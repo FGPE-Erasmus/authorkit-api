@@ -1,0 +1,23 @@
+{
+    "EMAILS": {
+        "EMAIL_VERIFATION": {
+            "you are one step away of joining FGPE AuthorKit": "you are one step away of joining FGPE AuthorKit",
+            "Confirm Email": "Confirm Email",
+            "Hi": "Hi",
+            "We may need to send you critical information about our service, so it is important that we have an accurate email address.": "We may need to send you critical information about our service, so it is important that we have an accurate email address.",
+            "Please confirm your email address by clicking the link below.": "Please confirm your email address by clicking the link below.",
+            "Confirm my email address": "Confirm my email address",
+            "After validating your email, you will be able to use FGPE Authorkit for free forever.": "After validating your email, you will be able to use FGPE Authorkit for free forever.",
+            "Note": "Note",
+            "If you do not confirm your account in the next": "If you do not confirm your account in the next",
+            "24 hours": "24 hours",
+            "it will be automatically deleted.": "it will be automatically deleted.",
+            "Kind Regards,": "Kind Regards,",
+            "The FGPE Team": "The FGPE Team",
+            "Follow": "Follow",
+            "on Twitter.": "on Twitter.",
+            "": ""
+        }
+        
+    }
+}

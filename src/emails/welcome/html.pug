@@ -1,0 +1,54 @@
+doctype transitional
+html(xmlns="http://www.w3.org/1999/xhtml")
+    head
+        meta(name="viewport" content="width=device-width")
+        meta(http-equiv="Content-Type" content="text/html; charset=UTF-8")
+        title Welcome to FGPE AuthorKit, #{firstname} #{lastname}!
+        link(href="styles/style.css" media="all" rel="stylesheet" type="text/css" data-inline="data-inline")
+    body.text-primary(itemscope="" itemtype="http://schema.org/EmailMessage")
+        table.body-wrap
+            tr
+                td
+                td.container(width="600")
+                    .header
+                        table(width="100%")
+                            tr
+                                td.content-block
+                                    img(src="images/fgpe-logo.jpg" alt="FGPE Logo" class="logo")
+                    .content
+                        table.main(width="100%" cellpadding="0" cellspacing="0" itemprop="action" itemscope="" itemtype="http://schema.org/Welcome")
+                            tr
+                                td.content-wrap
+                                    meta(itemprop="name" content="Welcome")
+                                    table(width="100%" cellpadding="0" cellspacing="0")
+                                        tr
+                                            td.content-block
+                                                p
+                                                    | Hi #{firstname} #{lastname},
+                                        tr
+                                            td.content-block
+                                                p
+                                                    | You have completed your registration successfully. You may now access the FGPE AuthorKit.
+                                        tr
+                                            td.content-block
+                                                p
+                                                    | The FGPE AuthorKit allows you to create gamified programming courses, by supporting the creation of programming exercises as well as a gamification layer on top of them.
+                                        tr
+                                            td.content-block
+                                                p
+                                                    | If you have any doubt or suggestion, you can reach us through our 
+                                                    a.text-primary(href="mailto:support@fgpe.usz.edu.pl") support email
+                                                    | .
+                                        tr
+                                            td.content-block.greetings
+                                                p
+                                                    | Kind Regards,
+                                                    br
+                                                    | The FGPE Team
+                    .footer
+                        table(width="100%")
+                            tr
+                                td.content-block.aligncenter.text-secondary
+                                    | Follow 
+                                    a.text-secondary(href="http://twitter.com/fgpe-project") @fgpe-project 
+                                    | on Twitter.

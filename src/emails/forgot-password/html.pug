@@ -1,0 +1,57 @@
+doctype transitional
+html(xmlns="http://www.w3.org/1999/xhtml")
+    head
+        meta(name="viewport" content="width=device-width")
+        meta(http-equiv="Content-Type" content="text/html; charset=UTF-8")
+        title Here are the instructions to reset your password from FGPE AuthorKit!
+        link(href="styles/style.css" media="all" rel="stylesheet" type="text/css" data-inline="data-inline")
+    body.text-primary(itemscope="" itemtype="http://schema.org/EmailMessage")
+        table.body-wrap
+            tr
+                td
+                td.container(width="600")
+                    .header
+                        table(width="100%")
+                            tr
+                                td.content-block
+                                    img(src="images/fgpe-logo.jpg" alt="FGPE Logo" class="logo")
+                    .content
+                        table.main(width="100%" cellpadding="0" cellspacing="0" itemprop="action" itemscope="" itemtype="http://schema.org/ResetPasswordAction")
+                            tr
+                                td.content-wrap
+                                    meta(itemprop="name" content="Reset Password")
+                                    table(width="100%" cellpadding="0" cellspacing="0")
+                                        tr
+                                            td.content-block
+                                                p
+                                                    | Hi #{firstname} #{lastname},
+                                        tr
+                                            td.content-block
+                                                p
+                                                    | You received this email because we got a request to reset the password for your account. If you did not request a new password you can safely delete this email.
+                                        tr
+                                            td.content-block
+                                                p
+                                                    | If you have made that request, please confirm and choose a new password by clicking the link below.
+                                        tr
+                                            td.content-block.text-center(itemprop="handler" itemscope="" itemtype="http://schema.org/HttpActionHandler")
+                                                a.btn-primary.text-secondary(href="http://fgpe.usz.edu.pl/authorkit/reset-password?key=" + token itemprop="url") Reset my password
+                                        tr
+                                            td.content-block
+                                                p
+                                                    | Note: This link is only valid for the next <strong>24 hours</strong>.
+                                        tr
+                                            td.content-block.greetings
+                                                p
+                                                    | Kind Regards,
+                                                    br
+                                                    | The FGPE Team
+                    .footer
+                        table(width="100%")
+                            tr
+                                td.content-block.aligncenter.text-secondary
+                                    | Follow 
+                                    a.text-secondary(href="http://twitter.com/fgpe-project") @fgpe-project 
+                                    | on Twitter.
+
+
