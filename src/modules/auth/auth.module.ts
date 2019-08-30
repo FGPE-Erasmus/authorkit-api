@@ -5,7 +5,7 @@ import { ConfigModule, ConfigService } from './../config';
 import { UserModule } from './../user';
 import { MailModule } from './../mail';
 import { AuthService } from './auth.service';
-import { JwtStrategy } from './jwt.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthController } from './auth.controller';
 
 @Module({
