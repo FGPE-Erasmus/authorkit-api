@@ -4,7 +4,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './';
 import { UsersService } from './../user';
 import { LoginPayload, RegisterPayload } from './payloads';
-import { async } from 'rxjs/internal/scheduler/async';
 import { ForgotPasswordPayload } from './payloads/forgot-password.payload';
 
 @Controller('api/auth')

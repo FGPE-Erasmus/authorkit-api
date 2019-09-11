@@ -6,7 +6,6 @@ import { ValidationPipe } from '@nestjs/common';
 import * as csurf from 'csurf';
 import * as helmet from 'helmet';
 import * as rateLimit from 'express-rate-limit';
-import * as CachePugTemplates from 'cache-pug-templates';
 
 import { AppModule } from './modules/main/app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
