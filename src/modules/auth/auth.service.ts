@@ -131,4 +131,29 @@ export class AuthService {
 
         return this.userService.update(user._id, user);
     }
+
+    async sendForgotPasswordEmail(user: User): Promise<boolean> {
+        if (!user || !user.email) {
+            throw new InternalServerErrorException(
+                this.i18n.translate('en-gb', 'EXCEPTIONS.MESSAGES.INTERNAL_SERVER_ERROR.SEND_FORGOT_PASSWORD_EMAIL_UNDEFINED_USER_EMAIL'));
+        }
+
+        const sent = await this.mailService.sendEmail(
+            'forgot-password',
+            user.email,
+            {
+                firstname: user.firstname,
+                lastname: user.lastname,
+                token: user.resetToken,
+                // locale: 'en-gb',
+            },
+        );
+
+        if (!sent) {
+            throw new InternalServerErrorException(
+                this.i18n.translate('en-gb', 'EXCEPTIONS.MESSAGES.INTERNAL_SERVER_ERROR.SEND_FORGOT_PASSWORD_EMAIL_FAILED'));
+        }
+
+        return sent;
+    }
 }

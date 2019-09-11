@@ -31,7 +31,7 @@ export class AuthController {
     async register(@Body() payload: RegisterPayload): Promise<any> {
         // register user
         const user = await this.userService.registerUser(payload);
-        // send email
+        // send activation email
         await this.authService.sendActivationEmail(user);
         return user;
     }
@@ -41,16 +41,29 @@ export class AuthController {
     @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async activate(@Query('key') key: string): Promise<any> {
+
+        // activate the user
         const user = await this.authService.activateUser(key);
-        return await this.authService.createToken(user);
+
+        // send welcome email
+        const sent = this.authService.sendWelcomeEmail(user);
+
+        return true;
     }
 
     @Post('forgot-password')
-    @ApiResponse({ status: 201, description: 'Successful Activation' })
+    @ApiResponse({ status: 201, description: 'Successful Reset Password Request' })
     @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async forgotPassword(@Body() payload: ForgotPasswordPayload): Promise<any> {
-        
+
+        // activate the user
+        const user = await this.authService.requestPasswordReset(payload);
+
+        // send reset password email
+        const sent = this.authService.sendResetPasswordEmail(user);
+
+        return true;
     }
 
     @ApiBearerAuth()
