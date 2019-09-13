@@ -1,5 +1,3 @@
-import * as path from 'path';
-
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 

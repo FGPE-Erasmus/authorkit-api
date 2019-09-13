@@ -23,11 +23,9 @@ import { AuthController } from './auth.controller';
           secret: configService.get('JWT_SECRET_KEY'),
           signOptions: {
             ...(
-              configService.get('JWT_EXPIRATION_TIME')
-                ? {
-                  expiresIn: Number(configService.get('JWT_EXPIRATION_TIME')),
-                }
-                : {}
+              configService.get('JWT_EXPIRATION_TIME') ?
+                { expiresIn: Number(configService.get('JWT_EXPIRATION_TIME')) } :
+                {}
             ),
           },
         };
@@ -45,7 +43,7 @@ import { AuthController } from './auth.controller';
     JwtStrategy,
   ],
   exports: [
-    PassportModule.register({ defaultStrategy: 'jwt' }),
+    JwtStrategy,
   ],
 })
 export class AuthModule { }

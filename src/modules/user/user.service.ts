@@ -16,7 +16,7 @@ export class UsersService {
         private readonly i18n: I18nService,
     ) { }
 
-    async get(id: number): Promise<User> {
+    async get(id: string): Promise<User> {
         return this.userRepository.findOne(id);
     }
 
@@ -78,7 +78,7 @@ export class UsersService {
     }
 
     async update(
-        id: number,
+        id: string,
         payload: UserFillableFields,
     ) {
         const user = await this.get(id);

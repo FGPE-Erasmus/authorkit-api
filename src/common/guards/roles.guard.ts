@@ -2,6 +2,10 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { Reflector } from '@nestjs/core';
 
+/**
+ * Guard that only allows authenticated requests of users with one of the given roles to
+ * proceed to the route handler.
+ */
 @Injectable()
 export class RolesGuard implements CanActivate {
     constructor(private readonly reflector: Reflector) { }
@@ -15,18 +19,9 @@ export class RolesGuard implements CanActivate {
 
         const req = context.switchToHttp().getRequest();
         const user = req.user;
-        const hasRole = () => user.roles.some((role: string) => roles.indexOf(role) > -1);
 
-        let hasPermission = false;
-        if (hasRole()) {
-            hasPermission = true;
-            if (req.params.email || req.body.email) {
-                if (req.user.email !== req.params.email && req.user.email !== req.body.email) {
-                    hasPermission = false;
-                }
-            }
-        }
+        const hasRole = () => user.roles.some((role: string) => roles.includes(role));
 
-        return user && user.roles && hasPermission;
+        return user && user.roles && hasRole();
     }
 }

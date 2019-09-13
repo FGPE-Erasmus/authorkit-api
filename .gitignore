@@ -17,6 +17,9 @@ yarn-error.log
 # build
 /dist
 
+# docker data
+/docker/mongodb/data/*
+
 # tests
 /test
 /coverage

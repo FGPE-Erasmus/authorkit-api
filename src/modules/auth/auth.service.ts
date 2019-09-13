@@ -29,19 +29,6 @@ export class AuthService {
         private readonly mailService: MailService,
     ) { }
 
-    async createToken(user: User): Promise<object> {
-        const expiresIn = this.configService.get('JWT_EXPIRATION_TIME');
-        return {
-            expiresIn,
-            accessToken: this.jwtService.sign({
-                id: user._id,
-                roles: user.roles,
-                username: user.username,
-                email: user.email,
-            }, { expiresIn }),
-        };
-    }
-
     async sendActivationEmail(user: User): Promise<boolean> {
         if (!user || !user.email) {
             throw new InternalServerErrorException(
@@ -80,18 +67,31 @@ export class AuthService {
         return this.userService.update(user._id, user);
     }
 
-    async validateUser(payload: LoginPayload): Promise<User> {
+    async authenticateUser(payload: LoginPayload): Promise<User> {
         const user = await this.userService.getByUsernameOrEmail(payload.username, payload.email);
 
         if (!user) {
             throw new UnauthorizedException(this.i18n.translate('en-gb', 'EXCEPTIONS.MESSAGES.NOT_FOUND.USER_NOT_FOUND_USERNAME_OR_EMAIL'));
         }
 
-        if (user.password === payload.password) {
+        if (user.password !== payload.password) {
             throw new UnauthorizedException(this.i18n.translate('en-gb', 'EXCEPTIONS.MESSAGES.UNAUTHORIZED.INVALID_CREDENTIALS'));
         }
 
         return user;
+    }
+
+    async createToken(user: User): Promise<object> {
+        const expiresIn = Number(this.configService.get('JWT_EXPIRATION_TIME'));
+        return {
+            expiresIn,
+            accessToken: this.jwtService.sign({
+                id: user._id,
+                roles: user.roles,
+                username: user.username,
+                email: user.email,
+            }, { expiresIn }),
+        };
     }
 
     async requestPasswordReset(payload: ForgotPasswordPayload): Promise<User> {
@@ -122,7 +122,7 @@ export class AuthService {
         }
 
         if (!user.resetTokenDate || (new Date().getTime() - user.resetTokenDate.getTime()) > RESET_PASSWORD_TOKEN_TTL) {
-            throw new BadRequestException(this.i18n.translate('en-gb', 'EXCEPTIONS.MESSAGES.BAD_REQUEST.RESET_PASSWORD_EXPIRED_TOKEN'));
+            throw new NotAcceptableException(this.i18n.translate('en-gb', 'EXCEPTIONS.MESSAGES.BAD_REQUEST.RESET_PASSWORD_EXPIRED_TOKEN'));
         }
 
         user.password = payload.password;
@@ -132,14 +132,14 @@ export class AuthService {
         return this.userService.update(user._id, user);
     }
 
-    async sendForgotPasswordEmail(user: User): Promise<boolean> {
+    async sendResetPasswordEmail(user: User): Promise<boolean> {
         if (!user || !user.email) {
             throw new InternalServerErrorException(
-                this.i18n.translate('en-gb', 'EXCEPTIONS.MESSAGES.INTERNAL_SERVER_ERROR.SEND_FORGOT_PASSWORD_EMAIL_UNDEFINED_USER_EMAIL'));
+                this.i18n.translate('en-gb', 'EXCEPTIONS.MESSAGES.INTERNAL_SERVER_ERROR.SEND_RESET_PASSWORD_EMAIL_UNDEFINED_USER_EMAIL'));
         }
 
         const sent = await this.mailService.sendEmail(
-            'forgot-password',
+            'reset-password',
             user.email,
             {
                 firstname: user.firstname,
@@ -151,7 +151,32 @@ export class AuthService {
 
         if (!sent) {
             throw new InternalServerErrorException(
-                this.i18n.translate('en-gb', 'EXCEPTIONS.MESSAGES.INTERNAL_SERVER_ERROR.SEND_FORGOT_PASSWORD_EMAIL_FAILED'));
+                this.i18n.translate('en-gb', 'EXCEPTIONS.MESSAGES.INTERNAL_SERVER_ERROR.SEND_RESET_PASSWORD_EMAIL_FAILED'));
+        }
+
+        return sent;
+    }
+
+    async sendWelcomeEmail(user: User): Promise<boolean> {
+        if (!user || !user.email) {
+            throw new InternalServerErrorException(
+                this.i18n.translate('en-gb', 'EXCEPTIONS.MESSAGES.INTERNAL_SERVER_ERROR.SEND_RESET_PASSWORD_EMAIL_UNDEFINED_USER_EMAIL'));
+        }
+
+        const sent = await this.mailService.sendEmail(
+            'welcome',
+            user.email,
+            {
+                firstname: user.firstname,
+                lastname: user.lastname,
+                token: user.resetToken,
+                // locale: 'en-gb',
+            },
+        );
+
+        if (!sent) {
+            throw new InternalServerErrorException(
+                this.i18n.translate('en-gb', 'EXCEPTIONS.MESSAGES.INTERNAL_SERVER_ERROR.SEND_RESET_PASSWORD_EMAIL_FAILED'));
         }
 
         return sent;

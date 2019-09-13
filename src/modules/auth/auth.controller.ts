@@ -1,10 +1,12 @@
 import { Controller, Body, Post, UseGuards, Get, Request, Query } from '@nestjs/common';
 import { ApiResponse, ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './';
-import { UsersService } from './../user';
+import { UsersService, User } from './../user';
 import { LoginPayload, RegisterPayload } from './payloads';
 import { ForgotPasswordPayload } from './payloads/forgot-password.payload';
+import { AuthenticatedGuard } from 'common/guards/authenticated.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-guard';
+import { RequestUser } from 'common/decorators/request-user.decorator';
 
 @Controller('api/auth')
 @ApiUseTags('authentication')
@@ -19,7 +21,7 @@ export class AuthController {
     @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async login(@Body() payload: LoginPayload): Promise<any> {
-        const user = await this.authService.validateUser(payload);
+        const user = await this.authService.authenticateUser(payload);
         return await this.authService.createToken(user);
     }
 
@@ -28,10 +30,13 @@ export class AuthController {
     @ApiResponse({ status: 400, description: 'Bad Request' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async register(@Body() payload: RegisterPayload): Promise<any> {
+
         // register user
         const user = await this.userService.registerUser(payload);
+
         // send activation email
         await this.authService.sendActivationEmail(user);
+
         return user;
     }
 
@@ -47,7 +52,7 @@ export class AuthController {
         // send welcome email
         const sent = this.authService.sendWelcomeEmail(user);
 
-        return true;
+        return ;
     }
 
     @Post('forgot-password')
@@ -65,12 +70,12 @@ export class AuthController {
         return true;
     }
 
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard())
     @Get('me')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
     @ApiResponse({ status: 200, description: 'Successful Response' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
-    async getLoggedInUser(@Request() request): Promise<any> {
-        return request.user;
+    async getLoggedInUser(@RequestUser() user: User): Promise<any> {
+        return user;
     }
 }

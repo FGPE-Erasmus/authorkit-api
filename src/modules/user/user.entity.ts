@@ -31,7 +31,7 @@ export enum UserRole {
 })
 export class User {
     @ObjectIdColumn()
-    _id: number;
+    _id: string;
 
     @Column({ length: 100 })
     @IsNotEmpty()
