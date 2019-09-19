@@ -1,4 +1,4 @@
-version: "3"
+version: "3.7"
 services:
   api:
     build:
@@ -9,7 +9,8 @@ services:
       restart_policy:
         condition: on-failure
     volumes:
-      - .env:/app/.env
+      - ./src:/usr/src/app/src
+      - ./.env.dev:/usr/src/app/.env
     depends_on:
       - db
     networks:
@@ -27,7 +28,7 @@ services:
       - api
     environment:
       - API_HOST=api
-      - API_PORT=3000
+      - API_PORT=3001
       - NGINX_SERVER_NAME=_
       - NGINX_MAX_BODY=100M
     ports:

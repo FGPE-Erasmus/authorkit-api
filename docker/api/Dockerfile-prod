@@ -1,14 +1,46 @@
-FROM node:lts-alpine
+## The builder
 
-WORKDIR /app
+FROM node:lts-alpine as builder
 
-ENV NODE_ENV production
-COPY package.json yarn.lock ./
-RUN set -x && yarn
+WORKDIR /usr/src/app
+
+ENV OPENCOLLECTIVE_HIDE=1
+ENV SUPPRESS_SUPPORT=1
+
+COPY package.json package-lock.json ./
+
+RUN npm ci --loglevel error
 
 COPY . .
-RUN set -x && yarn run prestart:prod
+
+RUN npm run build
+
+
+## The cleaner
+
+FROM node:lts-alpine as cleaner
+
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app .
+
+RUN npm prune --production
+
+
+## Output image
+
+FROM node:lts-alpine
+
+LABEL maintainer="José Carlos Paiva <josepaiva94@gmail.com>"
+
+HEALTHCHECK CMD curl -f http://localhost/healthcheck || exit 1
+
+RUN apk add --update curl
+
+WORKDIR /usr/src/app
+
+COPY --from=cleaner /usr/src/app .
 
 EXPOSE 3000
 
-CMD [ "node", "dist/main.js" ]
+CMD [ "npm", "run", "prod" ]

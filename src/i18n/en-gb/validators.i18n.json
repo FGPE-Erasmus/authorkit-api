@@ -1,9 +1,0 @@
-{
-    "VALIDATORS": {
-        "FAILURE_MESSAGES": {
-            "USERNAME": "Username should be a string with length greater or equal to 4 and lower or equal to 20 that only contains alphanumeric characters, dots, or underscores, and should start and end with an alphanumeric character.",
-            "PASSWORD": "Invalid password.",
-            "NOT_SIBLING_OF": "{property} cannot exist alongside the following defined properties: {siblings}"
-        }
-    }
-}

@@ -1,13 +1,28 @@
+# the builder
+FROM node:lts-alpine AS builder
+
+ARG NODE_ENV=development
+ENV NODE_ENV=${NODE_ENV}
+
+WORKDIR /usr/src/app
+
+RUN apk --no-cache add python make g++
+
+COPY package*.json nodemon*.json yarn.lock ./
+
+RUN npm install
+
+
+# the server
 FROM node:lts-alpine
 
-WORKDIR /app
+ARG NODE_ENV=development
+ENV NODE_ENV=${NODE_ENV}
 
-ENV NODE_ENV development
-COPY package.json yarn.lock ./
-RUN yarn
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app/node_modules node_modules
 
 COPY . .
 
-EXPOSE 3000
-
-CMD [ "yarn", "start:dev" ]
+CMD [ "npm", "run", "watch" ]

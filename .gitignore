@@ -1,29 +1,9 @@
-# dependencies
+.idea/
 node_modules/
-
-# IDE
-/.vscode
-
-# misc
-.DS_Store
-lerna-debug.log
-npm-debug.log
-yarn-error.log
-**/npm-debug.log
-
-# environment
 .env
+.env.stag
+.env.dev
+dist/
 
-# build
-/dist
-
-# docker data
-/docker/mongodb/data/*
-
-# tests
-/test
-/coverage
-/.nyc_output
-build/config\.gypi
-
-sqlite-example.sql
+# docker
+docker/mongodb/data/*
