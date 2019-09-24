@@ -5,16 +5,22 @@
   "main": "dist/index.js",
   "repository": "git@github.com:josepaiva94/fgpe-authorkit-api.git",
   "scripts": {
+    "format": "prettier --write \"src/**/*.ts\"",
     "start": "node -r ts-node/register -r dotenv-safe/config src/index.ts",
     "cli": "node -r ts-node/register -r dotenv-safe/config src/cli.ts",
-    "watch": "nodemon",
+    "watch:dev": "nodemon",
+    "watch:debug": "nodemon --config nodemon-debug.json",
     "prebuild": "rm -rf ./dist",
     "build": "tsc",
     "postbuild": "cp -R ./src/assets ./dist",
     "prod": "node -r dotenv-safe/config dist/index.js",
     "lint:check": "tslint --project ./",
     "lint:fix": "tslint --project ./ --fix",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "ts-typeorm": "ts-node ./node_modules/typeorm/cli.js"
   },
   "author": "José C. Paiva <josepaiva94@gmail.com>",
   "license": "MIT",
@@ -31,7 +37,6 @@
     "@nestjs/microservices": "^5.7.4",
     "@nestjs/passport": "^5.1.0",
     "@nestjs/swagger": "^2.5.1",
-    "@nestjs/testing": "^5.7.4",
     "@nestjs/websockets": "^5.7.4",
     "apollo-server-express": "^2.4.8",
     "async": "^2.6.2",
@@ -42,8 +47,8 @@
     "cors": "^2.8.5",
     "dotenv-safe": "^5.0.1",
     "email-templates": "^6.0.2",
+    "express-rate-limit": "^5.0.0",
     "faker": "^4.1.0",
-    "googleapis": "^37.2.0",
     "graphql": "^14.1.1",
     "graphql-subscriptions": "^1.0.0",
     "graphql-tag-pluck": "^0.8.4",
@@ -65,12 +70,11 @@
     "rxjs": "^6.3.3",
     "rxjs-compat": "^6.3.3",
     "tslib": "^1.9.3",
-    "twing": "^2.2.3",
     "typeorm": "^0.2.15",
-    "voucher-code-generator": "^1.1.1",
     "winston": "^2.4.4"
   },
   "devDependencies": {
+    "@nestjs/testing": "^5.7.4",
     "@types/async": "^2.4.1",
     "@types/express": "^4.16.0",
     "@types/faker": "^4.1.5",
@@ -83,11 +87,26 @@
     "@types/nodemailer": "^4.6.6",
     "@types/redis": "^2.8.11",
     "@types/socket.io": "^2.1.2",
+    "jest": "^24.9.0",
     "nodemon": "^1.19.2",
     "pre-commit": "^1.2.2",
     "ts-node": "^8.4.1",
     "tsconfig-paths": "^3.8.0",
     "tslint": "^5.14.0",
     "typescript": "^3.2.4"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".spec.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
   }
 }

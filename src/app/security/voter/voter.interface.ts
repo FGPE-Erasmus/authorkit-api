@@ -1,5 +1,5 @@
-import { AccessEnum } from './access.enum';
+import { Decision } from './decision';
 
 export interface VoterInterface {
-    vote(token: any, subject: any, attributes: any[]): Promise<AccessEnum>;
+    vote(token: any, subject: any, actions: any[]): Promise<Decision>;
 }

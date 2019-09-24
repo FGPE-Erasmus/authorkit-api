@@ -70,7 +70,13 @@ interface Config {
     };
     port: number;
     host: string;
-    microservice: MicroserviceOptions;
+    microservice: {
+        transport: Transport,
+        options?: {
+            host?: string;
+            port?: number;
+        }
+    };
     logger: {
         level: string;
         transports?: any[];
@@ -99,16 +105,6 @@ export const config: Config = {
     isProduction: process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'prod',
     salt: process.env.APP_SALT,
     assetsPath: `${__dirname}/../assets`,
-    mail: {
-        from: process.env.MAIL_FROM,
-        host: process.env.MAIL_HOST,
-        port: parseInt(process.env.MAIL_PORT, 10),
-        secure: Boolean(process.env.MAIL_SECURE),
-        user: process.env.MAIL_USER,
-        password: process.env.MAIL_PASSWORD,
-
-        templatesDir: `${__dirname}/../assets/mail`
-    },
     database: {
         type: 'mongodb',
         host: process.env.DB_HOST,
@@ -146,6 +142,16 @@ export const config: Config = {
             secret: process.env.AUTH_VERIFY_SECRET,
             timeout: parseInt(process.env.AUTH_VERIFY_TIMEOUT, 10)
         }
+    },
+    mail: {
+        from: process.env.MAIL_FROM,
+        host: process.env.MAIL_HOST,
+        port: parseInt(process.env.MAIL_PORT, 10),
+        secure: /true/i.test(process.env.MAIL_SECURE),
+        user: process.env.MAIL_USER,
+        password: process.env.MAIL_PASSWORD,
+
+        templatesDir: `${__dirname}/../assets/mail`
     },
     social: {
         facebook: {
@@ -187,11 +193,11 @@ export const config: Config = {
                 target: false,
                 value: false
             },
-            whitelist: true
+            whitelist: false
         },
         password: {
             min_length: parseInt(process.env.VALIDATOR_PASSWORD_MIN_LENGTH || '6', 10),
-            enforce_strong: Boolean(process.env.VALIDATOR_PASSWORD_ENFORCE_STRONG)
+            enforce_strong: /true/i.test(process.env.VALIDATOR_PASSWORD_ENFORCE_STRONG)
         }
     }
 };

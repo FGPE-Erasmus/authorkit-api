@@ -11,7 +11,7 @@ services:
       - db
     volumes:
       - ./src:/usr/src/app/src
-      - ./.env.dev:/usr/src/app/.env
+      - ./.env:/usr/src/app/.env
     networks:
       - fgpe-authorkit-api-network
 

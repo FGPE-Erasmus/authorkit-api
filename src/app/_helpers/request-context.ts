@@ -18,6 +18,7 @@ export class RequestContext {
 
     public static currentRequestContext(): RequestContext {
         const session = cls.getNamespace(RequestContext.nsid);
+
         if (session && session.active) {
             return session.get(RequestContext.name);
         }

@@ -1,8 +1,8 @@
-import { HttpException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DateTime } from 'luxon';
 import { Repository, DeepPartial, MongoRepository } from 'typeorm';
 import { CrudService } from '../../base';
-import { passwordHash, RestException } from '../_helpers';
+import { passwordHash, RestException, ValidationPhases } from '../_helpers';
 import { AppLogger } from '../app.logger';
 import { CredentialsDto } from '../auth/dto/credentials.dto';
 import { UserEmailEntity, UserEntity } from './entity';
@@ -22,7 +22,7 @@ export class UserService extends CrudService<UserEntity> {
 
     public async findByEmail(email: string): Promise<UserEntity> {
         this.logger.debug(`[findByEmail] Looking in users for ${email}`);
-        const user = await this.findOne({ where: { email: { eq: email } } });
+        const user = await this.findOne({ where: { email: { eq: email } } }, true);
         if (user) {
             this.logger.debug(`[findByEmail] Found in users an user with id ${user.id}`);
         } else {
@@ -42,7 +42,7 @@ export class UserService extends CrudService<UserEntity> {
         }
 
         if (user.password !== passwordHash(credentials.password)) {
-            throw new NotFoundException(`User doesn't exists`);
+            throw new BadRequestException(`Credentials do not match`);
         }
 
         if (!user.is_verified) {
@@ -56,14 +56,14 @@ export class UserService extends CrudService<UserEntity> {
         return user;
     }
 
-    public async create(data: DeepPartial<UserEntity>): Promise<UserEntity> {
+    public async register(data: DeepPartial<UserEntity>): Promise<UserEntity> {
         const entity = this.repository.create(data);
         await this.validate(entity);
         entity.hashPassword();
-        if (!entity.createdAt) {
-            entity.createdAt = DateTime.utc();
+        if (!entity.created_at) {
+            entity.created_at = DateTime.utc();
         }
-        entity.updatedAt = DateTime.utc();
+        entity.updated_at = DateTime.utc();
         const user = await entity.save();
         return user;
     }
@@ -71,17 +71,19 @@ export class UserService extends CrudService<UserEntity> {
     public async updatePassword(data: DeepPartial<UserEntity>): Promise<UserEntity> {
         const entity = await this.repository.findOneOrFail(data.id);
         entity.password = data.password;
-        await this.validate(entity);
+        await this.validate(entity, {
+            groups: [ValidationPhases.UPDATE]
+        });
         entity.hashPassword();
-        entity.updatedAt = DateTime.utc();
+        entity.updated_at = DateTime.utc();
         return this.repository.save(entity);
     }
 
     public async socialRegister(data: DeepPartial<UserEntity>) {
         const entity = this.repository.create(data);
         await this.validate(entity, { skipMissingProperties: true });
-        entity.createdAt = DateTime.utc();
-        entity.updatedAt = DateTime.utc();
+        entity.created_at = DateTime.utc();
+        entity.updated_at = DateTime.utc();
         return this.repository.save(entity);
     }
 }

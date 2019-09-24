@@ -7,6 +7,7 @@ export class AuthService {
     constructor(private readonly userService: UserService) { }
 
     async validateUser(payload: JwtPayload): Promise<any> {
-        return await this.userService.findOneById(payload.id);
+        console.log('validating user ' + payload.id);
+        return await this.userService.findOneById(payload.id, true);
     }
 }

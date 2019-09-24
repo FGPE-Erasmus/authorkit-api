@@ -1,4 +1,5 @@
+import { Decision } from '../voter/decision';
 
 export interface AccessDecisionManagerInterface {
-    decide(token, attributes: any[], object: any): Promise<boolean>;
+    decide(token, actions: any[], object: any): Promise<Decision>;
 }

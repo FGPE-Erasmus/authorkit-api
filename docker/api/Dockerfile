@@ -25,4 +25,4 @@ COPY --from=builder /usr/src/app/node_modules node_modules
 
 COPY . .
 
-CMD [ "npm", "run", "watch" ]
+CMD [ "npm", "run", "watch:dev" ]

@@ -21,14 +21,14 @@ export class OnlineService {
 
     public async addUser(user: UserEntity): Promise<OnlineService> {
         user.online_at = DateTime.utc();
-        await this.userService.update(user);
+        await this.userService.update(user.id, user);
         this.online.set(user.id.toString(), user);
         return this;
     }
 
     public async removeUser(user: UserEntity): Promise<OnlineService> {
         user.online_at = DateTime.utc();
-        await this.userService.update(user);
+        await this.userService.update(user.id, user);
         this.online.delete(user.id.toString());
         return this;
     }

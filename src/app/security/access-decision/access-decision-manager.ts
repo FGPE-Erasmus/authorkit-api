@@ -1,14 +1,16 @@
 import { AccessDecisionManagerInterface } from './access-decision-manager.interface';
 import { AccessDecisionStrategyEnum } from './access-decision-strategy.enum';
-import { AccessEnum, Voter } from '../voter';
-import { ucfirst } from '../../_helpers';
+import { AccessEnum, Voter, VoterRegistry } from '../voter';
+import { ucfirst, filterObject } from '../../_helpers';
+import { Decision } from '../voter/decision';
 
 export class AccessDecisionManager implements AccessDecisionManagerInterface {
 
     private strategyMethod: string;
 
     constructor(
-        private voters: IterableIterator<Voter>,
+        private voterRegistry: VoterRegistry,
+        /* private voters: IterableIterator<Voter>, */
         private strategy: AccessDecisionStrategyEnum = AccessDecisionStrategyEnum.STRATEGY_AFFIRMATIVE,
         private allowIfAllAbstainDecisions: boolean = false,
         private allowIfEqualGrantedDeniedDecisions: boolean = true
@@ -20,17 +22,18 @@ export class AccessDecisionManager implements AccessDecisionManagerInterface {
         this.strategyMethod = strategyMethod;
     }
 
-    public async decide(token, attributes: any[], object: any): Promise<boolean> {
-        return this[this.strategyMethod].call(this, token, attributes, object);
+    public async decide(token, actions: any[], object: any): Promise<Decision> {
+        return this[this.strategyMethod].call(this, token, actions, object);
     }
 
-    private async decideAffirmative(token, attributes, object): Promise<boolean> {
+    private async decideAffirmative(token, actions, object): Promise<Decision> {
         let deny = 0;
-        for (const voter of this.voters) {
-            const result = await voter.vote(token, object, attributes);
-            switch (result) {
+        const votersArr = Array.from(this.voterRegistry.getVoters());
+        for (const voter of votersArr) {
+            const decision = await voter.vote(token, object, actions);
+            switch (decision.vote) {
                 case AccessEnum.ACCESS_GRANTED:
-                    return true;
+                    return decision;
                 case AccessEnum.ACCESS_DENIED:
                     ++deny;
                     break;
@@ -38,20 +41,24 @@ export class AccessDecisionManager implements AccessDecisionManagerInterface {
                     break;
             }
         }
-        if (deny > 0) {
-            return false;
+        if (deny > 0 || !this.allowIfAllAbstainDecisions) {
+            return new Decision(AccessEnum.ACCESS_DENIED);
         }
-        return this.allowIfAllAbstainDecisions;
+        return new Decision(AccessEnum.ACCESS_GRANTED, ['*']);
     }
 
-    private async decideConsensus(token, attributes, object = null): Promise<boolean> {
+    private async decideConsensus(token, actions, object = null): Promise<Decision> {
         let grant = 0;
         let deny = 0;
-        for (const voter of this.voters) {
-            const result = await voter.vote(token, object, attributes);
-            switch (result) {
+        const attributesCounter = {};
+        for (const voter of this.voterRegistry.getVoters()) {
+            const decision = await voter.vote(token, object, actions);
+            switch (decision.vote) {
                 case AccessEnum.ACCESS_GRANTED:
                     ++grant;
+                    decision.attributes.forEach((attr) => {
+                        attributesCounter[attr] = (attributesCounter[attr] || 0) + 1;
+                    });
                     break;
                 case AccessEnum.ACCESS_DENIED:
                     ++deny;
@@ -59,36 +66,53 @@ export class AccessDecisionManager implements AccessDecisionManagerInterface {
             }
         }
         if (grant > deny) {
-            return true;
+            return new Decision(AccessEnum.ACCESS_GRANTED,
+                Object.keys(filterObject(attributesCounter, (v) => v > (grant / 2))));
         }
         if (deny > grant) {
-            return false;
+            return new Decision(AccessEnum.ACCESS_DENIED);
         }
         if (grant > 0) {
-            return this.allowIfEqualGrantedDeniedDecisions;
+            if (this.allowIfEqualGrantedDeniedDecisions) {
+                return new Decision(AccessEnum.ACCESS_GRANTED,
+                    Object.keys(filterObject(attributesCounter, (v) => v > (grant / 2))));
+            } else {
+                return new Decision(AccessEnum.ACCESS_DENIED);
+            }
         }
-        return this.allowIfAllAbstainDecisions;
+        if (this.allowIfAllAbstainDecisions) {
+            return new Decision(AccessEnum.ACCESS_GRANTED,
+                Object.keys(filterObject(attributesCounter, (v) => v > (grant / 2))));
+        } else {
+            return new Decision(AccessEnum.ACCESS_DENIED);
+        }
     }
 
-    private async decideUnanimous(token, attributes, object = null): Promise<boolean> {
+    private async decideUnanimous(token, actions, object = null): Promise<Decision> {
         let grant = 0;
-        for (const voter of this.voters) {
-            for (const attribute of attributes) {
-                const result = await voter.vote(token, object, [attribute]);
-                switch (result) {
+        const attributes = [];
+        for (const voter of this.voterRegistry.getVoters()) {
+            for (const action of actions) {
+                const decision = await voter.vote(token, object, [action]);
+                switch (decision.vote) {
                     case AccessEnum.ACCESS_GRANTED:
                         ++grant;
+                        attributes.push(...decision.attributes);
                         break;
                     case AccessEnum.ACCESS_DENIED:
-                        return false;
+                        return new Decision(AccessEnum.ACCESS_DENIED);
                     default:
                         break;
                 }
             }
         }
         if (grant > 0) {
-            return true;
+            return new Decision(AccessEnum.ACCESS_GRANTED, [...new Set(attributes)]);
         }
-        return this.allowIfAllAbstainDecisions;
+        if (this.allowIfAllAbstainDecisions) {
+            return new Decision(AccessEnum.ACCESS_GRANTED, [...new Set(attributes)]);
+        } else {
+            return new Decision(AccessEnum.ACCESS_DENIED);
+        }
     }
 }

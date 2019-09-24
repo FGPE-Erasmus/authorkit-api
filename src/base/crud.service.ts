@@ -1,11 +1,10 @@
-import {forwardRef, HttpException, HttpStatus, Inject} from '@nestjs/common';
-import {validate, ValidatorOptions} from 'class-validator';
-import {DateTime} from 'luxon';
-import {DeepPartial, FindManyOptions, FindOneOptions, MongoRepository, ObjectLiteral} from 'typeorm';
-import {ExtendedEntity, typeormFilterMapper} from '../app/_helpers';
-import {SecurityService} from '../app/security/security.service';
-import {RestVoterActionEnum} from '../app/security/voter';
-import {config} from '../config';
+import { forwardRef, HttpException, HttpStatus, Inject } from '@nestjs/common';
+import { validate, ValidatorOptions } from 'class-validator';
+import { DeepPartial, FindManyOptions, FindOneOptions, MongoRepository, ObjectLiteral } from 'typeorm';
+import { ExtendedEntity, typeormFilterMapper, ValidationPhases } from '../app/_helpers';
+import { SecurityService } from '../app/security/security.service';
+import { RestVoterActionEnum } from '../app/security/voter';
+import { config } from '../config';
 
 export class CrudService<T extends ExtendedEntity> {
     protected repository: MongoRepository<T>;
@@ -17,19 +16,23 @@ export class CrudService<T extends ExtendedEntity> {
         }
     }
 
-    public async findAll(options?: FindManyOptions<T>): Promise<T[]> {
-        if (options.where) {
+    public async findAll(options?: FindManyOptions<T>, internal: boolean = false): Promise<T[]> {
+        if (options && options.where) {
             options.where = typeormFilterMapper(options);
         }
         const entities = await this.repository.find(options);
-        await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.READ_ALL, entities);
+        if (!internal) {
+            await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.READ_ALL, entities);
+        }
         return entities;
     }
 
-    public async findOneById(id: string): Promise<T> {
+    public async findOneById(id: string, internal: boolean = false): Promise<T> {
         try {
             const entity = await this.repository.findOneOrFail(id);
-            await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.READ, entity);
+            if (!internal) {
+                await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.READ, entity);
+            }
             return entity;
         } catch (e) {
             throw new HttpException({
@@ -39,23 +42,24 @@ export class CrudService<T extends ExtendedEntity> {
         }
     }
 
-    public async findOne(options?: FindOneOptions<T>): Promise<T> {
+    public async findOne(options?: FindOneOptions<T>, internal: boolean = false): Promise<T> {
         if (options.where) {
             options.where = typeormFilterMapper(options);
         }
         const entity = await this.repository.findOne(options);
-        await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.READ, entity);
+        if (!internal) {
+            await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.READ, entity);
+        }
         return entity;
     }
 
-    public async create(data: DeepPartial<T>): Promise<T> {
+    public async create(data: DeepPartial<T>, internal: boolean = false): Promise<T> {
         const entity: T = this.repository.create(data);
-        entity.createdAt = DateTime.utc();
-        entity.updatedAt = DateTime.utc();
-        await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.CREATE, entity);
-        await this.validate(entity, {
-            groups: ['create']
-        });
+        if (!internal) {
+            const decision = await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.CREATE, entity);
+            await this.securityService.removeNonAllowedProperties(entity, decision.attributes);
+        }
+        await this.validate(entity);
         return entity.save();
     }
 
@@ -63,68 +67,65 @@ export class CrudService<T extends ExtendedEntity> {
         return this.repository.save(data);
     }
 
-    public async update(data: DeepPartial<T>|T): Promise<T> {
-        const id: string = String(data.id || '');
-        return this.patch(id, data);
+    public async update(id: string, data: DeepPartial<T> | T, internal: boolean = false): Promise<T> {
+        return this.patch(id, data, internal);
     }
 
-    public async updateAll(query, data: any): Promise<boolean> {
+    public async updateAll(query, data: any, internal: boolean = false): Promise<boolean> {
         if (query) {
-            query = typeormFilterMapper({where: query	});
+            query = typeormFilterMapper({ where: query });
         }
         const response = await this.repository.updateMany(query, data);
         return !!response.matchedCount;
     }
 
-    public async patch(id: string, data: DeepPartial<T>|T): Promise<T> {
-        let entity: T = null;
+    public async patch(id: string, data: DeepPartial<T> | T, internal: boolean = false): Promise<T> {
+        let entity: T = await this.findOneById(id, true);
+        if (!internal) {
+            const decision = await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.UPDATE, entity);
+            await this.securityService.removeNonAllowedProperties(data, decision.attributes);
+        }
         if (data instanceof ExtendedEntity) {
             entity = data;
         } else {
-            entity = await this.findOneById(id);
             if (data.id) {
                 delete data.id;
             }
-            this.repository.merge(entity, data);
+            entity = this.repository.merge(entity, data);
         }
-        let createdAt = entity.createdAt;
-        if (!createdAt) {
-            createdAt = DateTime.utc();
-        }
-        entity.createdAt = createdAt;
-        entity.updatedAt = DateTime.utc();
-        await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.UPDATE, entity);
         await this.validate(entity, {
-            groups: ['update']
+            groups: [ValidationPhases.UPDATE]
         });
         return entity.save();
     }
 
-    public async delete(id: string): Promise<T> {
-        const entity: T = await this.findOneById(id);
-        await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.UPDATE, entity);
+    public async delete(id: string, internal: boolean = false): Promise<T> {
+        const entity: T = await this.findOneById(id, true);
+        if (!internal) {
+            await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.DELETE, entity);
+        }
         await this.repository.delete(id);
         return entity;
     }
 
     public deleteAll(conditions?: ObjectLiteral): Promise<any> {
         if (conditions) {
-            conditions = typeormFilterMapper({where: conditions});
+            conditions = typeormFilterMapper({ where: conditions });
         }
         return this.repository.deleteMany(conditions);
     }
 
-
-    public async softDelete({id}: DeepPartial<T>): Promise<T> {
-        const entity = await this.findOneById(id as any);
-        await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.SOFT_DELETE, entity);
-        entity.isDeleted = true;
-        entity.updatedAt = DateTime.utc();
+    public async softDelete({ id }: DeepPartial<T>, internal: boolean = false): Promise<T> {
+        const entity = await this.findOneById(id as any, true);
+        if (!internal) {
+            await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.SOFT_DELETE, entity);
+        }
+        entity.is_deleted = true;
         return entity.save();
     }
 
     protected async validate(entity: T, options?: ValidatorOptions) {
-        const errors = await validate(entity, {...config.validator.options, options} as ValidatorOptions);
+        const errors = await validate(entity, { ...config.validator.options, ...options } as ValidatorOptions);
         if (errors.length) {
             throw new HttpException({
                 message: errors,

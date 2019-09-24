@@ -1,9 +1,8 @@
-import { createTransport, SendMailOptions, SentMessageInfo } from 'nodemailer';
-import * as Email from 'email-templates';
-import { TwingEnvironment, TwingLoaderFilesystem } from 'twing';
+import { createTransport, SentMessageInfo } from 'nodemailer';
 
 import { config } from '../../../config';
-import Mail = require('nodemailer/lib/mailer');
+
+const Email = require('email-templates');
 
 export async function mail(template: string, recipient: string, data: any): Promise<SentMessageInfo> {
     const transporter = createTransport({
@@ -16,32 +15,20 @@ export async function mail(template: string, recipient: string, data: any): Prom
         }
     });
 
-    const message = renderTemplate(template, data);
+    const message = await renderTemplate(template, data);
 
     return transporter.sendMail({
         from: config.mail.from,
         to: recipient,
-        ...message
+        subject: message.subject,
+        text: message.text,
+        html: message.html
     });
 }
 
-export function renderTemplate(path: string, data: any): RenderedMessage {
+export function renderTemplate(path: string, data: any): Promise<RenderedMessage> {
 
     const email = new Email({
-        /* message: {
-            from: config.mail.from
-        },
-        send: true,
-        transport: {
-            host: config.mail.host,
-            port: config.mail.port,
-            ssl: config.mail.ssl,
-            tls: config.mail.tls,
-            auth: {
-                user: config.mail.user,
-                pass: config.mail.password
-            }
-        }, */
         htmlToText: false,
         views: { root: config.mail.templatesDir },
         juice: true,
@@ -55,9 +42,6 @@ export function renderTemplate(path: string, data: any): RenderedMessage {
         i18n: {}
     });
 
-    /* const loader = new TwingLoaderFilesystem(config.assetsPath);
-    const twing = new TwingEnvironment(loader);
-    return twing.render(path, data); */
     return email.renderAll(path, {
         ...data,
         __: function (key: string) {

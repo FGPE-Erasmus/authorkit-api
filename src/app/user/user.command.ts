@@ -36,13 +36,16 @@ export class UserCommand {
                 last_name,
                 is_verified: true,
                 provider: 'faker',
-                socialId: faker.random.uuid(),
+                facebook_id: faker.random.uuid(),
+                google_id: faker.random.uuid(),
+                twitter_id: faker.random.uuid(),
+                github_id: faker.random.uuid(),
                 email: faker.internet.email(first_name, last_name).toLowerCase(),
                 password: faker.internet.password(),
                 phone_num: faker.phone.phoneNumber(),
                 profile_img: faker.internet.avatar(),
-                createdAt: DateTime.utc().toString(),
-                updatedAt: DateTime.utc().toString()
+                created_at: DateTime.utc().toString(),
+                updated_at: DateTime.utc().toString()
             });
             persons.push(person);
             // this.logger.debug(`[create] create random person ppl with provider "faker" as ${JSON.stringify(person)}`);

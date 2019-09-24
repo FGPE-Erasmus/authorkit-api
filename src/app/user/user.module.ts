@@ -7,10 +7,12 @@ import { UserService } from './user.service';
 import { IsUserAlreadyExist } from './user.validator';
 import { UserResolver } from './user.resolver';
 import { UserCommand } from './user.command';
+import { UserVoter } from './security/user.voter';
 
 const PROVIDERS = [
     ...userProviders,
     IsUserAlreadyExist,
+    UserVoter,
     UserService,
     OnlineService,
     UserResolver,

@@ -6,11 +6,16 @@ export class DeleteUserInput {
 export class UpdateUserInput {
     first_name?: string;
     last_name?: string;
+    institution?: string;
+    country?: string;
     email?: string;
     phone_num?: string;
     profile_img?: string;
-    phone_token?: string;
     password?: string;
+    facebook_id?: string;
+    google_id?: string;
+    twitter_id?: string;
+    github_id?: string;
 }
 
 export abstract class IMutation {
@@ -35,15 +40,19 @@ export class User {
     id: string;
     first_name?: string;
     last_name?: string;
+    institution?: string;
+    country?: string;
     email?: string;
     phone_num?: string;
     profile_img?: string;
     password?: string;
     provider?: string;
-    phone_token?: string;
-    socialId?: string;
-    createdAt?: Date;
-    updatedAt?: Date;
+    facebook_id?: string;
+    google_id?: string;
+    twitter_id?: string;
+    github_id?: string;
+    created_at?: Date;
+    updated_at?: Date;
 }
 
 export type Date = any;

@@ -16,11 +16,10 @@ $ npm install
 
 ## Configuration
 
-Copy file `.env.example` and name it `.env`
+Copy file `.env.example` and name it `.env.dev`
 
 These are environment variables required for application to start.
 
-* `APP_DATABASE_TYPE` is a type of database for `TypeORM`
 * `APP_DATABASE_LOGGING` is a logging level for `TypeORM`
 * `APP_LOGGER_LEVEL` is a logging level for `Nest.js`
 
@@ -28,8 +27,7 @@ These are environment variables required for application to start.
 
 ### Outside Docker containers
 
-- Create .env file `cp .env.example .env` and replace existing env variables
-  (mysql/mariadb connection params)
+- Create .env file `cp .env.example .env` and fill-in existing env variables
 - Install dependencies `npm install`
 - Start the app `npm run start`
 
@@ -37,7 +35,7 @@ These are environment variables required for application to start.
 
 Just run already prepared bash script:
 ```bash
-$ ./init
+$ ./build
 ```
 It will setup the project for you (building the Docker images, starting docker-compose stack).
 The NestJS app running in dev mode will be exposed on `http://localhost` (port 80)
@@ -77,22 +75,26 @@ $ ./build.sh
 
 ```bash
 # unit tests
-$ docker exec -it nest yarn test
+$ docker exec -it nest npm run test
 
 # e2e tests
-$ docker exec -it nest yarn test:e2e
+$ docker exec -it nest npm run test:e2e
 
 # test coverage
-$ docker exec -it nest yarn test:cov
+$ docker exec -it nest npm run test:cov
 ```
 
 ## Environment Configuration
 
-and read all environment variables from `.env` file, which is created automatically by the init script from `.env.example`.
+`.env.example` contains the configuration keys that must be set in `.env.dev` for development and/or
+`.env.prod` for production.
+
+When using the build script, one of these is automatically cloned to `.env`. If you don't use the
+build script, please m
 
 ## Swagger
 
-To see all available endpoints visit http://localhost/api/docs
+To see all available endpoints visit http://localhost/docs
 
 ## TypeORM integrated
 

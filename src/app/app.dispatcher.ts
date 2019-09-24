@@ -1,4 +1,4 @@
-import { INestApplication, INestApplicationContext, INestMicroservice } from '@nestjs/common';
+import { INestApplication, INestApplicationContext, INestMicroservice, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { useContainer } from 'class-validator';
@@ -8,7 +8,9 @@ import query from 'qs-middleware';
 import { config } from '../config';
 import { AppLogger } from './app.logger';
 import { AppModule } from './app.module';
-import { HttpExceptionFilter, TwigExceptionFilter } from './_helpers/filters';
+import { HttpExceptionFilter } from './_helpers/filters';
+
+const rateLimit = require('express-rate-limit');
 
 export class AppDispatcher {
     private app: INestApplication;
@@ -43,10 +45,27 @@ export class AppDispatcher {
         this.app.use(query());
 
         this.app.useGlobalFilters(new HttpExceptionFilter());
-        this.app.useGlobalFilters(new TwigExceptionFilter());
 
         if (config.isProduction) {
             this.app.use(helmet());
+
+            this.app.use( // limit each IP to 250 requests per 15 minutes
+            rateLimit({
+                windowMs: 15 * 60 * 1000,
+                max: 250,
+                message:
+                'Too many requests from this IP, please try again later'
+            })
+            );
+            this.app.use( // limit each IP to 10 email signup requests per hour
+            '/auth/register',
+            rateLimit({
+                windowMs: 60 * 60 * 1000,
+                max: 10,
+                message:
+                'Too many accounts created from this IP, please try again after an hour'
+            })
+            );
         }
 
         const options = new DocumentBuilder()

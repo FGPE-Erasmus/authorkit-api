@@ -1,7 +1,8 @@
 import { forwardRef, Inject, OnModuleInit } from '@nestjs/common';
-import { VoterInterface } from './voter.interface';
 import { AccessEnum } from './access.enum';
+import { VoterInterface } from './voter.interface';
 import { VoterRegistry } from './voter-registry';
+import { Decision } from './decision';
 
 export abstract class Voter implements VoterInterface, OnModuleInit {
 
@@ -11,26 +12,26 @@ export abstract class Voter implements VoterInterface, OnModuleInit {
         this.voterRegistry.register(this);
     }
 
-    public async vote(token: any, subject: any, attributes: any[]): Promise<AccessEnum> {
-        let vote = AccessEnum.ACCESS_ABSTAIN;
+    public async vote(token: any, subject: any, actions: any[]): Promise<Decision> {
+        let decision = new Decision(AccessEnum.ACCESS_ABSTAIN);
 
-        for (const attribute of attributes) {
-            if (!this.supports(attribute, subject)) {
+        for (const action of actions) {
+            if (!this.supports(action, subject)) {
                 continue;
             }
-            // as soon as at least one attribute is supported, default is to deny access
-            vote = AccessEnum.ACCESS_DENIED;
-            if (await this.voteOnAttribute(attribute, subject, token)) {
-                // grant access as soon as at least one attribute returns a positive response
-                return AccessEnum.ACCESS_GRANTED;
+            // as soon as at least one action is supported, default is to deny access
+            decision = await this.voteOnAction(action, subject, token);
+            if (decision.vote === AccessEnum.ACCESS_GRANTED) {
+                // grant access as soon as at least one action returns a positive response
+                return decision;
             }
         }
 
-        return vote;
+        return decision;
     }
 
-    protected abstract supports(attribute, subject): boolean;
+    protected abstract supports(action, subject): boolean;
 
-    protected async abstract voteOnAttribute(attribute, subject, token): Promise<boolean>;
+    protected async abstract voteOnAction(action, subject, token): Promise<Decision>;
 
 }

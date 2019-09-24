@@ -10,7 +10,8 @@ export class AuthorizationChecker implements AuthorizationCheckerInterface {
     private readonly tokenStorage;
 
     constructor(voterRegistry: VoterRegistry) {
-        this.adm = new AccessDecisionManager(voterRegistry.getVoters(), AccessDecisionStrategyEnum.STRATEGY_AFFIRMATIVE, true);
+        this.adm = new AccessDecisionManager(voterRegistry,
+            AccessDecisionStrategyEnum.STRATEGY_AFFIRMATIVE, true);
         this.tokenStorage = function () {
             return {
                 getUser: () => RequestContext.currentUser()
@@ -18,13 +19,13 @@ export class AuthorizationChecker implements AuthorizationCheckerInterface {
         };
     }
 
-    public async isGranted(attributes, subject = null) {
+    public async isGranted(actions, subject = null) {
         const token = this.tokenStorage();
 
-        if (!Array.isArray(attributes)) {
-            attributes = [attributes];
+        if (!Array.isArray(actions)) {
+            actions = [actions];
         }
 
-        return this.adm.decide(token, attributes, subject);
+        return this.adm.decide(token, actions, subject);
     }
 }

@@ -1,5 +1,5 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
-import { Client, ClientProxy, Transport } from '@nestjs/microservices';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, Get, Query, BadRequestException } from '@nestjs/common';
+import { Client, ClientProxy, Transport, TcpOptions } from '@nestjs/microservices';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiImplicitBody, ApiModelProperty, ApiResponse, ApiUseTags } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
@@ -22,7 +22,6 @@ import { FacebookProfile } from './interfaces/facebook-profile.interface';
 import { createAuthToken, verifyToken } from './jwt';
 import { PasswordResetDto } from './dto/password-reset.dto';
 import { PasswordTokenDto } from './dto/password-token.dto';
-import { VerifyTokenDto } from './dto/verify-token.dto';
 import { VerifyResendDto } from './dto/verify-resend.dto';
 
 export class TestDto {
@@ -35,7 +34,10 @@ export class TestDto {
 @Controller('auth')
 export class AuthController {
 
-    @Client({ transport: Transport.TCP })
+    @Client({
+        transport: Transport.TCP,
+        options: config.microservice.options
+    })
     private client: ClientProxy;
 
     private logger = new AppLogger(AuthController.name);
@@ -61,7 +63,7 @@ export class AuthController {
     @ApiImplicitBody({ required: true, type: UserEntityDto, name: 'UserEntityDto' })
     @ApiResponse({ status: 204, description: 'NO_CONTENT' })
     public async register(@Body() data: DeepPartial<UserEntity>): Promise<void> {
-        const user = await this.userService.create(data);
+        const user = await this.userService.register(data);
         this.logger.debug(`[register] User ${data.email} register`);
         this.client.send({ cmd: USER_CMD_REGISTER }, user).subscribe(() => { }, error => {
             this.logger.error(error, '');
@@ -69,16 +71,18 @@ export class AuthController {
         this.logger.debug(`[register] Send registration email for email ${data.email}`);
     }
 
-    @Post('register/verify')
+    @Get('register/verify')
     @HttpCode(200)
-    @ApiImplicitBody({ required: true, type: VerifyTokenDto, name: 'VerifyTokenDto' })
     @ApiResponse({ status: 200, description: 'OK', type: JwtDto })
-    public async registerVerify(@Body() body: VerifyTokenDto): Promise<JwtDto> {
-        this.logger.debug(`[registerVerify] Token ${body.verifyToken}`);
-        const token = await verifyToken(body.verifyToken, config.auth.verify.secret);
-        const user = await this.userService.findOneById(token.id);
+    public async registerVerify(@Query('token') activationToken: string): Promise<JwtDto> {
+        this.logger.debug(`[registerVerify] Token ${activationToken}`);
+        const token = await verifyToken(activationToken, config.auth.verify.secret);
+        const user = await this.userService.findOneById(token.id, true);
+        if (user.is_verified) {
+            throw new BadRequestException(`User ${user.email} already verified`);
+        }
         user.is_verified = true;
-        await this.userService.update(user);
+        await this.userService.update(token.id, user, true);
         this.client.send({ cmd: USER_CMD_REGISTER_VERIFY }, user).subscribe(() => { }, error => {
             this.logger.error(error, '');
         });
@@ -91,30 +95,33 @@ export class AuthController {
     @ApiImplicitBody({ required: true, type: VerifyResendDto, name: 'VerifyResendDto' })
     @ApiResponse({ status: 204, description: 'NO CONTENT' })
     public async registerVerifyResend(@Body() body: VerifyResendDto): Promise<void> {
-        try {
-            this.logger.debug(`[registerVerifyResend] Email where resend verification ${body.email}`);
-            const user = await this.userService.findByEmail(body.email);
-            if (user.is_verified) {
-                throw new Error(`User ${user.email} already verified`);
-            }
-            this.client.send({ cmd: USER_CMD_REGISTER }, user).subscribe(() => { }, error => {
-                this.logger.error(error, '');
-            });
-            this.logger.debug(`[registerVerify] Sent command registry verify for email ${body.email}`);
-        } catch (err) {
-            this.logger.error(`[registerVerifyResend] ${err.message}`, err.stack);
+        this.logger.debug(`[registerVerifyResend] Email where resend verification ${body.email}`);
+        const user = await this.userService.findByEmail(body.email);
+        if (user.is_verified) {
+            throw new BadRequestException(`User ${user.email} already verified`);
         }
+        this.client.send({ cmd: USER_CMD_REGISTER }, user).subscribe(() => { }, error => {
+            this.logger.error(error, '');
+        });
+        this.logger.debug(`[registerVerifyResend] Sent command registry verify for email ${body.email}`);
     }
 
     @Post('password/reset')
     @HttpCode(204)
     @ApiImplicitBody({ required: true, type: PasswordResetDto, name: 'PasswordResetDto' })
     @ApiResponse({ status: 204, description: 'NO CONTENT' })
-    public passwordReset(@Body() data: DeepPartial<UserEntity>): void {
-        this.logger.debug(`[passwordReset] User ${data.email} starts password reset`);
-        this.client.send({ cmd: USER_CMD_PASSWORD_RESET }, { email: data.email }).subscribe(() => { }, error => {
-            this.logger.error(error, '');
-        });
+    public async passwordReset(@Body() body: DeepPartial<UserEntity>): Promise<void> {
+        this.logger.debug(`[passwordReset] User ${body.email} starts password reset`);
+        if (body.email) {
+            const user = await this.userService.findByEmail(body.email);
+            this.client
+                .send({ cmd: USER_CMD_PASSWORD_RESET }, user)
+                .subscribe(() => { }, error => {
+                    this.logger.error(error, '');
+                });
+        } else {
+            throw new BadRequestException('User email is required');
+        }
     }
 
     @Post('password/new')
@@ -145,15 +152,15 @@ export class AuthController {
     @UseGuards(AuthGuard('facebook-token'))
     @ApiResponse({ status: 200, description: 'OK', type: JwtDto })
     public async fbSignIn(@Body() fbToken: FacebookTokenDto, @Profile() profile: FacebookProfile): Promise<JwtDto> {
-        this.logger.debug(`[fbSignIn] Facebook socialId ${profile.id}`);
-        let user = await this.userService.findOne({ where: { socialId: profile.id } });
+        this.logger.debug(`[fbSignIn] Facebook facebook_id ${profile.id}`);
+        let user = await this.userService.findOne({ where: { facebook_id: profile.id } });
         if (!user) {
             this.logger.debug(`[fbSignIn] User with this id doesn't exists before, social register`);
             user = await this.userService.socialRegister({
                 email: profile._json.email,
                 first_name: profile._json.first_name,
                 last_name: profile._json.last_name,
-                socialId: profile._json.id,
+                facebook_id: profile._json.id,
                 provider: profile.provider,
                 is_verified: true
             });

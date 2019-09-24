@@ -1,5 +1,6 @@
 import { ApiModelProperty } from '@nestjs/swagger';
 import { config } from '../../../config';
+import { UserRole } from 'app/user/entity';
 
 export class UserEntityDto {
 
@@ -36,4 +37,29 @@ export class UserEntityDto {
         required: false
     })
     public profile_img?: string;
+
+    @ApiModelProperty({
+        required: false
+    })
+    public roles?: UserRole[];
+
+    @ApiModelProperty({
+        required: false
+    })
+    public facebook_id?: string;
+
+    @ApiModelProperty({
+        required: false
+    })
+    public google_id?: string;
+
+    @ApiModelProperty({
+        required: false
+    })
+    public twitter_id?: string;
+
+    @ApiModelProperty({
+        required: false
+    })
+    public github_id?: string;
 }

@@ -18,25 +18,34 @@ type User {
     id: ID!
     first_name: String
     last_name: String
+    institution: String
+    country: String
     email: String
     phone_num: String
     profile_img: String
     password: String
     provider: String
-    phone_token: String
-    socialId: String
-    createdAt: Date
-    updatedAt: Date
+    facebook_id: String
+    google_id: String
+    twitter_id: String
+    github_id: String
+    created_at: Date
+    updated_at: Date
 }
 
 input UpdateUserInput {
     first_name: String
     last_name: String
+    institution: String
+    country: String
     email: String
     phone_num: String
     profile_img: String
-    phone_token: String
     password: String
+    facebook_id: String
+    google_id: String
+    twitter_id: String
+    github_id: String
 }
 
 input DeleteUserInput {

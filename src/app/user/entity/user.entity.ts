@@ -1,16 +1,23 @@
 import { ApiModelProperty } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, IsUrl, MinLength, Validate, ValidateIf } from 'class-validator';
+import { IsEmail, IsOptional, IsString, IsUrl, MinLength, Validate, ValidateIf, IsEnum, IsArray, IsEmpty, ArrayNotContains, IsDefined } from 'class-validator';
 import { DateTime } from 'luxon';
-import { ExtendedEntity, passwordHash, PasswordValidator } from '../../_helpers';
+import { ExtendedEntity, passwordHash, PasswordValidator, ValidationPhases } from '../../_helpers';
 import { IsUserAlreadyExist } from '../user.validator';
 import { config } from '../../../config';
-import { Column, Entity, ObjectIdColumn } from 'typeorm';
+import { Column, Entity, ObjectIdColumn, ObjectID } from 'typeorm';
+import { Exclude, Transform } from 'class-transformer';
+
+export enum UserRole {
+    ADMIN = 'admin',
+    USER = 'user'
+}
 
 @Entity()
 export class UserEntity extends ExtendedEntity {
 
     @ApiModelProperty()
     @ObjectIdColumn()
+    @Transform((id: ObjectID) => id.toHexString(), {toPlainOnly: true})
     public id: string;
 
     @ApiModelProperty()
@@ -36,8 +43,9 @@ export class UserEntity extends ExtendedEntity {
     public country: string;
 
     @ApiModelProperty()
+    @IsOptional({ groups: [ValidationPhases.UPDATE] })
+    @IsString()
     @IsEmail()
-    @ValidateIf(o => !o.id)
     @Validate(IsUserAlreadyExist, {
         message: 'User already exists'
     })
@@ -57,7 +65,9 @@ export class UserEntity extends ExtendedEntity {
     public profile_img: string;
 
     @ApiModelProperty()
-    @IsOptional()
+    @Exclude()
+    @IsOptional({ groups: [ValidationPhases.UPDATE] })
+    @IsDefined()
     @MinLength(config.validator.password.min_length)
     @Validate(PasswordValidator)
     @Column()
@@ -69,23 +79,42 @@ export class UserEntity extends ExtendedEntity {
 
     @ApiModelProperty()
     @IsOptional()
+    @IsArray()
+    @IsEnum(UserRole, { each: true })
+    @Column()
+    public roles: UserRole[] = [UserRole.USER];
+
+    @ApiModelProperty()
+    @IsOptional()
     @Column()
     public provider: string;
 
     @ApiModelProperty()
     @IsOptional()
     @Column()
-    public socialId: string;
+    public facebook_id: string;
 
     @ApiModelProperty()
     @IsOptional()
     @Column()
-    public phone_token: string;
+    public google_id: string;
+
+    @ApiModelProperty()
+    @IsOptional()
+    @Column()
+    public twitter_id: string;
+
+    @ApiModelProperty()
+    @IsOptional()
+    @Column()
+    public github_id: string;
 
     @Column()
     public online_at: DateTime;
 
     hashPassword() {
-        this.password = passwordHash(this.password);
+        if (this.password) {
+            this.password = passwordHash(this.password);
+        }
     }
 }
