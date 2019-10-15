@@ -3,7 +3,6 @@ import { AccessLevelEnum, RestVoterActionEnum, Voter, AccessEnum } from '../../s
 import { AppLogger } from '../../app.logger';
 import { UserService } from '../user.service';
 import { UserEntity, UserRole } from '../entity';
-import { DeepPartial } from '../../_helpers';
 import { Decision } from '../../security/voter/decision';
 
 @Injectable()
@@ -38,20 +37,13 @@ export class UserVoter extends Voter {
 
     protected supports(action: any, subject: any): boolean {
 
-        console.log('1. here for ' + action);
-
         if (!this.actions.includes(action)) {
             return false;
         }
 
-        console.log('2. here for ' + action);
-
         if (Array.isArray(subject)) {
             return subject.every(element => element instanceof UserEntity);
         }
-
-        console.log('3. here for ' + action);
-        console.log(subject);
 
         return subject instanceof UserEntity;
     }

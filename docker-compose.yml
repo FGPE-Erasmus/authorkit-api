@@ -33,24 +33,61 @@ services:
     networks:
       - fgpe-authorkit-api-network
 
+  # MongoDB
+  # db:
+  #   image: mongo:latest
+  #   container_name: fgpe-authorkit-api-db
+  #   restart: unless-stopped
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: root
+  #     MONGO_INITDB_ROOT_PASSWORD: gkw\CmTcr0,Yf~oe65pEh^EJ
+  #     MONGO_INITDB_DATABASE: fgpe-authorkit
+  #     MONGO_USERNAME: fgpe
+  #     MONGO_PASSWORD: 3abd5yPMaZjh9HfGPTGSEbkoWFNVVm
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - ./docker/mongodb/data:/data/db
+  #     - ./docker/mongodb/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+  #   networks:
+  #     - fgpe-authorkit-api-network
+
+  # MariaDB
+  # db:
+  #   image: mariadb:10.3.17
+  #   container_name: fgpe-authorkit-api-db
+  #   restart: unless-stopped
+  #   environment:
+  #     MYSQL_ROOT_HOST: \%
+  #     MYSQL_ROOT_PASSWORD: gkw\CmTcr0,Yf~oe65pEh^EJ
+  #     MYSQL_USERNAME: fgpe
+  #     MYSQL_PASSWORD: 3abd5yPMaZjh9HfGPTGSEbkoWFNVVm
+  #     MYSQL_DATABASE: fgpe-authorkit
+  #   ports:
+  #     - 3306:3306
+  #   volumes:
+  #     - ./docker/mariadb/data:/var/lib/mysql
+  #     - ./docker/mariadb/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+  #   networks:
+  #     - fgpe-authorkit-api-network
+
+  # PostgreSQL
   db:
-    image: mongo:latest
+    image: postgres:11.5-alpine
     container_name: fgpe-authorkit-api-db
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: gkw\CmTcr0,Yf~oe65pEh^EJ
-      MONGO_INITDB_DATABASE: fgpe-authorkit
-      MONGO_USERNAME: fgpe
-      MONGO_PASSWORD: 3abd5yPMaZjh9HfGPTGSEbkoWFNVVm
+      POSTGRES_USER: fgpe
+      POSTGRES_PASSWORD: 3abd5yPMaZjh9HfGPTGSEbkoWFNVVm
+      POSTGRES_DB: fgpe-authorkit
     ports:
-      - "27017:27017"
+      - 5432:5432
     volumes:
-      - ./docker/mongodb/data:/data/db
-      - ./docker/mongodb/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+      - ./docker/postgres/data:/var/lib/postgresql/data
+      - ./docker/postgres/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
     networks:
       - fgpe-authorkit-api-network
-      
+
 networks:
   fgpe-authorkit-api-network:
     driver: bridge

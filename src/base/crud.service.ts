@@ -1,25 +1,25 @@
 import { forwardRef, HttpException, HttpStatus, Inject } from '@nestjs/common';
 import { validate, ValidatorOptions } from 'class-validator';
-import { DeepPartial, FindManyOptions, FindOneOptions, MongoRepository, ObjectLiteral } from 'typeorm';
+import { DeepPartial, FindManyOptions, FindOneOptions, ObjectLiteral, Repository } from 'typeorm';
 import { ExtendedEntity, typeormFilterMapper, ValidationPhases } from '../app/_helpers';
 import { SecurityService } from '../app/security/security.service';
 import { RestVoterActionEnum } from '../app/security/voter';
 import { config } from '../config';
 
 export class CrudService<T extends ExtendedEntity> {
-    protected repository: MongoRepository<T>;
+    protected repository: Repository<T>;
     @Inject(forwardRef(() => SecurityService)) protected readonly securityService: SecurityService;
 
-    constructor(repository?: MongoRepository<T>) {
+    constructor(repository?: Repository<T>) {
         if (repository) {
             this.repository = repository;
         }
     }
 
     public async findAll(options?: FindManyOptions<T>, internal: boolean = false): Promise<T[]> {
-        if (options && options.where) {
+        /* if (options && options.where) {
             options.where = typeormFilterMapper(options);
-        }
+        } */
         const entities = await this.repository.find(options);
         if (!internal) {
             await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.READ_ALL, entities);
@@ -35,6 +35,8 @@ export class CrudService<T extends ExtendedEntity> {
             }
             return entity;
         } catch (e) {
+            console.log(e);
+
             throw new HttpException({
                 error: 'Database',
                 message: 'Item not found'
@@ -43,9 +45,9 @@ export class CrudService<T extends ExtendedEntity> {
     }
 
     public async findOne(options?: FindOneOptions<T>, internal: boolean = false): Promise<T> {
-        if (options.where) {
+        /* if (options.where) {
             options.where = typeormFilterMapper(options);
-        }
+        } */
         const entity = await this.repository.findOne(options);
         if (!internal) {
             await this.securityService.denyAccessUnlessGranted(RestVoterActionEnum.READ, entity);
@@ -60,6 +62,7 @@ export class CrudService<T extends ExtendedEntity> {
             await this.securityService.removeNonAllowedProperties(entity, decision.attributes);
         }
         await this.validate(entity);
+
         return entity.save();
     }
 
@@ -71,12 +74,12 @@ export class CrudService<T extends ExtendedEntity> {
         return this.patch(id, data, internal);
     }
 
-    public async updateAll(query, data: any, internal: boolean = false): Promise<boolean> {
-        if (query) {
+    public async updateAll(query, data: any, internal: boolean = false): Promise<boolean> { // only for internal use
+        /* if (query) {
             query = typeormFilterMapper({ where: query });
-        }
-        const response = await this.repository.updateMany(query, data);
-        return !!response.matchedCount;
+        } */
+        const response = await this.repository.update(query, data);
+        return !!response.affected;
     }
 
     public async patch(id: string, data: DeepPartial<T> | T, internal: boolean = false): Promise<T> {
@@ -108,11 +111,11 @@ export class CrudService<T extends ExtendedEntity> {
         return entity;
     }
 
-    public deleteAll(conditions?: ObjectLiteral): Promise<any> {
-        if (conditions) {
+    public deleteAll(query): Promise<any> {
+        /* if (conditions) {
             conditions = typeormFilterMapper({ where: conditions });
-        }
-        return this.repository.deleteMany(conditions);
+        } */
+        return this.repository.delete(query);
     }
 
     public async softDelete({ id }: DeepPartial<T>, internal: boolean = false): Promise<T> {

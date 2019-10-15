@@ -1,8 +1,9 @@
-import {Body, Delete, Get, Param, Patch, Post, Put, Req} from '@nestjs/common';
-import {DeepPartial} from 'typeorm';
-import {CrudService} from './crud.service';
-import {ExtendedEntity} from '../app/_helpers';
+import { Body, Delete, Get, Param, Patch, Post, Put, Req, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
+import { DeepPartial } from 'typeorm';
+import { CrudService } from './crud.service';
+import { ExtendedEntity } from '../app/_helpers';
 
+@UseInterceptors(ClassSerializerInterceptor)
 export class RestController<T extends ExtendedEntity> {
     protected service: CrudService<T>;
 

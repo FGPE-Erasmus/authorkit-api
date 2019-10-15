@@ -7,6 +7,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { HealthCheckModule } from './healthcheck/healthcheck.module';
 import { UserModule } from './user/user.module';
 import { SharedModule } from './shared/shared.module';
+import { ProjectModule } from './project/project.module';
 import { GqlConfigService, RequestContextMiddleware } from './_helpers';
 import { SecurityModule } from './security';
 
@@ -18,6 +19,7 @@ import { SecurityModule } from './security';
         DatabaseModule,
         AuthModule,
         UserModule,
+        ProjectModule,
         GraphQLModule.forRootAsync({
             imports: [SharedModule, UserModule],
             useClass: GqlConfigService

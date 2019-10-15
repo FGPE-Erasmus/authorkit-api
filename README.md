@@ -18,11 +18,6 @@ $ npm install
 
 Copy file `.env.example` and name it `.env.dev`
 
-These are environment variables required for application to start.
-
-* `APP_DATABASE_LOGGING` is a logging level for `TypeORM`
-* `APP_LOGGER_LEVEL` is a logging level for `Nest.js`
-
 ## Start Guide
 
 ### Outside Docker containers
@@ -101,6 +96,6 @@ To see all available endpoints visit http://localhost/docs
 [TypeORM](http://typeorm.io/) gives the possibility to use next db types:
 `mysql`, `postgres`, `mariadb`, `sqlite`, `mongodb` etc. Please look at docs for more details.
 
-We are using `mongodb`.
+We are using `postgres`.
 
 

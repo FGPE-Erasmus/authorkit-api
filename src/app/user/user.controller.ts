@@ -30,7 +30,6 @@ import { RestController } from '../../base';
 
 @Controller('user')
 @ApiUseTags('user')
-@UseInterceptors(ClassSerializerInterceptor)
 export class UserController extends RestController<UserEntity> {
     private logger = new AppLogger(UserController.name);
 

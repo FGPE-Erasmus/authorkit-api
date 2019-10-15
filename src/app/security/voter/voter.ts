@@ -13,7 +13,7 @@ export abstract class Voter implements VoterInterface, OnModuleInit {
     }
 
     public async vote(token: any, subject: any, actions: any[]): Promise<Decision> {
-        let decision = new Decision(AccessEnum.ACCESS_ABSTAIN);
+        let decision: Decision = new Decision(AccessEnum.ACCESS_ABSTAIN);
 
         for (const action of actions) {
             if (!this.supports(action, subject)) {

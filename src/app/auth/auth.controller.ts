@@ -95,10 +95,13 @@ export class AuthController {
     @ApiImplicitBody({ required: true, type: VerifyResendDto, name: 'VerifyResendDto' })
     @ApiResponse({ status: 204, description: 'NO CONTENT' })
     public async registerVerifyResend(@Body() body: VerifyResendDto): Promise<void> {
-        this.logger.debug(`[registerVerifyResend] Email where resend verification ${body.email}`);
+        this.logger.debug(`[registerVerifyResend] Resend verification email to ${body.email}`);
         const user = await this.userService.findByEmail(body.email);
+        if (!user) {
+            throw new BadRequestException(`User with email "${user.email}" does not exist.`);
+        }
         if (user.is_verified) {
-            throw new BadRequestException(`User ${user.email} already verified`);
+            throw new BadRequestException(`User with email "${user.email}" already verified`);
         }
         this.client.send({ cmd: USER_CMD_REGISTER }, user).subscribe(() => { }, error => {
             this.logger.error(error, '');

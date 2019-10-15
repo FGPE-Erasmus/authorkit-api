@@ -106,16 +106,15 @@ export const config: Config = {
     salt: process.env.APP_SALT,
     assetsPath: `${__dirname}/../assets`,
     database: {
-        type: 'mongodb',
+        type: 'postgres',
         host: process.env.DB_HOST,
         port: parseInt(process.env.DB_PORT, 10),
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_DATABASE,
 
-        // synchronize: true,
+        synchronize: true,
         logging: 'all',
-        useNewUrlParser: true,
         migrationsRun: true,
         migrations: [
             __dirname + '/../migrations/*{.ts,.js}'

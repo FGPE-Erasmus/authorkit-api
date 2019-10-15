@@ -22,7 +22,6 @@ type User {
     country: String
     email: String
     phone_num: String
-    profile_img: String
     password: String
     provider: String
     facebook_id: String
@@ -40,7 +39,6 @@ input UpdateUserInput {
     country: String
     email: String
     phone_num: String
-    profile_img: String
     password: String
     facebook_id: String
     google_id: String

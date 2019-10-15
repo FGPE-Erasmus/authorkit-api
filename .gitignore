@@ -7,3 +7,5 @@ dist/
 
 # docker
 docker/mongodb/data/*
+docker/mariadb/data/*
+docker/postgres/data/*

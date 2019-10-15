@@ -1,3 +1,9 @@
+
+/** ------------------------------------------------------
+ * THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+ * -------------------------------------------------------
+ */
+
 /* tslint:disable */
 export class DeleteUserInput {
     id: string;
@@ -10,7 +16,6 @@ export class UpdateUserInput {
     country?: string;
     email?: string;
     phone_num?: string;
-    profile_img?: string;
     password?: string;
     facebook_id?: string;
     google_id?: string;
@@ -26,8 +31,6 @@ export abstract class IMutation {
 
 export abstract class IQuery {
     abstract me(): User | Promise<User>;
-
-    abstract temp__(): boolean | Promise<boolean>;
 }
 
 export abstract class ISubscription {
@@ -44,7 +47,6 @@ export class User {
     country?: string;
     email?: string;
     phone_num?: string;
-    profile_img?: string;
     password?: string;
     provider?: string;
     facebook_id?: string;
@@ -54,5 +56,3 @@ export class User {
     created_at?: Date;
     updated_at?: Date;
 }
-
-export type Date = any;

@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DateTime } from 'luxon';
-import { Repository, DeepPartial, MongoRepository } from 'typeorm';
+import { Repository, DeepPartial } from 'typeorm';
 import { CrudService } from '../../base';
 import { passwordHash, RestException, ValidationPhases } from '../_helpers';
 import { AppLogger } from '../app.logger';
@@ -14,7 +14,7 @@ export class UserService extends CrudService<UserEntity> {
     private logger = new AppLogger(UserService.name);
 
     constructor(
-        @Inject(USER_TOKEN) protected readonly repository: MongoRepository<UserEntity>,
+        @Inject(USER_TOKEN) protected readonly repository: Repository<UserEntity>,
         @Inject(USER_EMAIL_TOKEN) protected readonly userEmailRepository: Repository<UserEmailEntity>
     ) {
         super();
@@ -22,7 +22,7 @@ export class UserService extends CrudService<UserEntity> {
 
     public async findByEmail(email: string): Promise<UserEntity> {
         this.logger.debug(`[findByEmail] Looking in users for ${email}`);
-        const user = await this.findOne({ where: { email: { eq: email } } }, true);
+        const user = await this.findOne({ where: { email } }, true);
         if (user) {
             this.logger.debug(`[findByEmail] Found in users an user with id ${user.id}`);
         } else {
@@ -60,10 +60,6 @@ export class UserService extends CrudService<UserEntity> {
         const entity = this.repository.create(data);
         await this.validate(entity);
         entity.hashPassword();
-        if (!entity.created_at) {
-            entity.created_at = DateTime.utc();
-        }
-        entity.updated_at = DateTime.utc();
         const user = await entity.save();
         return user;
     }
@@ -75,15 +71,12 @@ export class UserService extends CrudService<UserEntity> {
             groups: [ValidationPhases.UPDATE]
         });
         entity.hashPassword();
-        entity.updated_at = DateTime.utc();
         return this.repository.save(entity);
     }
 
     public async socialRegister(data: DeepPartial<UserEntity>) {
         const entity = this.repository.create(data);
         await this.validate(entity, { skipMissingProperties: true });
-        entity.created_at = DateTime.utc();
-        entity.updated_at = DateTime.utc();
         return this.repository.save(entity);
     }
 }
