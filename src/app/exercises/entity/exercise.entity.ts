@@ -73,7 +73,7 @@ export class ExerciseEntity extends ExtendedEntity {
     })
     public status: ExerciseStatus;
 
-    @OneToMany(type => ExerciseInstructionEntity, instruction => instruction.exercise, {
+    @OneToMany(type => ExerciseInstructionEntity, instruction => instruction.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
@@ -81,7 +81,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @Field(type => [ExerciseInstructionEntity])
     public instructions: ExerciseInstructionEntity[];
 
-    @OneToMany(type => ExerciseStatementEntity, statement => statement.exercise, {
+    @OneToMany(type => ExerciseStatementEntity, statement => statement.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
@@ -89,7 +89,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @Field(type => [ExerciseStatementEntity])
     public statements: ExerciseStatementEntity[];
 
-    @OneToMany(type => ExerciseEmbeddableEntity, embeddable => embeddable.exercise, {
+    @OneToMany(type => ExerciseEmbeddableEntity, embeddable => embeddable.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
@@ -97,7 +97,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @Field(type => [ExerciseEmbeddableEntity])
     public embeddables: ExerciseEmbeddableEntity[];
 
-    @OneToMany(type => ExerciseLibraryEntity, library => library.exercise, {
+    @OneToMany(type => ExerciseLibraryEntity, library => library.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
@@ -105,7 +105,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @Field(type => [ExerciseLibraryEntity])
     public libraries: ExerciseLibraryEntity[];
 
-    @OneToMany(type => ExerciseStaticCorrectorEntity, static_corrector => static_corrector.exercise, {
+    @OneToMany(type => ExerciseStaticCorrectorEntity, static_corrector => static_corrector.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
@@ -113,7 +113,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @Field(type => [ExerciseStaticCorrectorEntity])
     public static_correctors: ExerciseStaticCorrectorEntity[];
 
-    @OneToMany(type => ExerciseDynamicCorrectorEntity, dynamic_corrector => dynamic_corrector.exercise, {
+    @OneToMany(type => ExerciseDynamicCorrectorEntity, dynamic_corrector => dynamic_corrector.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
@@ -121,7 +121,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @Field(type => [ExerciseDynamicCorrectorEntity])
     public dynamic_correctors: ExerciseDynamicCorrectorEntity[];
 
-    @OneToMany(type => ExerciseTestGeneratorEntity, test_generator => test_generator.exercise, {
+    @OneToMany(type => ExerciseTestGeneratorEntity, test_generator => test_generator.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
@@ -129,7 +129,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @Field(type => [ExerciseTestGeneratorEntity])
     public test_generators: ExerciseTestGeneratorEntity[];
 
-    @OneToMany(type => ExerciseFeedbackGeneratorEntity, test_generator => test_generator.exercise, {
+    @OneToMany(type => ExerciseFeedbackGeneratorEntity, test_generator => test_generator.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
@@ -137,7 +137,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @Field(type => [ExerciseFeedbackGeneratorEntity])
     public feedback_generators: ExerciseFeedbackGeneratorEntity[];
 
-    @OneToMany(type => ExerciseSkeletonEntity, skeleton => skeleton.exercise, {
+    @OneToMany(type => ExerciseSkeletonEntity, skeleton => skeleton.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
@@ -145,7 +145,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @Field(type => [ExerciseSkeletonEntity])
     public skeletons: ExerciseSkeletonEntity[];
 
-    @OneToMany(type => ExerciseSolutionEntity, solution => solution.exercise, {
+    @OneToMany(type => ExerciseSolutionEntity, solution => solution.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
@@ -153,7 +153,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @Field(type => [ExerciseSolutionEntity])
     public solutions: ExerciseSolutionEntity[];
 
-    @OneToMany(type => ExerciseTemplateEntity, tmpl => tmpl.exercise, {
+    @OneToMany(type => ExerciseTemplateEntity, tmpl => tmpl.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
@@ -161,7 +161,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @Field(type => [ExerciseTemplateEntity])
     public templates: ExerciseTemplateEntity[];
 
-    @OneToMany(type => ExerciseTestEntity, test => test.exercise, {
+    @OneToMany(type => ExerciseTestEntity, test => test.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
@@ -169,7 +169,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @Field(type => [ExerciseTestEntity])
     public tests: ExerciseTestEntity[];
 
-    @OneToMany(type => ExerciseTestSetEntity, testSet => testSet.exercise, {
+    @OneToMany(type => ExerciseTestSetEntity, testset => testset.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true

@@ -1,17 +1,18 @@
-import { Column, PrimaryGeneratedColumn, ManyToOne, Entity, PrimaryColumn, JoinColumn, OneToMany } from 'typeorm';
+import { Column, PrimaryGeneratedColumn, Entity, OneToMany, Index } from 'typeorm';
 import { Field } from 'type-graphql';
 
 import { ExtendedEntity } from '../../_helpers';
-import { ExerciseEntity } from './exercise.entity';
 import { ExerciseTestEntity } from './exercise-test.entity';
 
 @Entity('exercise-test-set')
 export class ExerciseTestSetEntity extends ExtendedEntity {
 
     @PrimaryGeneratedColumn('uuid')
+    @Field()
     public id: string;
 
-    @PrimaryColumn('uuid')
+    @Column('uuid')
+    @Index()
     @Field()
     public exercise_id: string;
 
@@ -24,15 +25,10 @@ export class ExerciseTestSetEntity extends ExtendedEntity {
     @Column()
     public visible: boolean;
 
-    @OneToMany(type => ExerciseTestEntity, test => test.test_set, {
+    @OneToMany(type => ExerciseTestEntity, test => test.testset_id, {
         cascade: true,
         onDelete: 'CASCADE'
     })
     @Field(type => [ExerciseTestEntity])
     public tests: ExerciseTestEntity[];
-
-    @ManyToOne(type => ExerciseEntity, exercise => exercise.testSets)
-    @JoinColumn({ name: 'exercise_id' })
-    // @Field(type => ExerciseEntity)
-    public exercise: ExerciseEntity;
 }
