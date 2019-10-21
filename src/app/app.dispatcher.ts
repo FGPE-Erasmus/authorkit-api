@@ -12,7 +12,7 @@ import { AppLogger } from './app.logger';
 
 /**
  * START NOTICE
- * TypeScript decorators are executed when we declare our class but not 
+ * TypeScript decorators are executed when we declare our class but not
  * when we create new class instance
  */
 CrudConfigService.load({
