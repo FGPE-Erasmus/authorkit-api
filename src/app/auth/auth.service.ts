@@ -8,6 +8,10 @@ export class AuthService {
 
     async validateUser(payload: JwtPayload): Promise<any> {
         console.log('validating user ' + payload.id);
-        return await this.userService.findOneById(payload.id, true);
+        console.log();
+        return await this.userService.findOne(null, {
+            where: { id: payload.id },
+            relations: ['permissions']
+        });
     }
 }

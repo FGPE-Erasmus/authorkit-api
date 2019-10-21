@@ -1,28 +1,29 @@
 import { HttpModule, Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { DatabaseModule } from '../database/database.module';
 import { UserModule } from '../user/user.module';
+import { AccessControlModule } from '../access-control/access-control.module';
+import { accessRules } from '../app.access-rules';
 
 import { ProjectCommand } from './project.command';
-import { projectProviders } from './project.providers';
 import { ProjectPipe } from './pipe/project.pipe';
 import { ProjectService } from './project.service';
-import { ProjectVoter } from './security/project.voter';
 import { ProjectController } from './project.controller';
+import { ProjectMiddleware } from './project.middleware';
+import { ProjectEntity, PermissionEntity } from './entity';
 
 const PROVIDERS = [
-    ...projectProviders,
     ProjectService,
-    ProjectVoter,
     ProjectCommand,
-    ProjectPipe
+    ProjectPipe,
+    ProjectMiddleware
 ];
 
 const MODULES = [
+    TypeOrmModule.forFeature([ProjectEntity, PermissionEntity]),
+    AccessControlModule.forRoles(accessRules),
     HttpModule,
-    DatabaseModule,
     UserModule
-    // forwardRef(() => ProjectUserModule)
 ];
 
 @Module({
@@ -31,6 +32,4 @@ const MODULES = [
     imports: [...MODULES],
     exports: [ProjectService]
 })
-export class ProjectModule {
-
-}
+export class ProjectModule {}

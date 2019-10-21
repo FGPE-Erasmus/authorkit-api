@@ -39,7 +39,7 @@ export class GqlConfigService implements GqlOptionsFactory {
                         try {
                             const authToken = connectionParams['Authorization'];
                             const token = await this.validateToken(authToken);
-                            const user = await this.userService.findOneById(token.id);
+                            const user = await this.userService.findOne(token.id);
                             await this.onlineService.addUser(user);
                             resolve({ req: { ...context.request, user } });
                         } catch (e) {

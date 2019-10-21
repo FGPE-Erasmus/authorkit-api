@@ -2,6 +2,8 @@ import exitHook from 'async-exit-hook';
 import { CommandModule, CommandService } from 'nestjs-command';
 import { AppDispatcher, AppLogger } from './app';
 
+process.setMaxListeners(0);
+
 const logger = new AppLogger('Cli');
 
 logger.log(`Start`);

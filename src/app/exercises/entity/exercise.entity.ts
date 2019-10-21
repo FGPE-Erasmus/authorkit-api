@@ -1,9 +1,10 @@
 import { ApiModelProperty } from '@nestjs/swagger';
-import { Entity, ObjectIdColumn, Column, ManyToOne, ObjectID, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Entity, ObjectIdColumn, Column, ManyToOne, ObjectID, PrimaryGeneratedColumn, OneToMany, JoinColumn } from 'typeorm';
+import { CrudValidationGroups } from '@nestjsx/crud';
 import { Field } from 'type-graphql';
-import { IsString, IsOptional, Length, MaxLength, IsEnum, IsNotEmpty, Validate } from 'class-validator';
+import { IsString, MaxLength, IsEnum, IsNotEmpty, Validate, IsEmpty, IsOptional, IsDefined, IsUUID, IsArray } from 'class-validator';
 
-import { ExtendedEntity, GithubReponameValidator, GithubUsernameValidator } from '../../_helpers';
+import { ExtendedEntity } from '../../_helpers';
 import { UserEntity } from '../../user/entity';
 import { ProjectEntity } from '../../project/entity';
 
@@ -24,48 +25,101 @@ import { ExerciseTemplateEntity } from './exercise-template.entity';
 import { ExerciseTestSetEntity } from './exercise-test-set.entity';
 import { ExerciseTestEntity } from './exercise-test.entity';
 
+const { CREATE, UPDATE } = CrudValidationGroups;
+
 @Entity('exercise')
 export class ExerciseEntity extends ExtendedEntity {
 
     @ApiModelProperty()
+    @IsOptional({ groups: [UPDATE] })
+    @IsEmpty({ groups: [CREATE] })
     @PrimaryGeneratedColumn('uuid')
+    @Field()
     public id: string;
 
     @ApiModelProperty()
-    @IsString()
-    @MaxLength(250)
-    @Column()
+    @IsOptional({ groups: [UPDATE] })
+    @IsDefined({ groups: [CREATE] })
+    @IsNotEmpty({ always: true })
+    @IsString({ always: true })
+    @MaxLength(150, { always: true })
+    @Column('varchar', { length: 150, nullable: false })
+    @Field()
     public title: string;
 
-    @Column()
+    @ApiModelProperty()
+    @IsOptional({ always: true })
+    @IsString({ always: true })
+    @MaxLength(150, { always: true })
+    @Column('varchar', { length: 150, nullable: true })
+    @Field()
     public module: string;
 
-    @ManyToOne(type => UserEntity, author => author.exercises)
-    @Field(type => ProjectEntity)
-    public author: UserEntity;
+    @ApiModelProperty()
+    @IsOptional({ groups: [UPDATE] })
+    @IsDefined({ groups: [CREATE] })
+    @IsNotEmpty({ always: true })
+    @IsUUID('4', { always: true })
+    @ManyToOne(type => UserEntity, user => user.exercises)
+    @JoinColumn({ name: 'owner_id' })
+    @Column('uuid', { nullable: false })
+    public owner_id: string;
 
+    @ApiModelProperty()
+    @IsOptional({ groups: [UPDATE] })
+    @IsDefined({ groups: [CREATE] })
+    @IsNotEmpty({ always: true })
+    @IsUUID('4', { always: true })
     @ManyToOne(type => ProjectEntity, project => project.exercises)
-    @Field(type => ProjectEntity)
-    public project: ProjectEntity;
+    @JoinColumn({ name: 'project_id' })
+    @Column('uuid', { nullable: false })
+    public project_id: string;
 
+    @ApiModelProperty()
+    @IsOptional({ groups: [UPDATE] })
+    @IsDefined({ groups: [CREATE] })
+    @IsArray({ always: true })
+    @IsString({ always: true, each: true })
+    @MaxLength(50, { always: true, each: true })
     @Column('simple-array', { default: [] })
     public keywords: string[];
 
-    @Column()
+    @ApiModelProperty({ required: true })
+    @IsOptional({ groups: [UPDATE] })
+    @IsDefined({ groups: [CREATE] })
+    @IsEnum(ExerciseType, { always: true })
+    @Column({
+        type: 'enum',
+        enum: ExerciseType
+    })
     public type: ExerciseType;
 
-    @Column()
+    @ApiModelProperty()
+    @IsOptional({ always: true })
+    @IsString({ always: true })
+    @MaxLength(250, { always: true })
+    @Column('varchar', { length: 250, nullable: true })
     public event: string;
 
-    @Column()
+    @ApiModelProperty()
+    @IsOptional({ always: true })
+    @IsString({ always: true })
+    @MaxLength(250, { always: true })
+    @Column('varchar', { length: 250, nullable: true })
     public platform: string;
 
+    @ApiModelProperty()
+    @IsOptional({ always: true })
+    @IsEnum(ExerciseDifficulty, { always: true })
     @Column({
         type: 'enum',
         enum: ExerciseDifficulty
     })
     public difficulty: ExerciseDifficulty;
 
+    @ApiModelProperty()
+    @IsOptional({ always: true })
+    @IsEnum(ExerciseStatus, { always: true })
     @Column({
         type: 'enum',
         enum: ExerciseStatus,

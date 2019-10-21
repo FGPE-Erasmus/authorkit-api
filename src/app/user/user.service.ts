@@ -1,28 +1,29 @@
-import { HttpException, HttpStatus, Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { DateTime } from 'luxon';
+import { HttpException, HttpStatus, Injectable, BadRequestException } from '@nestjs/common';
 import { Repository, DeepPartial } from 'typeorm';
-import { CrudService } from '../../base';
-import { passwordHash, RestException, ValidationPhases } from '../_helpers';
+import { InjectRepository } from '@nestjs/typeorm';
+import { CrudValidationGroups } from '@nestjsx/crud';
+import { TypeOrmCrudService } from '@nestjsx/crud-typeorm';
+
+import { passwordHash, RestException, validateEntity } from '../_helpers';
 import { AppLogger } from '../app.logger';
 import { CredentialsDto } from '../auth/dto/credentials.dto';
-import { UserEmailEntity, UserEntity } from './entity';
+import { UserEntity } from './entity';
 import { UserErrorEnum } from './user-error.enum';
-import { USER_EMAIL_TOKEN, USER_TOKEN } from './user.constants';
 
 @Injectable()
-export class UserService extends CrudService<UserEntity> {
+export class UserService extends TypeOrmCrudService<UserEntity> {
+
     private logger = new AppLogger(UserService.name);
 
     constructor(
-        @Inject(USER_TOKEN) protected readonly repository: Repository<UserEntity>,
-        @Inject(USER_EMAIL_TOKEN) protected readonly userEmailRepository: Repository<UserEmailEntity>
+        @InjectRepository(UserEntity) protected readonly repository: Repository<UserEntity>
     ) {
-        super();
+        super(repository);
     }
 
     public async findByEmail(email: string): Promise<UserEntity> {
         this.logger.debug(`[findByEmail] Looking in users for ${email}`);
-        const user = await this.findOne({ where: { email } }, true);
+        const user = await this.findOne(null, { where: { email } });
         if (user) {
             this.logger.debug(`[findByEmail] Found in users an user with id ${user.id}`);
         } else {
@@ -58,7 +59,7 @@ export class UserService extends CrudService<UserEntity> {
 
     public async register(data: DeepPartial<UserEntity>): Promise<UserEntity> {
         const entity = this.repository.create(data);
-        await this.validate(entity);
+        await validateEntity(entity);
         entity.hashPassword();
         const user = await entity.save();
         return user;
@@ -67,8 +68,8 @@ export class UserService extends CrudService<UserEntity> {
     public async updatePassword(data: DeepPartial<UserEntity>): Promise<UserEntity> {
         const entity = await this.repository.findOneOrFail(data.id);
         entity.password = data.password;
-        await this.validate(entity, {
-            groups: [ValidationPhases.UPDATE]
+        await validateEntity(entity, {
+            groups: [CrudValidationGroups.UPDATE]
         });
         entity.hashPassword();
         return this.repository.save(entity);
@@ -76,7 +77,7 @@ export class UserService extends CrudService<UserEntity> {
 
     public async socialRegister(data: DeepPartial<UserEntity>) {
         const entity = this.repository.create(data);
-        await this.validate(entity, { skipMissingProperties: true });
+        await validateEntity(entity, { skipMissingProperties: true });
         return this.repository.save(entity);
     }
 }

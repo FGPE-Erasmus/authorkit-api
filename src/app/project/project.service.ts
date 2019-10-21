@@ -1,47 +1,33 @@
-import { Injectable, Inject, HttpService } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { DeepPartial, Repository, In } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { TypeOrmCrudService } from '@nestjsx/crud-typeorm';
 
 import { RequestContext } from '../_helpers/request-context';
-import { CrudService } from '../../base';
 import { AppLogger } from '../app.logger';
-import { UserService } from '../user/user.service';
-import { UserRole } from '../user/entity';
 import { ProjectEntity, ProjectAccessLevel } from './entity';
-import { PROJECT_TOKEN, PERMISSION_TOKEN } from './project.constants';
 import { PermissionEntity } from './entity/permission.entity';
-import { OtherVoterActionEnum } from '../security';
+import { UserContextRole } from '../access-control/user-context-role.enum';
+import { UserRole } from '../access-control';
 
 @Injectable()
-export class ProjectService extends CrudService<ProjectEntity> {
+export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
 
     private logger = new AppLogger(ProjectService.name);
 
     constructor(
-        @Inject(PROJECT_TOKEN) protected readonly repository: Repository<ProjectEntity>,
-        @Inject(PERMISSION_TOKEN) protected readonly permissionRepository: Repository<PermissionEntity>,
-        private readonly httpService: HttpService,
-        private readonly userService: UserService
+        @InjectRepository(ProjectEntity) protected readonly repository: Repository<ProjectEntity>,
+        @InjectRepository(PermissionEntity) protected readonly permissionRepository: Repository<PermissionEntity>
     ) {
-        super();
-    }
-
-    public async create(data: DeepPartial<ProjectEntity>, internal: boolean = false): Promise<ProjectEntity> {
-        if (!data.owner_id) {
-            data.permissions = [{
-                user: RequestContext.currentUser(),
-                access_level: ProjectAccessLevel.OWNER
-            }];
-            data.owner = RequestContext.currentUser();
-        }
-        return await super.create(data, internal);
+        super(repository);
     }
 
     public async findAccessibleProjects(internal: boolean = false): Promise<ProjectEntity[]> {
         const currentUser = RequestContext.currentUser();
         if (internal || currentUser.roles.includes(UserRole.ADMIN)) {
-            return super.findAll({}, internal);
+            return super.find({});
         } else {
-            return super.findAll({
+            return super.find({
                 relations: ['permissions'],
                 where: {
                     user_id: currentUser.id,
@@ -52,21 +38,20 @@ export class ProjectService extends CrudService<ProjectEntity> {
                         ProjectAccessLevel.VIEWER
                     ])
                 }
-            }, internal);
+            });
         }
     }
 
-    public async findAllOfOwner(user_id: string, internal: boolean = false): Promise<ProjectEntity[]> {
+    public async findAllOfOwner(user_id: string): Promise<ProjectEntity[]> {
         this.logger.debug(`[findAllOfOwner] Looking in projects for owner ${user_id}`);
-        const projects = await this.findAll({ where: {
-            user_id: { eq: user_id },
-            access_level: { eq: ProjectAccessLevel.OWNER }
-        } }, internal);
+        const projects = await this.find({ where: {
+            owner_id: { eq: user_id }
+        } });
         return projects;
     }
 
     public async findAccessLevelOfUser(user_id: string, project_id: string,
-            internal: boolean = false): Promise<ProjectAccessLevel | null> {
+            internal: boolean = false): Promise<UserContextRole | null> {
         this.logger.debug(`[findAccessLevelOfUser] Looking for access-level of user \
             ${user_id} in project ${project_id}`);
         const permission = await this.permissionRepository.findOne({
@@ -74,30 +59,26 @@ export class ProjectService extends CrudService<ProjectEntity> {
             project_id
         });
         if (permission) {
-            return permission.access_level;
+            return permission.role;
         }
-        return ProjectAccessLevel.NONE;
+        return null;
     }
 
     public async share(project_id: string, data: DeepPartial<PermissionEntity>) {
-        const project: ProjectEntity = await this.findOneById(project_id, true);
-        this.securityService.denyAccessUnlessGranted(
-            OtherVoterActionEnum.MANAGE_PERMISSIONS,
-            project
-        );
         data.project_id = project_id;
         return await this.permissionRepository.save(data);
     }
 
     public async revoke(project_id: string, user_id: string) {
-        const project: ProjectEntity = await this.findOneById(project_id, true);
-        this.securityService.denyAccessUnlessGranted(
-            OtherVoterActionEnum.MANAGE_PERMISSIONS,
-            project
-        );
-        const permissions = await project.permissions;
-        const permission = permissions.find(
-            perm => perm.project_id === project_id && perm.user_id === user_id);
+        const permission = await this.permissionRepository.findOne({
+            where: {
+                project_id,
+                user_id
+            }
+        });
+        if (!permission) {
+            throw new BadRequestException('User has no permission to revoke in specified project');
+        }
         return await this.permissionRepository.remove(permission);
     }
 }

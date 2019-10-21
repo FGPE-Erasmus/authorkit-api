@@ -1,105 +1,145 @@
 import {
-    Body,
     Controller,
-    HttpCode,
     Post,
     UseGuards,
-    Put,
-    Patch,
-    Param,
-    UseInterceptors,
     ClassSerializerInterceptor,
-    Get,
-    Delete,
-    Req
+    UseInterceptors
 } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
+import { CrudController, Crud } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiImplicitBody, ApiResponse, ApiUseTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiUseTags } from '@nestjs/swagger';
+
 import { config } from '../../config';
 import { mail } from '../_helpers/mail';
 import { AppLogger } from '../app.logger';
 import { createToken } from '../auth/jwt';
-import { UserEntityDto } from '../auth/dto/user-entity.dto';
 import { UserEntity } from './entity';
 import { UserCommand } from './user.command';
-import { USER_CMD_PASSWORD_NEW, USER_CMD_PASSWORD_RESET, USER_CMD_REGISTER, USER_CMD_REGISTER_VERIFY } from './user.constants';
+import {
+    USER_CMD_PASSWORD_NEW,
+    USER_CMD_PASSWORD_RESET,
+    USER_CMD_REGISTER,
+    USER_CMD_REGISTER_VERIFY
+} from './user.constants';
 import { UserService } from './user.service';
-import { DeepPartial } from 'typeorm';
-import { RestController } from '../../base';
+import {
+    UseRoles,
+    CrudOperationEnum,
+    ResourcePossession,
+    UseContextAccessEvaluator,
+    ACGuard,
+    AccessControlRequestInterceptor
+} from '../access-control';
+import { evaluateUserContextAccess } from './security/user-context-access.evaluator';
 
-@Controller('user')
-@ApiUseTags('user')
-export class UserController extends RestController<UserEntity> {
+@Controller('users')
+@ApiUseTags('users')
+@ApiBearerAuth()
+@UseInterceptors(ClassSerializerInterceptor)
+@Crud({
+    model: {
+        type: UserEntity
+    },
+    routes: {
+        exclude: ['createManyBase'],
+        getManyBase: {
+            interceptors: [],
+            decorators: [
+                UseGuards(AuthGuard('jwt'), ACGuard),
+                UseRoles({
+                    resource: 'user',
+                    action: CrudOperationEnum.LIST,
+                    possession: ResourcePossession.ANY
+                }),
+                UseContextAccessEvaluator(evaluateUserContextAccess)
+            ]
+        },
+        getOneBase: {
+            interceptors: [],
+            decorators: [
+                UseGuards(AuthGuard('jwt'), ACGuard),
+                UseRoles({
+                    resource: 'user',
+                    action: CrudOperationEnum.READ,
+                    possession: ResourcePossession.OWN
+                }),
+                UseContextAccessEvaluator(evaluateUserContextAccess)
+            ]
+        },
+        createOneBase: {
+            interceptors: [AccessControlRequestInterceptor],
+            decorators: [
+                UseGuards(AuthGuard('jwt'), ACGuard),
+                UseRoles({
+                    resource: 'user',
+                    action: CrudOperationEnum.CREATE,
+                    possession: ResourcePossession.ANY
+                }),
+                UseContextAccessEvaluator(evaluateUserContextAccess)
+            ]
+        },
+        updateOneBase: {
+            interceptors: [AccessControlRequestInterceptor],
+            decorators: [
+                UseGuards(AuthGuard('jwt'), ACGuard),
+                UseRoles({
+                    resource: 'user',
+                    action: CrudOperationEnum.UPDATE,
+                    possession: ResourcePossession.ANY
+                }),
+                UseContextAccessEvaluator(evaluateUserContextAccess)
+            ]
+        },
+        replaceOneBase: {
+            interceptors: [AccessControlRequestInterceptor],
+            decorators: [
+                UseGuards(AuthGuard('jwt'), ACGuard),
+                UseRoles({
+                    resource: 'user',
+                    action: CrudOperationEnum.UPDATE,
+                    possession: ResourcePossession.ANY
+                }),
+                UseContextAccessEvaluator(evaluateUserContextAccess)
+            ]
+        },
+        deleteOneBase: {
+            interceptors: [],
+            decorators: [
+                UseGuards(AuthGuard('jwt'), ACGuard),
+                UseRoles({
+                    resource: 'user',
+                    action: CrudOperationEnum.DELETE,
+                    possession: ResourcePossession.ANY
+                }),
+                UseContextAccessEvaluator(evaluateUserContextAccess)
+            ],
+            returnDeleted: true
+        }
+    }
+})
+export class UserController implements CrudController<UserEntity> {
+
     private logger = new AppLogger(UserController.name);
 
     constructor(
-        protected service: UserService,
+        readonly service: UserService,
         private userCmd: UserCommand
-    ) {
-        super();
+    ) { }
+
+    get base(): CrudController<UserEntity> {
+        return this;
     }
 
     @Post('import')
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'), ACGuard)
+    @UseRoles({
+        resource: 'user',
+        action: CrudOperationEnum.CREATE,
+        possession: ResourcePossession.ANY
+    })
     public async importUsers(): Promise<any> {
         return this.userCmd.create(20);
-    }
-
-    @Get('/')
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
-    @HttpCode(200)
-    @ApiResponse({ status: 200, description: 'OK', type: [UserEntityDto] })
-    public findAll(@Req() req): Promise<UserEntity[]> {
-        return super.findAll(req);
-    }
-
-    @Get('/:id')
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
-    @HttpCode(200)
-    @ApiResponse({ status: 200, description: 'OK', type: UserEntityDto })
-    public async findOne(@Param('id') id: string) {
-        return super.findOne(id);
-    }
-
-    @Post('/')
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
-    @HttpCode(201)
-    @ApiImplicitBody({ required: true, type: UserEntityDto, name: 'UserEntityDto' })
-    @ApiResponse({ status: 200, description: 'OK', type: UserEntityDto })
-    public async create(@Body() data: DeepPartial<UserEntity>): Promise<UserEntity> {
-        return super.create(data);
-    }
-
-    @Put('/:id')
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
-    @HttpCode(200)
-    @ApiImplicitBody({ required: true, type: UserEntityDto, name: 'UserEntityDto' })
-    @ApiResponse({ status: 200, description: 'OK', type: UserEntityDto })
-    public async update(@Param('id') id: string, @Body() data: DeepPartial<UserEntity>): Promise<UserEntity> {
-        return super.update(id, data);
-    }
-
-    @Patch('/:id')
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
-    @HttpCode(200)
-    @ApiImplicitBody({ required: true, type: UserEntityDto, name: 'UserEntityDto' })
-    @ApiResponse({ status: 200, description: 'OK', type: UserEntityDto })
-    public async patch(@Param('id') id: string, @Body() data: DeepPartial<UserEntity>): Promise<UserEntity> {
-        return super.patch(id, data);
-    }
-
-    @Delete('/:id')
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
-    public async delete(@Param('id') id: string): Promise<UserEntity> {
-        return super.delete(id);
     }
 
     @MessagePattern({ cmd: USER_CMD_REGISTER })

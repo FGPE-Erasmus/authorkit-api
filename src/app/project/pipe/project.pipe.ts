@@ -9,6 +9,6 @@ export class ProjectPipe implements PipeTransform<any> {
     }
 
     async transform(projectId: string, metadata: ArgumentMetadata): Promise<ProjectEntity> {
-        return this.projectService.findOneById(projectId);
+        return this.projectService.findOne(projectId);
     }
 }

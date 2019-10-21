@@ -1,18 +1,18 @@
-import { Module } from '@nestjs/common';
-import { DatabaseModule } from '../database/database.module';
+import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { AccessControlModule } from '../access-control';
+import { accessRules } from '../app.access-rules';
 import { OnlineService } from './online.service';
 import { UserController } from './user.controller';
-import { userProviders } from './user.providers';
 import { UserService } from './user.service';
 import { IsUserAlreadyExist } from './user.validator';
 import { UserResolver } from './user.resolver';
 import { UserCommand } from './user.command';
-import { UserVoter } from './security/user.voter';
+import { UserEntity } from './entity';
 
 const PROVIDERS = [
-    ...userProviders,
     IsUserAlreadyExist,
-    UserVoter,
     UserService,
     OnlineService,
     UserResolver,
@@ -22,7 +22,10 @@ const PROVIDERS = [
 @Module({
     controllers: [UserController],
     providers: [...PROVIDERS],
-    imports: [DatabaseModule],
+    imports: [
+        TypeOrmModule.forFeature([UserEntity]),
+        AccessControlModule.forRoles(accessRules)
+    ],
     exports: [UserService, OnlineService]
 })
 export class UserModule {

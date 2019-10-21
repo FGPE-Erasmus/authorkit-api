@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Command, Positional } from 'nestjs-command';
 import { DateTime } from 'luxon';
 import faker from 'faker';
@@ -13,7 +15,7 @@ export class UserCommand {
     private logger = new AppLogger(UserCommand.name);
 
     constructor(
-        private readonly userService: UserService
+        @InjectRepository(UserEntity) protected readonly repository: Repository<UserEntity>
     ) {
         faker.locale = 'en_US';
     }
@@ -25,7 +27,7 @@ export class UserCommand {
         this.logger.debug(`[create] execute for amount ${amount}!`);
 
         this.logger.debug(`[create] delete from db everything with provider "faker"`);
-        await this.userService.deleteAll({ provider: { eq: 'faker' } });
+        await this.repository.delete({ provider: 'faker' });
 
         const persons: UserEntity[] = [];
         for (let i = 0; i < amount; i++) {
@@ -53,6 +55,6 @@ export class UserCommand {
         }
 
         this.logger.debug(`[create] create ${amount} random ppl with provider "faker"`);
-        await this.userService.saveAll(persons);
+        await this.repository.save(persons);
     }
 }

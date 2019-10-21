@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { AccessLevelEnum, RestVoterActionEnum, Voter, AccessEnum } from '../../security';
 import { AppLogger } from '../../app.logger';
 import { UserService } from '../user.service';
-import { UserEntity, UserRole } from '../entity';
+import { UserEntity } from '../entity';
+import { UserRole } from '../../access-control';
 import { Decision } from '../../security/voter/decision';
 
 @Injectable()

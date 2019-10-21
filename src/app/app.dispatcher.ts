@@ -1,12 +1,44 @@
 import { INestApplication, INestApplicationContext, INestMicroservice, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { CrudConfigService } from '@nestjsx/crud';
 import { useContainer } from 'class-validator';
 import cors from 'cors';
 import helmet from 'helmet';
 import query from 'qs-middleware';
+
 import { config } from '../config';
 import { AppLogger } from './app.logger';
+
+/**
+ * START NOTICE
+ * TypeScript decorators are executed when we declare our class but not 
+ * when we create new class instance
+ */
+CrudConfigService.load({
+    query: {
+      limit: 25,
+      cache: 2000
+    },
+    params: {
+        id: {
+            field: 'id',
+            type: 'uuid',
+            primary: true
+        }
+    },
+    routes: {
+        exclude: ['createManyBase'],
+        updateOneBase: {
+            allowParamsOverride: true
+        },
+        deleteOneBase: {
+            returnDeleted: true
+        }
+    }
+});
+/* END NOTICE */
+
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './_helpers/filters';
 

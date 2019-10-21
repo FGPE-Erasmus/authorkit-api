@@ -1,6 +1,8 @@
 import exitHook from 'async-exit-hook';
 import { AppDispatcher, AppLogger } from './app';
 
+process.setMaxListeners(0);
+
 const logger = new AppLogger('Index');
 
 logger.log(`Start`);

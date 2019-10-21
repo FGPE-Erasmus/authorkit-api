@@ -1,6 +1,7 @@
 import { ApiModelProperty } from '@nestjs/swagger';
+
 import { config } from '../../../config';
-import { UserRole } from 'app/user/entity';
+import { UserRole } from '../../access-control';
 
 export class UserEntityDto {
 

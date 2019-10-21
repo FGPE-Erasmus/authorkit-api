@@ -4,33 +4,29 @@ import { Field } from 'type-graphql';
 import { IsString, IsEnum } from 'class-validator';
 
 import { ExtendedEntity } from '../../_helpers';
-import { ProjectAccessLevel } from './project-access-level.enum';
-import { ProjectEntity } from '../../project/entity';
 import { UserEntity } from '../../user/entity';
+import { UserContextRole } from '../../access-control';
+import { ProjectEntity } from './project.entity';
 
 @Entity('permission')
 export class PermissionEntity extends ExtendedEntity {
 
     @PrimaryColumn('uuid')
+    @ManyToOne(type => ProjectEntity, project => project.id)
+    @JoinColumn({ name: 'project_id' })
     @Field()
     public project_id: string;
 
-    @ManyToOne(type => ProjectEntity, project => project.permissions, { primary: true })
-    @JoinColumn({ name: 'project_id' })
-    public project: ProjectEntity;
-
     @PrimaryColumn('uuid')
+    @ManyToOne(type => UserEntity, user => user.id)
+    @JoinColumn({ name: 'user_id' })
     @Field()
     public user_id: string;
 
-    @ManyToOne(type => UserEntity, user => user.permissions, { primary: true })
-    @JoinColumn({ name: 'user_id' })
-    public user: UserEntity;
-
-    @IsEnum(ProjectAccessLevel)
-    @Field(type => ProjectAccessLevel)
+    @IsEnum(UserContextRole)
     @Column('enum', {
-        enum: ProjectAccessLevel
+        enum: UserContextRole
     })
-    public access_level: ProjectAccessLevel;
+    @Field(type => UserContextRole)
+    public role: UserContextRole;
 }

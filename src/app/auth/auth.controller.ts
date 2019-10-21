@@ -3,6 +3,9 @@ import { Client, ClientProxy, Transport, TcpOptions } from '@nestjs/microservice
 import { AuthGuard } from '@nestjs/passport';
 import { ApiImplicitBody, ApiModelProperty, ApiResponse, ApiUseTags } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
 import { config } from '../../config';
 import { RestException } from '../_helpers';
 import { DeepPartial } from '../_helpers/database';
@@ -44,7 +47,8 @@ export class AuthController {
 
     constructor(
         private readonly authService: AuthService,
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        @InjectRepository(UserEntity) protected readonly repository: Repository<UserEntity>
     ) {
 
     }
@@ -77,12 +81,11 @@ export class AuthController {
     public async registerVerify(@Query('token') activationToken: string): Promise<JwtDto> {
         this.logger.debug(`[registerVerify] Token ${activationToken}`);
         const token = await verifyToken(activationToken, config.auth.verify.secret);
-        const user = await this.userService.findOneById(token.id, true);
+        const user = await this.userService.findOne(token.id);
         if (user.is_verified) {
             throw new BadRequestException(`User ${user.email} already verified`);
         }
-        user.is_verified = true;
-        await this.userService.update(token.id, user, true);
+        await this.repository.update(token.id, { is_verified: true });
         this.client.send({ cmd: USER_CMD_REGISTER_VERIFY }, user).subscribe(() => { }, error => {
             this.logger.error(error, '');
         });

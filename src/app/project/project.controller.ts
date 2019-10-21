@@ -1,36 +1,104 @@
-import { Controller, UseGuards, Post, HttpCode, HttpStatus, Param, Body, Get, Req } from '@nestjs/common';
+import { Controller, UseGuards, Post, HttpCode, HttpStatus, Param, Body, UseInterceptors } from '@nestjs/common';
+import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
-import { Client, Transport, ClientProxy } from '@nestjs/microservices';
 import { ApiUseTags, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 
-import { config } from '../../config';
-import { RestController } from '../../base';
+import { RequestContext } from '../_helpers';
 import { AppLogger } from '../app.logger';
+import {
+    UseRoles,
+    ResourcePossession,
+    CrudOperationEnum,
+    UseContextAccessEvaluator,
+    ACGuard,
+    AccessControlRequestInterceptor,
+    AccessControlResponseInterceptor
+} from '../access-control';
 import { ProjectEntity, PermissionEntity } from './entity';
-import { ProjectCommand } from './project.command';
 import { ProjectService } from './project.service';
-import { ProjectUserService } from '../project-user/project-user.service';
+import { evaluateUserContextAccess } from './security/project-context-access.evaluator';
 import { AddPermissionDto } from './dto/add-permission.dto';
+import { ProjectCommand } from './project.command';
 
-@ApiUseTags('project')
-@Controller('project')
+@ApiUseTags('projects')
+@Controller('projects')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
-export class ProjectController extends RestController<ProjectEntity> {
-
-    @Client({
-        transport: Transport.TCP,
-        options: config.microservice.options
-    })
-    private client: ClientProxy;
+@UseGuards(AuthGuard('jwt'), ACGuard)
+@Crud({
+    model: {
+        type: ProjectEntity
+    },
+    routes: {
+        exclude: ['createManyBase'],
+        getManyBase: {
+            interceptors: [AccessControlResponseInterceptor],
+            decorators: [
+                UseRoles({
+                    resource: 'project',
+                    action: CrudOperationEnum.LIST,
+                    possession: ResourcePossession.ANY
+                }),
+                UseContextAccessEvaluator(evaluateUserContextAccess)
+            ]
+        },
+        getOneBase: {
+            interceptors: [AccessControlResponseInterceptor],
+            decorators: [
+                UseRoles({
+                    resource: 'project',
+                    action: CrudOperationEnum.READ,
+                    possession: ResourcePossession.ANY
+                }),
+                UseContextAccessEvaluator(evaluateUserContextAccess)
+            ]
+        },
+        updateOneBase: {
+            interceptors: [AccessControlRequestInterceptor],
+            decorators: [
+                UseRoles({
+                    resource: 'project',
+                    action: CrudOperationEnum.UPDATE,
+                    possession: ResourcePossession.ANY
+                }),
+                UseContextAccessEvaluator(evaluateUserContextAccess)
+            ]
+        },
+        replaceOneBase: {
+            interceptors: [AccessControlRequestInterceptor],
+            decorators: [
+                UseRoles({
+                    resource: 'project',
+                    action: CrudOperationEnum.UPDATE,
+                    possession: ResourcePossession.ANY
+                }),
+                UseContextAccessEvaluator(evaluateUserContextAccess)
+            ]
+        },
+        deleteOneBase: {
+            interceptors: [],
+            decorators: [
+                UseRoles({
+                    resource: 'project',
+                    action: CrudOperationEnum.DELETE,
+                    possession: ResourcePossession.ANY
+                }),
+                UseContextAccessEvaluator(evaluateUserContextAccess)
+            ],
+            returnDeleted: true
+        }
+    }
+})
+export class ProjectController implements CrudController<ProjectEntity> {
 
     private logger = new AppLogger(ProjectController.name);
 
     constructor(
         readonly service: ProjectService,
-        private projectCmd: ProjectCommand
-    ) {
-        super();
+        readonly projectCmd: ProjectCommand
+    ) { }
+
+    get base(): CrudController<ProjectEntity> {
+        return this;
     }
 
     @Post('import/projects')
@@ -41,9 +109,22 @@ export class ProjectController extends RestController<ProjectEntity> {
         return this.projectCmd.create(20);
     }
 
-    @Get('/')
-    public findAll(@Req() req): Promise<ProjectEntity[]> {
-        return this.service.findAccessibleProjects();
+    @Override()
+    @UseRoles({
+        resource: 'project',
+        action: CrudOperationEnum.CREATE,
+        possession: ResourcePossession.ANY
+    })
+    @UseContextAccessEvaluator(evaluateUserContextAccess)
+    @UseInterceptors(AccessControlRequestInterceptor)
+    createOne(
+        @ParsedRequest() req: CrudRequest,
+        @ParsedBody() dto: ProjectEntity
+    ) {
+        if (!dto.owner_id) {
+            dto.owner_id = RequestContext.currentUser().id;
+        }
+        return this.base.createOneBase(req, dto);
     }
 
     @Post('/:id/permissions')

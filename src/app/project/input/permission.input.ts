@@ -2,6 +2,7 @@ import { InputType, Field } from 'type-graphql';
 import { IsEnum } from 'class-validator';
 
 import { ProjectAccessLevel } from '../entity/project-access-level.enum';
+import { UserContextRole } from 'app/access-control/user-context-role.enum';
 
 @InputType()
 export class PermissionInput {
@@ -12,7 +13,7 @@ export class PermissionInput {
     @Field()
     public user_id: string;
 
-    @IsEnum(ProjectAccessLevel)
-    @Field(type => ProjectAccessLevel)
-    public access_level: ProjectAccessLevel;
+    @IsEnum(UserContextRole)
+    @Field(type => UserContextRole)
+    public role: UserContextRole;
 }

@@ -7,6 +7,7 @@ import { Field } from 'type-graphql';
 export class ExerciseTestEntity extends ExtendedEntity {
 
     @PrimaryGeneratedColumn('uuid')
+    @Field()
     public id: string;
 
     @Column('uuid')
@@ -20,17 +21,22 @@ export class ExerciseTestEntity extends ExtendedEntity {
     public testset_id: string;
 
     @Column()
+    @Field()
     public input: string;
 
     @Column()
+    @Field()
     public output: string;
 
     @Column('simple-array', { default: [] })
+    @Field(type => [String])
     public arguments: string[];
 
     @Column()
+    @Field()
     public weight: number;
 
     @Column({ default: false })
+    @Field()
     public visible: boolean;
 }
