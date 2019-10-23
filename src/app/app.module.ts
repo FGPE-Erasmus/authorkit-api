@@ -3,29 +3,29 @@ import { CommandModule } from 'nestjs-command';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GraphQLModule } from '@nestjs/graphql';
 
+import { config } from '../config';
 import { AuthModule } from './auth/auth.module';
 import { AppLogger } from './app.logger';
-import { DatabaseModule } from './database/database.module';
 import { HealthCheckModule } from './healthcheck/healthcheck.module';
 import { UserModule } from './user/user.module';
 import { SharedModule } from './shared/shared.module';
 import { ProjectModule } from './project/project.module';
 import { GqlConfigService, RequestContextMiddleware } from './_helpers';
-import { SecurityModule } from './security';
-import { ProjectMiddleware } from './project/project.middleware';
+import { ProjectContextMiddleware } from './project/project-context.middleware';
 import { ProjectController } from './project/project.controller';
-import { config } from '../config';
+import { ExerciseContextMiddleware } from './exercises/exercise-context.middleware';
+import { ExerciseController } from './exercises/exercise.controller';
+import { ExerciseModule } from './exercises/exercise.module';
 
 @Module({
     imports: [
         TypeOrmModule.forRoot(config.database),
         CommandModule,
         HealthCheckModule,
-        SecurityModule,
-        // DatabaseModule,
         AuthModule,
         UserModule,
         ProjectModule,
+        ExerciseModule,
         GraphQLModule.forRootAsync({
             imports: [SharedModule, UserModule],
             useClass: GqlConfigService
@@ -44,7 +44,10 @@ export class AppModule {
             .apply(RequestContextMiddleware)
             .forRoutes({ path: '*', method: RequestMethod.ALL });
         consumer
-            .apply(ProjectMiddleware)
+            .apply(ProjectContextMiddleware)
             .forRoutes(ProjectController);
+        consumer
+            .apply(ExerciseContextMiddleware)
+            .forRoutes(ExerciseController);
     }
 }

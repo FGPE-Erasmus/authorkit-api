@@ -10,7 +10,7 @@ import { ExtendedEntity, Lazy, passwordHash, PasswordValidator } from '../../_he
 import { UserRole } from '../../access-control';
 import { ProjectEntity, PermissionEntity } from '../../project/entity';
 import { ExerciseEntity } from '../../exercises/entity';
-import { IsUserAlreadyExist } from '../user.validator';
+import { UniqueEmailValidator } from '../../_helpers/validators/unique-email.validator';
 import { DateTime } from 'luxon';
 
 const { CREATE, UPDATE } = CrudValidationGroups;
@@ -58,7 +58,7 @@ export class UserEntity extends ExtendedEntity {
     @IsString({ always: true })
     @IsEmail({ require_tld: true }, { always: true })
     @MaxLength(200, { always: true })
-    @Validate(IsUserAlreadyExist, {
+    @Validate(UniqueEmailValidator, {
         groups: [CREATE],
         message: 'User already exists'
     })
@@ -123,16 +123,16 @@ export class UserEntity extends ExtendedEntity {
     @Column('timestamptz', { nullable: true })
     public online_at: DateTime;
 
-    @OneToMany(type => PermissionEntity, permission => permission.user_id, { lazy: true })
-    @Field(type => [PermissionEntity])
+    @OneToMany(() => PermissionEntity, permission => permission.user_id, { lazy: true })
+    @Field(() => [PermissionEntity])
     public permissions: Lazy<PermissionEntity[]>;
 
-    @OneToMany(type => ProjectEntity, project => project.owner_id, { lazy: true })
-    @Field(type => [ProjectEntity])
+    @OneToMany(() => ProjectEntity, project => project.owner_id, { lazy: true })
+    @Field(() => [ProjectEntity])
     public projects: Lazy<ProjectEntity[]>;
 
-    @OneToMany(type => ExerciseEntity, exercise => exercise.owner_id, { lazy: true })
-    @Field(type => [ExerciseEntity])
+    @OneToMany(() => ExerciseEntity, exercise => exercise.owner_id, { lazy: true })
+    @Field(() => [ExerciseEntity])
     public exercises: Lazy<ExerciseEntity[]>;
 
     hashPassword() {

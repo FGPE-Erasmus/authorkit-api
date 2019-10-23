@@ -42,7 +42,6 @@ import { evaluateUserContextAccess } from './security/user-context-access.evalua
         type: UserEntity
     },
     routes: {
-        exclude: ['createManyBase'],
         getManyBase: {
             interceptors: [],
             decorators: [

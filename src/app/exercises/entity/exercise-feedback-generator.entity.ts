@@ -1,12 +1,31 @@
-import { Entity, PrimaryColumn } from 'typeorm';
+import { ApiModelProperty } from '@nestjs/swagger';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column } from 'typeorm';
 import { Field } from 'type-graphql';
+import { IsOptional, IsEmpty, IsDefined, IsUUID } from 'class-validator';
+import { CrudValidationGroups } from '@nestjsx/crud';
 
 import { ExecutableEntity } from './executable.entity';
+import { ExerciseEntity } from './exercise.entity';
+
+const { CREATE, UPDATE } = CrudValidationGroups;
 
 @Entity('exercise-feedback-generator')
 export class ExerciseFeedbackGeneratorEntity extends ExecutableEntity {
 
-    @PrimaryColumn('uuid')
+    @ApiModelProperty()
+    @IsOptional({ groups: [UPDATE] })
+    @IsEmpty({ groups: [CREATE] })
+    @PrimaryGeneratedColumn('uuid')
+    @Field()
+    public id: string;
+
+    @ApiModelProperty()
+    @IsOptional({ groups: [UPDATE] })
+    @IsDefined({ groups: [CREATE] })
+    @IsUUID('4', { always: true })
+    @ManyToOne(() => ExerciseEntity, exercise => exercise.feedback_generators)
+    @JoinColumn({ name: 'exercise_id' })
+    @Column('uuid', { nullable: false })
     @Field()
     public exercise_id: string;
 }

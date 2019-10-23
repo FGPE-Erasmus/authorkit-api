@@ -6,13 +6,11 @@ import { accessRules } from '../app.access-rules';
 import { OnlineService } from './online.service';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { IsUserAlreadyExist } from './user.validator';
 import { UserResolver } from './user.resolver';
 import { UserCommand } from './user.command';
 import { UserEntity } from './entity';
 
 const PROVIDERS = [
-    IsUserAlreadyExist,
     UserService,
     OnlineService,
     UserResolver,

@@ -9,6 +9,6 @@ export class ExercisePipe implements PipeTransform<any> {
     }
 
     async transform(exerciseId: string, metadata: ArgumentMetadata): Promise<ExerciseEntity> {
-        return this.exerciseService.findOneById(exerciseId);
+        return this.exerciseService.findOne(exerciseId);
     }
 }

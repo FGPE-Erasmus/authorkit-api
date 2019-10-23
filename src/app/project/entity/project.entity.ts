@@ -5,10 +5,10 @@ import { IsString, IsOptional, Length, MaxLength, IsEnum, IsNotEmpty, Validate, 
 import { CrudValidationGroups } from '@nestjsx/crud';
 
 import { ExtendedEntity, GithubReponameValidator, GithubUsernameValidator, Lazy } from '../../_helpers';
+import { UserEntity } from '../../user/entity/user.entity';
 import { ExerciseEntity } from '../../exercises/entity/exercise.entity';
 import { ProjectStatus } from './project-status.enum';
 import { PermissionEntity } from './permission.entity';
-import { UserEntity } from '../../user/entity';
 
 const { CREATE, UPDATE } = CrudValidationGroups;
 

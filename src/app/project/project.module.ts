@@ -9,14 +9,14 @@ import { ProjectCommand } from './project.command';
 import { ProjectPipe } from './pipe/project.pipe';
 import { ProjectService } from './project.service';
 import { ProjectController } from './project.controller';
-import { ProjectMiddleware } from './project.middleware';
+import { ProjectContextMiddleware } from './project-context.middleware';
 import { ProjectEntity, PermissionEntity } from './entity';
 
 const PROVIDERS = [
     ProjectService,
     ProjectCommand,
     ProjectPipe,
-    ProjectMiddleware
+    ProjectContextMiddleware
 ];
 
 const MODULES = [

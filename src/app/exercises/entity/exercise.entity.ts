@@ -1,10 +1,10 @@
 import { ApiModelProperty } from '@nestjs/swagger';
-import { Entity, ObjectIdColumn, Column, ManyToOne, ObjectID, PrimaryGeneratedColumn, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, PrimaryGeneratedColumn, OneToMany, JoinColumn } from 'typeorm';
 import { CrudValidationGroups } from '@nestjsx/crud';
 import { Field } from 'type-graphql';
 import { IsString, MaxLength, IsEnum, IsNotEmpty, Validate, IsEmpty, IsOptional, IsDefined, IsUUID, IsArray } from 'class-validator';
 
-import { ExtendedEntity } from '../../_helpers';
+import { ExtendedEntity, Lazy } from '../../_helpers';
 import { UserEntity } from '../../user/entity';
 import { ProjectEntity } from '../../project/entity';
 
@@ -60,7 +60,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @IsDefined({ groups: [CREATE] })
     @IsNotEmpty({ always: true })
     @IsUUID('4', { always: true })
-    @ManyToOne(type => UserEntity, user => user.exercises)
+    @ManyToOne(() => UserEntity, user => user.id)
     @JoinColumn({ name: 'owner_id' })
     @Column('uuid', { nullable: false })
     public owner_id: string;
@@ -70,7 +70,7 @@ export class ExerciseEntity extends ExtendedEntity {
     @IsDefined({ groups: [CREATE] })
     @IsNotEmpty({ always: true })
     @IsUUID('4', { always: true })
-    @ManyToOne(type => ProjectEntity, project => project.exercises)
+    @ManyToOne(() => ProjectEntity, project => project.id)
     @JoinColumn({ name: 'project_id' })
     @Column('uuid', { nullable: false })
     public project_id: string;
@@ -127,108 +127,108 @@ export class ExerciseEntity extends ExtendedEntity {
     })
     public status: ExerciseStatus;
 
-    @OneToMany(type => ExerciseInstructionEntity, instruction => instruction.exercise_id, {
+    @OneToMany(() => ExerciseInstructionEntity, instruction => instruction.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
     })
-    @Field(type => [ExerciseInstructionEntity])
+    @Field(() => [ExerciseInstructionEntity])
     public instructions: ExerciseInstructionEntity[];
 
-    @OneToMany(type => ExerciseStatementEntity, statement => statement.exercise_id, {
+    @OneToMany(() => ExerciseStatementEntity, statement => statement.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
     })
-    @Field(type => [ExerciseStatementEntity])
+    @Field(() => [ExerciseStatementEntity])
     public statements: ExerciseStatementEntity[];
 
-    @OneToMany(type => ExerciseEmbeddableEntity, embeddable => embeddable.exercise_id, {
+    @OneToMany(() => ExerciseEmbeddableEntity, embeddable => embeddable.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
     })
-    @Field(type => [ExerciseEmbeddableEntity])
+    @Field(() => [ExerciseEmbeddableEntity])
     public embeddables: ExerciseEmbeddableEntity[];
 
-    @OneToMany(type => ExerciseLibraryEntity, library => library.exercise_id, {
+    @OneToMany(() => ExerciseLibraryEntity, library => library.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
     })
-    @Field(type => [ExerciseLibraryEntity])
+    @Field(() => [ExerciseLibraryEntity])
     public libraries: ExerciseLibraryEntity[];
 
-    @OneToMany(type => ExerciseStaticCorrectorEntity, static_corrector => static_corrector.exercise_id, {
+    @OneToMany(() => ExerciseStaticCorrectorEntity, static_corrector => static_corrector.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
     })
-    @Field(type => [ExerciseStaticCorrectorEntity])
+    @Field(() => [ExerciseStaticCorrectorEntity])
     public static_correctors: ExerciseStaticCorrectorEntity[];
 
-    @OneToMany(type => ExerciseDynamicCorrectorEntity, dynamic_corrector => dynamic_corrector.exercise_id, {
+    @OneToMany(() => ExerciseDynamicCorrectorEntity, dynamic_corrector => dynamic_corrector.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
     })
-    @Field(type => [ExerciseDynamicCorrectorEntity])
+    @Field(() => [ExerciseDynamicCorrectorEntity])
     public dynamic_correctors: ExerciseDynamicCorrectorEntity[];
 
-    @OneToMany(type => ExerciseTestGeneratorEntity, test_generator => test_generator.exercise_id, {
+    @OneToMany(() => ExerciseTestGeneratorEntity, test_generator => test_generator.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
     })
-    @Field(type => [ExerciseTestGeneratorEntity])
+    @Field(() => [ExerciseTestGeneratorEntity])
     public test_generators: ExerciseTestGeneratorEntity[];
 
-    @OneToMany(type => ExerciseFeedbackGeneratorEntity, test_generator => test_generator.exercise_id, {
+    @OneToMany(() => ExerciseFeedbackGeneratorEntity, test_generator => test_generator.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
     })
-    @Field(type => [ExerciseFeedbackGeneratorEntity])
+    @Field(() => [ExerciseFeedbackGeneratorEntity])
     public feedback_generators: ExerciseFeedbackGeneratorEntity[];
 
-    @OneToMany(type => ExerciseSkeletonEntity, skeleton => skeleton.exercise_id, {
+    @OneToMany(() => ExerciseSkeletonEntity, skeleton => skeleton.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
     })
-    @Field(type => [ExerciseSkeletonEntity])
+    @Field(() => [ExerciseSkeletonEntity])
     public skeletons: ExerciseSkeletonEntity[];
 
-    @OneToMany(type => ExerciseSolutionEntity, solution => solution.exercise_id, {
+    @OneToMany(() => ExerciseSolutionEntity, solution => solution.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
     })
-    @Field(type => [ExerciseSolutionEntity])
+    @Field(() => [ExerciseSolutionEntity])
     public solutions: ExerciseSolutionEntity[];
 
-    @OneToMany(type => ExerciseTemplateEntity, tmpl => tmpl.exercise_id, {
+    @OneToMany(() => ExerciseTemplateEntity, tmpl => tmpl.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
     })
-    @Field(type => [ExerciseTemplateEntity])
+    @Field(() => [ExerciseTemplateEntity])
     public templates: ExerciseTemplateEntity[];
 
-    @OneToMany(type => ExerciseTestEntity, test => test.exercise_id, {
+    @OneToMany(() => ExerciseTestEntity, test => test.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
     })
-    @Field(type => [ExerciseTestEntity])
+    @Field(() => [ExerciseTestEntity])
     public tests: ExerciseTestEntity[];
 
-    @OneToMany(type => ExerciseTestSetEntity, testset => testset.exercise_id, {
+    @OneToMany(() => ExerciseTestSetEntity, testset => testset.exercise_id, {
         cascade: true,
         onDelete: 'CASCADE',
         eager: true
     })
-    @Field(type => [ExerciseTestSetEntity])
-    public testSets: ExerciseTestSetEntity[];
+    @Field(() => [ExerciseTestSetEntity])
+    public test_sets: ExerciseTestSetEntity[];
 
 }

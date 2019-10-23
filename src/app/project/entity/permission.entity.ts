@@ -12,13 +12,13 @@ import { ProjectEntity } from './project.entity';
 export class PermissionEntity extends ExtendedEntity {
 
     @PrimaryColumn('uuid')
-    @ManyToOne(type => ProjectEntity, project => project.id)
+    @ManyToOne(() => ProjectEntity, project => project.permissions)
     @JoinColumn({ name: 'project_id' })
     @Field()
     public project_id: string;
 
     @PrimaryColumn('uuid')
-    @ManyToOne(type => UserEntity, user => user.id)
+    @ManyToOne(() => UserEntity, user => user.permissions)
     @JoinColumn({ name: 'user_id' })
     @Field()
     public user_id: string;

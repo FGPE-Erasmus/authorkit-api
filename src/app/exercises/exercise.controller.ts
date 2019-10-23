@@ -1,40 +1,32 @@
-import { Controller, UseGuards, Post, HttpCode, HttpStatus, Param, Body, UseInterceptors } from '@nestjs/common';
-import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
+import { Post, HttpCode, HttpStatus, UseInterceptors, Controller, ClassSerializerInterceptor, UseGuards, UploadedFile } from '@nestjs/common';
+import { ApiResponse, ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
+import { CrudController, Override, ParsedBody, ParsedRequest, CrudRequest, Crud } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiUseTags, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 
-import { RequestContext } from '../_helpers';
 import { AppLogger } from '../app.logger';
-import {
-    UseRoles,
-    ResourcePossession,
-    CrudOperationEnum,
-    UseContextAccessEvaluator,
-    ACGuard,
-    AccessControlRequestInterceptor,
-    AccessControlResponseInterceptor
-} from '../access-control';
-import { ProjectEntity, PermissionEntity } from './entity';
-import { ProjectService } from './project.service';
-import { evaluateUserContextAccess } from './security/project-context-access.evaluator';
-import { AddPermissionDto } from './dto/add-permission.dto';
-import { ProjectCommand } from './project.command';
+import { RequestContext } from '../_helpers';
+import { UseRoles, CrudOperationEnum, ResourcePossession, UseContextAccessEvaluator, AccessControlRequestInterceptor, ACGuard } from '../access-control';
+import { evaluateUserContextAccess } from '../project/security/project-context-access.evaluator';
+import { ExerciseEntity, ExerciseDynamicCorrectorEntity } from './entity';
+import { ExerciseService } from './exercise.service';
+import { ExerciseCommand } from './exercise.command';
 
-@ApiUseTags('projects')
-@Controller('projects')
+@Controller('exercises')
+@ApiUseTags('exercises')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'), ACGuard)
+@UseInterceptors(ClassSerializerInterceptor)
 @Crud({
     model: {
-        type: ProjectEntity
+        type: ExerciseEntity
     },
     routes: {
-        exclude: ['createManyBase'],
         getManyBase: {
-            interceptors: [AccessControlResponseInterceptor],
+            interceptors: [],
             decorators: [
                 UseRoles({
-                    resource: 'project',
+                    resource: 'exercise',
                     action: CrudOperationEnum.LIST,
                     possession: ResourcePossession.ANY
                 }),
@@ -42,12 +34,12 @@ import { ProjectCommand } from './project.command';
             ]
         },
         getOneBase: {
-            interceptors: [AccessControlResponseInterceptor],
+            interceptors: [],
             decorators: [
                 UseRoles({
-                    resource: 'project',
+                    resource: 'exercise',
                     action: CrudOperationEnum.READ,
-                    possession: ResourcePossession.ANY
+                    possession: ResourcePossession.OWN
                 }),
                 UseContextAccessEvaluator(evaluateUserContextAccess)
             ]
@@ -56,7 +48,7 @@ import { ProjectCommand } from './project.command';
             interceptors: [AccessControlRequestInterceptor],
             decorators: [
                 UseRoles({
-                    resource: 'project',
+                    resource: 'exercise',
                     action: CrudOperationEnum.UPDATE,
                     possession: ResourcePossession.ANY
                 }),
@@ -67,7 +59,7 @@ import { ProjectCommand } from './project.command';
             interceptors: [AccessControlRequestInterceptor],
             decorators: [
                 UseRoles({
-                    resource: 'project',
+                    resource: 'exercise',
                     action: CrudOperationEnum.UPDATE,
                     possession: ResourcePossession.ANY
                 }),
@@ -78,7 +70,7 @@ import { ProjectCommand } from './project.command';
             interceptors: [],
             decorators: [
                 UseRoles({
-                    resource: 'project',
+                    resource: 'exercise',
                     action: CrudOperationEnum.DELETE,
                     possession: ResourcePossession.ANY
                 }),
@@ -88,16 +80,16 @@ import { ProjectCommand } from './project.command';
         }
     }
 })
-export class ProjectController implements CrudController<ProjectEntity> {
+export class ExerciseController implements CrudController<ExerciseEntity> {
 
-    private logger = new AppLogger(ProjectController.name);
+    private logger = new AppLogger(ExerciseController.name);
 
     constructor(
-        readonly service: ProjectService,
-        readonly projectCmd: ProjectCommand
+        readonly service: ExerciseService,
+        readonly exerciseCmd: ExerciseCommand
     ) { }
 
-    get base(): CrudController<ProjectEntity> {
+    get base(): CrudController<ExerciseEntity> {
         return this;
     }
 
@@ -105,13 +97,13 @@ export class ProjectController implements CrudController<ProjectEntity> {
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'NO CONTENT' })
     public async import(): Promise<void> {
-        this.logger.silly(`[importProjects] execute `);
-        return this.projectCmd.create(20);
+        this.logger.silly(`[importExercises] execute `);
+        return this.exerciseCmd.create(20);
     }
 
     @Override()
     @UseRoles({
-        resource: 'project',
+        resource: 'exercise',
         action: CrudOperationEnum.CREATE,
         possession: ResourcePossession.ANY
     })
@@ -119,7 +111,7 @@ export class ProjectController implements CrudController<ProjectEntity> {
     @UseInterceptors(AccessControlRequestInterceptor)
     createOne(
         @ParsedRequest() req: CrudRequest,
-        @ParsedBody() dto: ProjectEntity
+        @ParsedBody() dto: ExerciseEntity
     ) {
         if (!dto.owner_id) {
             dto.owner_id = RequestContext.currentUser().id;
@@ -127,16 +119,15 @@ export class ProjectController implements CrudController<ProjectEntity> {
         return this.base.createOneBase(req, dto);
     }
 
-    @Post('/:id/permissions')
-    public async share(@Param('id') id: string, @Body() data: AddPermissionDto): Promise<PermissionEntity> {
-        this.logger.silly(`[share] sharing project ${id}`);
-        return this.service.share(id, data);
-    }
-
-    @Post('/:id/permissions/:user_id')
-    public async revoke(@Param('id') id: string, @Param('user_id') user_id: string): Promise<PermissionEntity> {
-        this.logger.silly(`[revoke] revoking permissions of ${user_id} on project ${id}`);
-        return this.service.revoke(id, user_id);
+    @Post('dynamic-corrector')
+    @UseRoles({
+        resource: 'exercise',
+        action: CrudOperationEnum.UPDATE,
+        possession: ResourcePossession.ANY
+    })
+    @UseContextAccessEvaluator(evaluateUserContextAccess)
+    @UseInterceptors(FileInterceptor('file'))
+    async uploadDynamicCorrector(@UploadedFile() file, dto: ExerciseDynamicCorrectorEntity): Promise<ExerciseDynamicCorrectorEntity> {
+        return undefined;
     }
 }
-

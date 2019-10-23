@@ -1,34 +1,65 @@
-import { Column, PrimaryGeneratedColumn, Entity, OneToMany, Index } from 'typeorm';
+import { Column, PrimaryGeneratedColumn, Entity, OneToMany, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { Field } from 'type-graphql';
+import { ApiModelProperty } from '@nestjs/swagger';
+import { IsOptional, IsEmpty, IsDefined, IsString, MaxLength, IsNumber, Max, Min, IsBoolean } from 'class-validator';
+import { CrudValidationGroups } from '@nestjsx/crud';
 
 import { ExtendedEntity } from '../../_helpers';
 import { ExerciseTestEntity } from './exercise-test.entity';
+import { ExerciseEntity } from './exercise.entity';
+
+const { CREATE, UPDATE } = CrudValidationGroups;
 
 @Entity('exercise-test-set')
 export class ExerciseTestSetEntity extends ExtendedEntity {
 
+    @ApiModelProperty()
+    @IsOptional({ groups: [UPDATE] })
+    @IsEmpty({ groups: [CREATE] })
     @PrimaryGeneratedColumn('uuid')
     @Field()
     public id: string;
 
-    @Column('uuid')
+    @ApiModelProperty()
+    @IsOptional({ groups: [UPDATE] })
+    @IsDefined({ groups: [CREATE] })
+    @ManyToOne(() => ExerciseEntity, exercise => exercise.test_sets)
+    @JoinColumn({ name: 'exercise_id' })
+    @Column('uuid', { nullable: false })
     @Index()
     @Field()
     public exercise_id: string;
 
-    @Column()
+    @ApiModelProperty()
+    @IsOptional({ groups: [UPDATE] })
+    @IsDefined({ groups: [CREATE] })
+    @IsString({ always: true })
+    @MaxLength(100, { always: true })
+    @Column('varchar', { length: 100, nullable: false })
+    @Field()
     public name: string;
 
-    @Column()
+    @ApiModelProperty()
+    @IsOptional({ groups: [UPDATE] })
+    @IsDefined({ groups: [CREATE] })
+    @IsNumber({ allowNaN: false, allowInfinity: false }, { always: true })
+    @Max(100, { always: true })
+    @Min(0, { always: true })
+    @Column('real', { nullable: false })
+    @Field()
     public weight: number;
 
-    @Column()
+    @ApiModelProperty()
+    @IsOptional({ always: true })
+    @IsBoolean({ always: true })
+    @Column('boolean', { default: true })
+    @Field()
     public visible: boolean;
 
-    @OneToMany(type => ExerciseTestEntity, test => test.testset_id, {
+    @OneToMany(() => ExerciseTestEntity, test => test.testset_id, {
         cascade: true,
         onDelete: 'CASCADE'
     })
-    @Field(type => [ExerciseTestEntity])
+    @Field(() => [ExerciseTestEntity])
     public tests: ExerciseTestEntity[];
 }

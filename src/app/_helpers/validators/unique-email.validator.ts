@@ -1,12 +1,12 @@
-import { Injectable, Inject, forwardRef, OnModuleInit } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 
-import { UserService } from './user.service';
-import { ModuleRef } from '@nestjs/core';
+import { UserService } from '../../user/user.service';
 
-@ValidatorConstraint({ name: 'isUserAlreadyExist', async: true })
+@ValidatorConstraint({ name: 'unique-email', async: true })
 @Injectable()
-export class IsUserAlreadyExist implements ValidatorConstraintInterface, OnModuleInit {
+export class UniqueEmailValidator implements ValidatorConstraintInterface, OnModuleInit {
     private userService: UserService;
 
     constructor(private readonly moduleRef: ModuleRef) {}
