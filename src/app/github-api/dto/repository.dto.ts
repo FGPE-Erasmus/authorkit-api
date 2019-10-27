@@ -1,6 +1,5 @@
-import { Expose, Type } from 'class-transformer';
 
-export class Repository {
+export class RepositoryDto {
     id?: number;
     node_id?: string;
     name?: string;
@@ -81,8 +80,8 @@ export class Repository {
     network_count?: number;
     license?: License;
     organization?: Organization;
-    parent?: Repository;
-    source?: Repository;
+    parent?: RepositoryDto;
+    source?: RepositoryDto;
 }
 
 export class License {

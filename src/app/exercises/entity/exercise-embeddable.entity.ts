@@ -20,10 +20,9 @@ export class ExerciseEmbeddableEntity extends ResourceEntity {
     public id: string;
 
     @ApiModelProperty()
-    @IsOptional({ groups: [UPDATE] })
-    @IsDefined({ groups: [CREATE] })
+    @IsOptional({ always: true })
     @IsUUID('4', { always: true })
-    @ManyToOne(() => ExerciseEntity, exercise => exercise.embeddables)
+    @ManyToOne(() => ExerciseEntity, exercise => exercise.embeddables, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'exercise_id' })
     @Column('uuid', { nullable: false })
     @Field()

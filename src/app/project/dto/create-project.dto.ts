@@ -40,10 +40,10 @@ export class CreateProjectDto {
     @Field()
     readonly status?: ProjectStatus = ProjectStatus.DRAFT;
 
-    @ApiModelProperty()
+    /* @ApiModelProperty()
     @IsString()
     @IsNotEmpty()
     @Validate(GithubReponameValidator)
     @Field()
-    readonly repo_name?: string;
+    readonly repo_name?: string; */
 }

@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { config } from '../../../config';
+import { CrudRequest } from '@nestjsx/crud';
 
 export function commonElements(arrays: Array<string[]>): string[] {
     return arrays.shift().reduce(function (res, v) {
@@ -34,4 +35,20 @@ export function passwordHash(password: string) {
     return crypto.createHmac('sha256', config.salt)
         .update(password, 'utf8')
         .digest('hex');
+}
+
+export function getParamValueFromCrudRequest(req: CrudRequest, param: string) {
+    const field = req.parsed.paramsFilter
+        .find(
+            (attr) =>
+                attr.field.toLowerCase() === param.toLowerCase() &&
+                attr.operator.toLowerCase() === 'eq'
+        );
+    return field ? field.value : undefined;
+}
+
+export async function asyncForEach(array: any[], callback) {
+    for (let index = 0; index < array.length; index++) {
+        await callback(array[index], index, array);
+    }
 }

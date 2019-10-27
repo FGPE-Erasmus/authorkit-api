@@ -1,9 +1,11 @@
 import { HttpModule, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { UserModule } from '../user/user.module';
-import { AccessControlModule } from '../access-control/access-control.module';
 import { accessRules } from '../app.access-rules';
+import { AccessControlModule } from '../access-control/access-control.module';
+import { UserModule } from '../user/user.module';
+import { GithubApiModule } from '../github-api/github-api.module';
+import { GithubApiService } from '../github-api/github-api.service';
 
 import { ProjectCommand } from './project.command';
 import { ProjectPipe } from './pipe/project.pipe';
@@ -23,7 +25,8 @@ const MODULES = [
     TypeOrmModule.forFeature([ProjectEntity, PermissionEntity]),
     AccessControlModule.forRoles(accessRules),
     HttpModule,
-    UserModule
+    UserModule,
+    GithubApiModule
 ];
 
 @Module({

@@ -29,9 +29,9 @@ export class ProjectInput {
     @Field()
     readonly status?: ProjectStatus = ProjectStatus.DRAFT;
 
-    @IsString()
+    /* @IsString()
     @IsNotEmpty()
     @Validate(GithubReponameValidator)
     @Field()
-    readonly repo_name?: string;
+    readonly repo_name?: string; */
 }

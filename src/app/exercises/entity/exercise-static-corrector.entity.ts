@@ -20,10 +20,9 @@ export class ExerciseStaticCorrectorEntity extends ExecutableEntity {
     public id: string;
 
     @ApiModelProperty()
-    @IsOptional({ groups: [UPDATE] })
-    @IsDefined({ groups: [CREATE] })
+    @IsOptional({ always: true })
     @IsUUID('4', { always: true })
-    @ManyToOne(() => ExerciseEntity, exercise => exercise.static_correctors)
+    @ManyToOne(() => ExerciseEntity, exercise => exercise.static_correctors, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'exercise_id' })
     @Column('uuid', { nullable: false })
     @Field()

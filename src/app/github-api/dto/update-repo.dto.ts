@@ -1,7 +1,5 @@
 
 export class UpdateRepoDto {
-    // name of the repository
-    name?: string;
     // short description of the repository
     description?: string;
     // URL with more information about the repository

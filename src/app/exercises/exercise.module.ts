@@ -27,12 +27,19 @@ import {
     ExerciseTestGeneratorEntity,
     ExerciseTestSetEntity
 } from './entity';
+import { GithubApiModule } from '../github-api/github-api.module';
+import { TestController } from './tests/test.controller';
+import { TestService } from './tests/test.service';
+import { TestSetService } from './testsets/testset.service';
+import { TestSetController } from './testsets/testset.controller';
 
 const PROVIDERS = [
     ExerciseCommand,
     ExercisePipe,
     ExerciseContextMiddleware,
-    ExerciseService
+    ExerciseService,
+    TestSetService,
+    TestService
 ];
 
 const MODULES = [
@@ -55,13 +62,14 @@ const MODULES = [
     AccessControlModule.forRoles(accessRules),
     HttpModule,
     forwardRef(() => UserModule),
-    forwardRef(() => ProjectModule)
+    forwardRef(() => ProjectModule),
+    GithubApiModule
 ];
 
 @Module({
-    controllers: [ExerciseController],
+    controllers: [ExerciseController, TestSetController, TestController],
     providers: [...PROVIDERS],
     imports: [...MODULES],
-    exports: [ExerciseService]
+    exports: [ExerciseService, TestSetService, TestService]
 })
 export class ExerciseModule {}

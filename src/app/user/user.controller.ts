@@ -84,7 +84,7 @@ import { evaluateUserContextAccess } from './security/user-context-access.evalua
                 UseGuards(AuthGuard('jwt'), ACGuard),
                 UseRoles({
                     resource: 'user',
-                    action: CrudOperationEnum.UPDATE,
+                    action: CrudOperationEnum.PATCH,
                     possession: ResourcePossession.ANY
                 }),
                 UseContextAccessEvaluator(evaluateUserContextAccess)

@@ -21,9 +21,8 @@ export class ExerciseTestSetEntity extends ExtendedEntity {
     public id: string;
 
     @ApiModelProperty()
-    @IsOptional({ groups: [UPDATE] })
-    @IsDefined({ groups: [CREATE] })
-    @ManyToOne(() => ExerciseEntity, exercise => exercise.test_sets)
+    @IsOptional({ always: true })
+    @ManyToOne(() => ExerciseEntity, exercise => exercise.test_sets, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'exercise_id' })
     @Column('uuid', { nullable: false })
     @Index()
@@ -57,8 +56,8 @@ export class ExerciseTestSetEntity extends ExtendedEntity {
     public visible: boolean;
 
     @OneToMany(() => ExerciseTestEntity, test => test.testset_id, {
-        cascade: true,
-        onDelete: 'CASCADE'
+        eager: true,
+        cascade: true
     })
     @Field(() => [ExerciseTestEntity])
     public tests: ExerciseTestEntity[];

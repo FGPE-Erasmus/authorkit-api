@@ -6,6 +6,8 @@ import { CrudValidationGroups } from '@nestjsx/crud';
 
 import { ExtendedEntity } from '../../_helpers';
 import { ExerciseEntity } from './exercise.entity';
+import { ResourceEntity } from './resource.entity';
+import { ExerciseTestSetEntity } from './exercise-test-set.entity';
 
 const { CREATE, UPDATE } = CrudValidationGroups;
 
@@ -20,10 +22,9 @@ export class ExerciseTestEntity extends ExtendedEntity {
     public id: string;
 
     @ApiModelProperty()
-    @IsOptional({ groups: [UPDATE] })
-    @IsDefined({ groups: [CREATE] })
+    @IsOptional({ always: true })
     @IsUUID('4', { always: true })
-    @ManyToOne(() => ExerciseEntity, exercise => exercise.tests)
+    @ManyToOne(() => ExerciseEntity, exercise => exercise.tests, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'exercise_id' })
     @Column('uuid', { nullable: false })
     @Index()
@@ -33,7 +34,7 @@ export class ExerciseTestEntity extends ExtendedEntity {
     @ApiModelProperty()
     @IsOptional({ always: true })
     @IsUUID('4', { always: true })
-    @ManyToOne(() => ExerciseEntity, exercise => exercise.test_sets)
+    @ManyToOne(() => ExerciseTestSetEntity, testset => testset.tests, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'testset_id' })
     @Column('uuid', { nullable: true })
     @Index()
@@ -41,29 +42,23 @@ export class ExerciseTestEntity extends ExtendedEntity {
     public testset_id: string;
 
     @ApiModelProperty()
-    @IsOptional({ groups: [UPDATE] })
-    @IsDefined({ groups: [CREATE] })
-    @IsString({ always: true })
-    @MinLength(2, { always: true })
-    @Column('varchar', { nullable: false })
-    @Field()
-    public input: string;
+    @IsOptional({ always: true })
+    @Column('simple-json', { nullable: true })
+    @Field(() => ResourceEntity)
+    public input: ResourceEntity;
 
     @ApiModelProperty()
-    @IsOptional({ groups: [UPDATE] })
-    @IsDefined({ groups: [CREATE] })
-    @IsString({ always: true })
-    @MinLength(2, { always: true })
-    @Column('varchar', { nullable: false })
-    @Field()
-    public output: string;
+    @IsOptional({ always: true })
+    @Column('simple-json', { nullable: true })
+    @Field(() => ResourceEntity)
+    public output: ResourceEntity;
 
     @ApiModelProperty()
     @IsOptional({ always: true })
     @IsString({ each: true, always: true })
-    @Column('simple-array', { default: [] })
+    @Column('simple-array')
     @Field(() => [String])
-    public arguments: string[];
+    public arguments: string[] = [];
 
     @ApiModelProperty()
     @IsOptional({ groups: [UPDATE] })

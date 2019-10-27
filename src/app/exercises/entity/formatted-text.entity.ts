@@ -1,23 +1,19 @@
-import { Column, PrimaryColumn } from 'typeorm';
+import { Column } from 'typeorm';
 import { Field } from 'type-graphql';
-import { IsString, IsOptional, IsDefined, MinLength, IsEnum, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsDefined, IsEnum, MaxLength, IsEmpty } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
-import { ExtendedEntity } from '../../_helpers';
 import { TextFormat } from './text-format.enum';
 import { ApiModelProperty } from '@nestjs/swagger';
+import { TrackedFileEntity } from './tracked-file.entity';
 
 const { CREATE, UPDATE } = CrudValidationGroups;
 
-export class FormattedTextEntity extends ExtendedEntity {
+export class FormattedTextEntity extends TrackedFileEntity {
 
     @ApiModelProperty()
-    @IsOptional({ groups: [UPDATE] })
-    @IsDefined({ groups: [CREATE] })
-    @IsString({ always: true })
-    @MinLength(2, { always: true })
+    @IsEmpty({ always: true })
     @Column('varchar', { nullable: false })
-    @Field()
     public pathname: string;
 
     @ApiModelProperty()

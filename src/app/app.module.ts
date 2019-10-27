@@ -16,6 +16,9 @@ import { ProjectController } from './project/project.controller';
 import { ExerciseContextMiddleware } from './exercises/exercise-context.middleware';
 import { ExerciseController } from './exercises/exercise.controller';
 import { ExerciseModule } from './exercises/exercise.module';
+import { TestController } from './exercises/tests/test.controller';
+import { TestSetController } from './exercises/testsets/testset.controller';
+import { TestSetContextMiddleware } from './exercises/testsets/testset-context.middleware';
 
 @Module({
     imports: [
@@ -48,6 +51,9 @@ export class AppModule {
             .forRoutes(ProjectController);
         consumer
             .apply(ExerciseContextMiddleware)
-            .forRoutes(ExerciseController);
+            .forRoutes(ExerciseController, TestSetController, TestController);
+        consumer
+            .apply(TestSetContextMiddleware)
+            .forRoutes(TestSetController);
     }
 }

@@ -9,9 +9,9 @@ export class ExtendedEntity extends BaseEntity {
 
     @ApiModelProperty()
     @CreateDateColumn({ type: 'timestamptz' })
-    public created_at: Date;
+    public created_at?: Date;
 
     @ApiModelProperty()
     @UpdateDateColumn({ type: 'timestamptz', nullable: true })
-    public updated_at: Date;
+    public updated_at?: Date;
 }

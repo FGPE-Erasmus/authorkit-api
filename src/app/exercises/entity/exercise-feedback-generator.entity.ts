@@ -20,10 +20,9 @@ export class ExerciseFeedbackGeneratorEntity extends ExecutableEntity {
     public id: string;
 
     @ApiModelProperty()
-    @IsOptional({ groups: [UPDATE] })
-    @IsDefined({ groups: [CREATE] })
+    @IsOptional({ always: true })
     @IsUUID('4', { always: true })
-    @ManyToOne(() => ExerciseEntity, exercise => exercise.feedback_generators)
+    @ManyToOne(() => ExerciseEntity, exercise => exercise.feedback_generators, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'exercise_id' })
     @Column('uuid', { nullable: false })
     @Field()

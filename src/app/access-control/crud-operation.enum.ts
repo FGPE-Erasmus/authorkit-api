@@ -3,5 +3,6 @@ export enum CrudOperationEnum {
     READ        = 'read',
     CREATE      = 'create',
     UPDATE      = 'update',
+    PATCH       = 'patch',
     DELETE      = 'delete'
 }

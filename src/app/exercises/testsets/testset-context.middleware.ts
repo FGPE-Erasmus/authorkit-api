@@ -1,13 +1,13 @@
 import { Injectable, NestMiddleware, Inject } from '@nestjs/common';
 
-import { ProjectService } from '../project/project.service';
-import { ExerciseService } from './exercise.service';
+import { ProjectService } from '../../project/project.service';
+import { ExerciseService } from '../exercise.service';
 
 /**
  * Middleware finds the related project and adds it to the request.
  */
 @Injectable()
-export class ExerciseContextMiddleware implements NestMiddleware {
+export class TestSetContextMiddleware implements NestMiddleware {
 
     constructor(
         protected readonly exerciseService: ExerciseService,
@@ -15,7 +15,7 @@ export class ExerciseContextMiddleware implements NestMiddleware {
     }
 
     async use(req: any, res: any, next: () => void): Promise<void> {
-        const exercise_id = req.params.id || req.query.id || req.body.id;
+        const exercise_id = req.params.exercise_id || req.query.exercise_id || req.body.exercise_id;
         if (exercise_id) {
             const exercise = await this.exerciseService.findOne(exercise_id, {
                 select: ['id', 'project_id']

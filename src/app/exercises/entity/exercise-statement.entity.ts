@@ -20,10 +20,9 @@ export class ExerciseStatementEntity extends FormattedTextEntity {
     public id: string;
 
     @ApiModelProperty()
-    @IsOptional({ groups: [UPDATE] })
-    @IsDefined({ groups: [CREATE] })
+    @IsOptional({ always: true })
     @IsUUID('4', { always: true })
-    @ManyToOne(() => ExerciseEntity, exercise => exercise.statements)
+    @ManyToOne(() => ExerciseEntity, exercise => exercise.statements, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'exercise_id' })
     @Column('uuid', { nullable: false })
     @Field()

@@ -67,7 +67,7 @@ export class ProjectEntity extends ExtendedEntity {
     @Field(type => ProjectStatus)
     public status: ProjectStatus = ProjectStatus.DRAFT;
 
-    @ApiModelProperty()
+    /* @ApiModelProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsString({ always: true })
@@ -87,7 +87,7 @@ export class ProjectEntity extends ExtendedEntity {
     @Validate(GithubReponameValidator, { always: true })
     @Column('varchar', { length: 100 })
     @Field()
-    public repo_name: string;
+    public repo_name: string; */
 
     @OneToMany(() => PermissionEntity, permission => permission.project_id, { cascade: true })
     @Field(() => [PermissionEntity])
@@ -97,12 +97,12 @@ export class ProjectEntity extends ExtendedEntity {
     @Field(() => [ExerciseEntity])
     public exercises: Lazy<ExerciseEntity[]>;
 
-    public getSshCloneUrl(): string {
+    /* public getSshCloneUrl(): string {
         return `git@github.com:${this.repo_owner}/${this.repo_name}.git`;
     }
 
     public getHttpCloneUrl(): string {
         return `https://github.com/${this.repo_owner}/${this.repo_name}.git`;
-    }
+    } */
 
 }

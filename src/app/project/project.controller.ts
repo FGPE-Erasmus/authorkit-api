@@ -57,7 +57,7 @@ import { ProjectCommand } from './project.command';
             decorators: [
                 UseRoles({
                     resource: 'project',
-                    action: CrudOperationEnum.UPDATE,
+                    action: CrudOperationEnum.PATCH,
                     possession: ResourcePossession.ANY
                 }),
                 UseContextAccessEvaluator(evaluateUserContextAccess)
