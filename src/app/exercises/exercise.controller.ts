@@ -1,8 +1,21 @@
-import { Post, HttpCode, HttpStatus, UseInterceptors, Controller, ClassSerializerInterceptor, UseGuards, UploadedFile, Body, Param, Put, Delete } from '@nestjs/common';
+import {
+    Post,
+    HttpCode,
+    HttpStatus,
+    UseInterceptors,
+    Controller,
+    ClassSerializerInterceptor,
+    UseGuards,
+    UploadedFile,
+    Body,
+    Param,
+    Put,
+    Delete
+} from '@nestjs/common';
 import { ApiResponse, ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile, ApiImplicitBody } from '@nestjs/swagger';
 import { CrudController, Override, ParsedBody, ParsedRequest, CrudRequest, Crud } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 import { AppLogger } from '../app.logger';
 import { RequestContext } from '../_helpers';

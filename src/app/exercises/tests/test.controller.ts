@@ -1,4 +1,15 @@
-import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor, Post, Param, UploadedFile, Body, Put, Delete, UploadedFiles } from '@nestjs/common';
+import {
+    Controller,
+    UseGuards,
+    UseInterceptors,
+    ClassSerializerInterceptor,
+    Post,
+    Param,
+    Body,
+    Put,
+    Delete,
+    UploadedFiles
+} from '@nestjs/common';
 import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile, ApiImplicitBody } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';

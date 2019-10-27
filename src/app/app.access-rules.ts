@@ -154,14 +154,36 @@ accessRules
         resource: 'project',
         action: CrudOperationEnum.READ,
         possession: ResourcePossession.OWN,
-        attributes: ['id', 'name', 'description', 'owner_id', 'is_public', 'status', 'permissions', 'created_at', 'updated_at', 'is_deleted']
+        attributes: [
+            'id',
+            'name',
+            'description',
+            'owner_id',
+            'is_public',
+            'status',
+            'permissions',
+            'created_at',
+            'updated_at',
+            'is_deleted'
+        ]
     })
     .addAccessInfo({
         role: '*',
         resource: 'project',
         action: CrudOperationEnum.LIST,
         possession: ResourcePossession.OWN,
-        attributes: ['id', 'name', 'description', 'owner_id', 'is_public', 'status', 'permissions', 'created_at', 'updated_at', 'is_deleted']
+        attributes: [
+            'id',
+            'name',
+            'description',
+            'owner_id',
+            'is_public',
+            'status',
+            'permissions',
+            'created_at',
+            'updated_at',
+            'is_deleted'
+        ]
     })
     .addAccessInfo({
         role: '*',
@@ -183,14 +205,36 @@ accessRules
         resource: 'project',
         action: CrudOperationEnum.READ,
         possession: ResourcePossession.ANY,
-        attributes: ['id', 'name', 'description', 'owner_id', 'is_public', 'status', 'permissions', 'created_at', 'updated_at', 'is_deleted']
+        attributes: [
+            'id',
+            'name',
+            'description',
+            'owner_id',
+            'is_public',
+            'status',
+            'permissions',
+            'created_at',
+            'updated_at',
+            'is_deleted'
+        ]
     })
     .addAccessInfo({
         role: UserContextRole.MANAGER,
         resource: 'project',
         action: CrudOperationEnum.LIST,
         possession: ResourcePossession.ANY,
-        attributes: ['id', 'name', 'description', 'owner_id', 'is_public', 'status', 'permissions', 'created_at', 'updated_at', 'is_deleted']
+        attributes: [
+            'id',
+            'name',
+            'description',
+            'owner_id',
+            'is_public',
+            'status',
+            'permissions',
+            'created_at',
+            'updated_at',
+            'is_deleted'
+        ]
     })
     .addAccessInfo({
         role: UserContextRole.MANAGER,
