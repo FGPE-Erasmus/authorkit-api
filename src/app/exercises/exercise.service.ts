@@ -198,6 +198,18 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
     /* Extra Files */
 
+    public async getExtraFileContents(exercise_id: string, pathname: string):
+            Promise<any> {
+        const exercise = await this.repository.findOneOrFail(exercise_id);
+        try {
+            const response = await this.githubApiService.getExerciseFileContents(
+                exercise, pathname);
+            return response.content;
+        } catch (e) {
+            throw new InternalServerErrorException(`Failed to read ${pathname}`, e);
+        }
+    }
+
     public async createExtraFile<T>(exercise_id: string, type: Type<T>, dto: any, file: any):
             Promise<any> {
         const exercise = await this.repository.findOneOrFail(exercise_id);

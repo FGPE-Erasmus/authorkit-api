@@ -3,7 +3,9 @@ import {
     Post,
     UseGuards,
     ClassSerializerInterceptor,
-    UseInterceptors
+    UseInterceptors,
+    Get,
+    Req
 } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { CrudController, Crud } from '@nestjsx/crud';
@@ -29,7 +31,8 @@ import {
     ResourcePossession,
     UseContextAccessEvaluator,
     ACGuard,
-    AccessControlRequestInterceptor
+    AccessControlRequestInterceptor,
+    AccessControlResponseInterceptor
 } from '../access-control';
 import { evaluateUserContextAccess } from './security/user-context-access.evaluator';
 
@@ -43,7 +46,7 @@ import { evaluateUserContextAccess } from './security/user-context-access.evalua
     },
     routes: {
         getManyBase: {
-            interceptors: [],
+            interceptors: [AccessControlResponseInterceptor],
             decorators: [
                 UseGuards(AuthGuard('jwt'), ACGuard),
                 UseRoles({
@@ -55,13 +58,13 @@ import { evaluateUserContextAccess } from './security/user-context-access.evalua
             ]
         },
         getOneBase: {
-            interceptors: [],
+            interceptors: [AccessControlResponseInterceptor],
             decorators: [
                 UseGuards(AuthGuard('jwt'), ACGuard),
                 UseRoles({
                     resource: 'user',
                     action: CrudOperationEnum.READ,
-                    possession: ResourcePossession.OWN
+                    possession: ResourcePossession.ANY
                 }),
                 UseContextAccessEvaluator(evaluateUserContextAccess)
             ]
@@ -139,6 +142,12 @@ export class UserController implements CrudController<UserEntity> {
     })
     public async importUsers(): Promise<any> {
         return this.userCmd.create(20);
+    }
+
+    @Get('me')
+    @UseGuards(AuthGuard('jwt'))
+    public async me(@Req() req) {
+        return req.user;
     }
 
     @MessagePattern({ cmd: USER_CMD_REGISTER })

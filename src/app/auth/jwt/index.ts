@@ -6,10 +6,12 @@ import { TokenDto } from '../dto/token.dto';
 
 export async function createAuthToken({ id }: DeepPartial<UserEntity>) {
     const expiresIn = config.auth.access.timeout;
+    const refreshTokenExpiresIn = config.auth.refresh.timeout;
     const accessToken = createToken(id, expiresIn, config.auth.access.secret);
     const refreshToken = createToken(id, config.auth.refresh.timeout, config.auth.refresh.secret);
     return {
         expiresIn,
+        refreshTokenExpiresIn,
         accessToken,
         refreshToken
     };

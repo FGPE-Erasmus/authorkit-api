@@ -116,13 +116,6 @@ accessRules
     .addAccessInfo({
         role: UserRole.ADMIN,
         resource: 'project',
-        action: CrudOperationEnum.LIST,
-        possession: ResourcePossession.ANY,
-        attributes: '*'
-    })
-    .addAccessInfo({
-        role: UserRole.ADMIN,
-        resource: 'project',
         action: CrudOperationEnum.READ,
         possession: ResourcePossession.ANY,
         attributes: '*'
@@ -170,24 +163,6 @@ accessRules
     .addAccessInfo({
         role: '*',
         resource: 'project',
-        action: CrudOperationEnum.LIST,
-        possession: ResourcePossession.OWN,
-        attributes: [
-            'id',
-            'name',
-            'description',
-            'owner_id',
-            'is_public',
-            'status',
-            'permissions',
-            'created_at',
-            'updated_at',
-            'is_deleted'
-        ]
-    })
-    .addAccessInfo({
-        role: '*',
-        resource: 'project',
         action: CrudOperationEnum.DELETE,
         possession: ResourcePossession.OWN
     })
@@ -204,24 +179,6 @@ accessRules
         role: UserContextRole.MANAGER,
         resource: 'project',
         action: CrudOperationEnum.READ,
-        possession: ResourcePossession.ANY,
-        attributes: [
-            'id',
-            'name',
-            'description',
-            'owner_id',
-            'is_public',
-            'status',
-            'permissions',
-            'created_at',
-            'updated_at',
-            'is_deleted'
-        ]
-    })
-    .addAccessInfo({
-        role: UserContextRole.MANAGER,
-        resource: 'project',
-        action: CrudOperationEnum.LIST,
         possession: ResourcePossession.ANY,
         attributes: [
             'id',
@@ -258,26 +215,12 @@ accessRules
         possession: ResourcePossession.ANY,
         attributes: ['id', 'name', 'description', 'owner_id', 'is_public', 'status', 'created_at', 'updated_at', 'is_deleted']
     })
-    .addAccessInfo({
-        role: UserContextRole.CONTRIBUTOR,
-        resource: 'project',
-        action: CrudOperationEnum.LIST,
-        possession: ResourcePossession.ANY,
-        attributes: ['id', 'name', 'description', 'owner_id', 'is_public', 'status', 'created_at', 'updated_at', 'is_deleted']
-    })
 
     // viewer
     .addAccessInfo({
         role: UserContextRole.VIEWER,
         resource: 'project',
         action: CrudOperationEnum.READ,
-        possession: ResourcePossession.ANY,
-        attributes: ['id', 'name', 'description', 'owner_id', 'is_public', 'status', 'created_at', 'updated_at', 'is_deleted']
-    })
-    .addAccessInfo({
-        role: UserContextRole.VIEWER,
-        resource: 'project',
-        action: CrudOperationEnum.LIST,
         possession: ResourcePossession.ANY,
         attributes: ['id', 'name', 'description', 'owner_id', 'is_public', 'status', 'created_at', 'updated_at', 'is_deleted']
     })
@@ -289,6 +232,29 @@ accessRules
         action: CrudOperationEnum.CREATE,
         possession: ResourcePossession.ANY,
         attributes: ['name', 'description', 'is_public', 'status']
+    })
+
+    // any
+    .addAccessInfo({
+        role: '*',
+        resource: 'project',
+        action: CrudOperationEnum.LIST,
+        possession: ResourcePossession.ANY,
+        attributes: [
+            'data',
+            'data.id',
+            'data.name',
+            'data.description',
+            'data.owner_id',
+            'data.is_public',
+            'data.status',
+            'data.created_at',
+            'data.updated_at',
+            'count',
+            'total',
+            'page',
+            'pageCount'
+        ]
     });
 
 
@@ -314,13 +280,6 @@ accessRules
         role: UserRole.ADMIN,
         resource: 'exercise',
         action: CrudOperationEnum.PATCH,
-        possession: ResourcePossession.ANY,
-        attributes: '*'
-    })
-    .addAccessInfo({
-        role: UserRole.ADMIN,
-        resource: 'exercise',
-        action: CrudOperationEnum.LIST,
         possession: ResourcePossession.ANY,
         attributes: '*'
     })
@@ -370,13 +329,6 @@ accessRules
     .addAccessInfo({
         role: '*',
         resource: 'exercise',
-        action: CrudOperationEnum.LIST,
-        possession: ResourcePossession.OWN,
-        attributes: '*'
-    })
-    .addAccessInfo({
-        role: '*',
-        resource: 'exercise',
         action: CrudOperationEnum.DELETE,
         possession: ResourcePossession.OWN
     })
@@ -407,13 +359,6 @@ accessRules
         role: UserContextRole.MANAGER,
         resource: 'exercise',
         action: CrudOperationEnum.READ,
-        possession: ResourcePossession.ANY,
-        attributes: '*'
-    })
-    .addAccessInfo({
-        role: UserContextRole.MANAGER,
-        resource: 'exercise',
-        action: CrudOperationEnum.LIST,
         possession: ResourcePossession.ANY,
         attributes: '*'
     })
@@ -451,22 +396,7 @@ accessRules
         resource: 'exercise',
         action: CrudOperationEnum.READ,
         possession: ResourcePossession.ANY,
-        attributes: [
-            'id', 'title', 'module', 'owner_id', 'project_id', 'keywords', 'type', 'event', 'platform', 'difficulty',
-            'status', 'instructions', 'statements', 'embeddables', 'libraries', 'static_correctors', 'dynamic_correctors',
-            'test_generators', 'feedback_generators', 'skeletons', 'solutions', 'templates', 'tests', 'test_sets'
-        ]
-    })
-    .addAccessInfo({
-        role: UserContextRole.CONTRIBUTOR,
-        resource: 'exercise',
-        action: CrudOperationEnum.LIST,
-        possession: ResourcePossession.ANY,
-        attributes: [
-            'id', 'title', 'module', 'owner_id', 'project_id', 'keywords', 'type', 'event', 'platform', 'difficulty',
-            'status', 'instructions', 'statements', 'embeddables', 'libraries', 'static_correctors', 'dynamic_correctors',
-            'test_generators', 'feedback_generators', 'skeletons', 'solutions', 'templates', 'tests', 'test_sets'
-        ]
+        attributes: '*'
     })
 
     // viewer
@@ -475,21 +405,34 @@ accessRules
         resource: 'exercise',
         action: CrudOperationEnum.READ,
         possession: ResourcePossession.ANY,
-        attributes: [
-            'id', 'title', 'module', 'owner_id', 'project_id', 'keywords', 'type', 'event', 'platform', 'difficulty',
-            'status', 'instructions', 'statements', 'embeddables', 'libraries', 'static_correctors', 'dynamic_correctors',
-            'test_generators', 'feedback_generators', 'skeletons', 'solutions', 'templates', 'tests', 'test_sets'
-        ]
+        attributes: '*'
     })
+
+    // any
     .addAccessInfo({
-        role: UserContextRole.VIEWER,
+        role: '*',
         resource: 'exercise',
         action: CrudOperationEnum.LIST,
         possession: ResourcePossession.ANY,
         attributes: [
-            'id', 'title', 'module', 'owner_id', 'project_id', 'keywords', 'type', 'event', 'platform', 'difficulty',
-            'status', 'instructions', 'statements', 'embeddables', 'libraries', 'static_correctors', 'dynamic_correctors',
-            'test_generators', 'feedback_generators', 'skeletons', 'solutions', 'templates', 'tests', 'test_sets'
+            'data',
+            'data.id',
+            'data.title',
+            'data.module',
+            'data.owner_id',
+            'data.project_id',
+            'data.keywords',
+            'data.type',
+            'data.event',
+            'data.platform',
+            'data.difficulty',
+            'data.status',
+            'data.created_at',
+            'data.updated_at',
+            'count',
+            'total',
+            'page',
+            'pageCount'
         ]
     });
 

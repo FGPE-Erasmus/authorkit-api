@@ -28,14 +28,14 @@ html(xmlns="http://www.w3.org/1999/xhtml")
                                         tr
                                             td.content-block
                                                 p
-                                                  | #{__('We')} may need to send you critical information about our service, so it is important that we have an accurate email address.
+                                                  | We may need to send you critical information about our service, so it is important that we have an accurate email address.
                                         tr
                                             td.content-block
                                                 p
                                                   | Please confirm your email address by clicking the link below.
                                         tr
                                             td.content-block.text-center(itemprop="handler" itemscope="" itemtype="http://schema.org/HttpActionHandler")
-                                                a.btn-primary.text-secondary(href=app_host + ":" + app_port + "/register/verify?activationToken=" + token itemprop="url") Confirm my email address
+                                                a.btn-primary.text-secondary(href=app_host + ":" + app_port + "/pages/verify-email?token=" + token itemprop="url") Confirm my email address
                                         tr
                                             td.content-block
                                                 p

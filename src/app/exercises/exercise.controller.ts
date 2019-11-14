@@ -9,17 +9,26 @@ import {
     UploadedFile,
     Body,
     Param,
-    Put,
-    Delete
+    Patch,
+    Delete,
+    Get
 } from '@nestjs/common';
 import { ApiResponse, ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile, ApiImplicitBody } from '@nestjs/swagger';
-import { CrudController, Override, ParsedBody, ParsedRequest, CrudRequest, Crud } from '@nestjsx/crud';
+import { CrudController, Override, ParsedBody, ParsedRequest, CrudRequest, Crud, CrudAuth } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 import { AppLogger } from '../app.logger';
 import { RequestContext } from '../_helpers';
-import { UseRoles, CrudOperationEnum, ResourcePossession, UseContextAccessEvaluator, AccessControlRequestInterceptor, ACGuard } from '../access-control';
+import {
+    UseRoles,
+    CrudOperationEnum,
+    ResourcePossession,
+    UseContextAccessEvaluator,
+    AccessControlRequestInterceptor,
+    ACGuard,
+    AccessControlResponseInterceptor
+} from '../access-control';
 import { evaluateUserContextAccess } from '../project/security/project-context-access.evaluator';
 import {
     ExerciseEntity,
@@ -37,6 +46,7 @@ import {
 } from './entity';
 import { ExerciseService } from './exercise.service';
 import { ExerciseCommand } from './exercise.command';
+import { UserEntity } from 'app/user/entity/user.entity';
 
 @Controller('exercises')
 @ApiUseTags('exercises')
@@ -49,7 +59,7 @@ import { ExerciseCommand } from './exercise.command';
     },
     routes: {
         getManyBase: {
-            interceptors: [],
+            interceptors: [AccessControlResponseInterceptor],
             decorators: [
                 UseRoles({
                     resource: 'exercise',
@@ -60,7 +70,7 @@ import { ExerciseCommand } from './exercise.command';
             ]
         },
         getOneBase: {
-            interceptors: [],
+            interceptors: [AccessControlResponseInterceptor],
             decorators: [
                 UseRoles({
                     resource: 'exercise',
@@ -104,8 +114,66 @@ import { ExerciseCommand } from './exercise.command';
             ],
             returnDeleted: true
         }
+    },
+    query: {
+        join: {
+            /* 'projects': {
+                alias: 'project_id'
+            },
+            'projects.permissions': {
+                eager: true
+            } */
+            'instructions': {
+                eager: true
+            },
+            'statements': {
+                eager: true
+            },
+            'embeddables': {
+                eager: true
+            },
+            'skeletons': {
+                eager: true
+            },
+            'libraries': {
+                eager: true
+            },
+            'static_correctors': {
+                eager: true
+            },
+            'dynamic_correctors': {
+                eager: true
+            },
+            'solutions': {
+                eager: true
+            },
+            'templates': {
+                eager: true
+            },
+            'tests': {
+                eager: true
+            },
+            'test_sets': {
+                eager: true
+            },
+            'test_generators': {
+                eager: true
+            },
+            'feedback_generators': {
+                eager: true
+            }
+        }
     }
 })
+/* @CrudAuth({
+    property: 'user',
+    filter: (user: UserEntity) => ({
+        $or: [
+            { 'owner_id': user.id },
+            { 'projects.permissions.user_id': user.id }
+        ]
+    })
+}) */
 export class ExerciseController implements CrudController<ExerciseEntity> {
 
     private logger = new AppLogger(ExerciseController.name);
@@ -147,6 +215,20 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
 
     /* Extra Files */
 
+    @Get('/:id/files/:pathname')
+    @UseRoles({
+        resource: 'exercise',
+        action: CrudOperationEnum.READ,
+        possession: ResourcePossession.ANY
+    })
+    @UseContextAccessEvaluator(evaluateUserContextAccess)
+    async getFeedbackGenerator(
+        @Param('id') exercise_id: string,
+        @Param('pathname') pathname: string
+    ): Promise<string> {
+        return this.service.getExtraFileContents(exercise_id, pathname);
+    }
+
     // dynamic corrector
 
     @Post('/:id/dynamic-correctors/')
@@ -168,7 +250,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         return this.service.createExtraFile(exercise_id, ExerciseDynamicCorrectorEntity, dto, file);
     }
 
-    @Put('/:id/dynamic-correctors/:file_id')
+    @Patch('/:id/dynamic-correctors/:file_id')
     @UseRoles({
         resource: 'exercise',
         action: CrudOperationEnum.PATCH,
@@ -224,7 +306,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         return this.service.createExtraFile(exercise_id, ExerciseEmbeddableEntity, dto, file);
     }
 
-    @Put('/:id/embeddables/:file_id')
+    @Patch('/:id/embeddables/:file_id')
     @UseRoles({
         resource: 'exercise',
         action: CrudOperationEnum.PATCH,
@@ -280,7 +362,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         return this.service.createExtraFile(exercise_id, ExerciseFeedbackGeneratorEntity, dto, file);
     }
 
-    @Put('/:id/feedback-generators/:file_id')
+    @Patch('/:id/feedback-generators/:file_id')
     @UseRoles({
         resource: 'exercise',
         action: CrudOperationEnum.PATCH,
@@ -335,7 +417,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         return this.service.createExtraFile(exercise_id, ExerciseInstructionEntity, dto, file);
     }
 
-    @Put('/:id/instructions/:file_id')
+    @Patch('/:id/instructions/:file_id')
     @UseRoles({
         resource: 'exercise',
         action: CrudOperationEnum.PATCH,
@@ -390,7 +472,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         return this.service.createExtraFile(exercise_id, ExerciseLibraryEntity, dto, file);
     }
 
-    @Put('/:id/libraries/:file_id')
+    @Patch('/:id/libraries/:file_id')
     @UseRoles({
         resource: 'exercise',
         action: CrudOperationEnum.PATCH,
@@ -446,7 +528,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         return this.service.createExtraFile(exercise_id, ExerciseSkeletonEntity, dto, file);
     }
 
-    @Put('/:id/skeletons/:file_id')
+    @Patch('/:id/skeletons/:file_id')
     @UseRoles({
         resource: 'exercise',
         action: CrudOperationEnum.PATCH,
@@ -502,7 +584,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         return this.service.createExtraFile(exercise_id, ExerciseSolutionEntity, dto, file);
     }
 
-    @Put('/:id/solutions/:file_id')
+    @Patch('/:id/solutions/:file_id')
     @UseRoles({
         resource: 'exercise',
         action: CrudOperationEnum.PATCH,
@@ -558,7 +640,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         return this.service.createExtraFile(exercise_id, ExerciseStatementEntity, dto, file);
     }
 
-    @Put('/:id/statements/:file_id')
+    @Patch('/:id/statements/:file_id')
     @UseRoles({
         resource: 'exercise',
         action: CrudOperationEnum.PATCH,
@@ -614,7 +696,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         return this.service.createExtraFile(exercise_id, ExerciseStaticCorrectorEntity, dto, file);
     }
 
-    @Put('/:id/static-correctors/:file_id')
+    @Patch('/:id/static-correctors/:file_id')
     @UseRoles({
         resource: 'exercise',
         action: CrudOperationEnum.PATCH,
@@ -670,7 +752,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         return this.service.createExtraFile(exercise_id, ExerciseTemplateEntity, dto, file);
     }
 
-    @Put('/:id/templates/:file_id')
+    @Patch('/:id/templates/:file_id')
     @UseRoles({
         resource: 'exercise',
         action: CrudOperationEnum.PATCH,
@@ -726,7 +808,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         return this.service.createExtraFile(exercise_id, ExerciseTestGeneratorEntity, dto, file);
     }
 
-    @Put('/:id/test-generators/:file_id')
+    @Patch('/:id/test-generators/:file_id')
     @UseRoles({
         resource: 'exercise',
         action: CrudOperationEnum.PATCH,

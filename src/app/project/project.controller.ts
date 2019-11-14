@@ -1,5 +1,5 @@
 import { Controller, UseGuards, Post, HttpCode, HttpStatus, Param, Body, UseInterceptors } from '@nestjs/common';
-import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
+import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody, CrudAuth } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiUseTags, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 
@@ -19,6 +19,7 @@ import { ProjectService } from './project.service';
 import { evaluateUserContextAccess } from './security/project-context-access.evaluator';
 import { AddPermissionDto } from './dto/add-permission.dto';
 import { ProjectCommand } from './project.command';
+import { UserEntity } from 'app/user/entity';
 
 @ApiUseTags('projects')
 @Controller('projects')
@@ -86,7 +87,23 @@ import { ProjectCommand } from './project.command';
             ],
             returnDeleted: true
         }
+    },
+    query: {
+        join: {
+            permissions: {
+                eager: true
+            }
+        }
     }
+})
+@CrudAuth({
+    property: 'user',
+    filter: (user: UserEntity) => ({
+        $or: [
+            { 'owner_id': user.id },
+            { 'permissions.user_id': user.id }
+        ]
+    })
 })
 export class ProjectController implements CrudController<ProjectEntity> {
 

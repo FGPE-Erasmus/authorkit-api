@@ -9,6 +9,7 @@ import { RepositoryDto, FileCommitResponseDto } from './dto';
 import { ProjectEntity } from '../project/entity/project.entity';
 import { ExerciseEntity } from '../exercises/entity/exercise.entity';
 import { GithubClient } from './github-api.client';
+import { FileContentsDto } from './dto/file-contents.dto';
 
 
 @Injectable()
@@ -147,6 +148,33 @@ export class GithubApiService {
             this.logger.error(
                 `[deleteExerciseTree] Tree ${exercise.id} not deleted in Github repository ${exercise.project_id}, \
                     because ${JSON.stringify(err.message)}`,
+                err.stack
+            );
+            throw err;
+        }
+    }
+
+    public async getExerciseFileContents(exercise: ExerciseEntity, pathname: string):
+            Promise<FileContentsDto> {
+        try {
+            this.logger.debug(`[getExerciseFileContents] Get ${pathname} contents in ${exercise.id} \
+                in Github repository ${exercise.project_id}`);
+            const client = await this.getClientForToken(config.githubApi.secret);
+            const user = RequestContext.currentUser();
+            const result = await client.getFileContents(
+                exercise.project_id,
+                pathname
+            );
+            if (!result) {
+                throw new Error(`Failed to get ${pathname} contents`);
+            }
+            this.logger.debug(`[getExerciseFileContents] Contents of ${pathname} retrieved from Github \
+                repository ${exercise.project_id}`);
+            return result;
+        } catch (err) {
+            this.logger.error(
+                `[getExerciseFileContents] Contents of ${pathname} not retrieved from \
+                    Github repository ${exercise.project_id}, because ${JSON.stringify(err.message)}`,
                 err.stack
             );
             throw err;

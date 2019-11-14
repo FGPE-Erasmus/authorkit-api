@@ -7,6 +7,7 @@ const Octokit = require('@octokit/rest');
 import { config } from '../../config';
 import { AppLogger } from '../app.logger';
 import { CreateRepoDto, RepositoryDto, UpdateRepoDto, UserDto, FileCommitDto, FileCommitResponseDto } from './dto';
+import { FileContentsDto } from './dto/file-contents.dto';
 
 /**
  * Wrapper around Github Octokit REST client for authenticated users
@@ -65,6 +66,22 @@ export class GithubClient {
     public async deleteRepository(repo: string): Promise<RepositoryDto> {
         return await this.octokit.repos
             .delete({ owner: this.owner, repo });
+    }
+
+    public async getFileContents(repo: string, path: string): Promise<FileContentsDto> {
+        try {
+            return from(this.octokit.repos.getContents({
+                    owner: this.owner,
+                    repo,
+                    path
+                }))
+                .pipe(map(({ data }) => plainToClass(FileContentsDto, data)))
+                .toPromise();
+        } catch (e) {
+            this.logger.error(e.message, e.trace);
+            throw new Error(
+                `Failed to get contents of ${path} from Github repository "${repo}" of "${this.owner}"`);
+        }
     }
 
     public async createOrUpdateFile(repo: string, path: string,

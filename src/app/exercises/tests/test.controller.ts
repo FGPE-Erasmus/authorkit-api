@@ -8,7 +8,8 @@ import {
     Body,
     Put,
     Delete,
-    UploadedFiles
+    UploadedFiles,
+    Patch
 } from '@nestjs/common';
 import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile, ApiImplicitBody } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -53,7 +54,7 @@ export class TestController {
         return this.service.createTest(exercise_id, dto, files.input[0], files.output[0]);
     }
 
-    @Put('/:test_id')
+    @Patch('/:test_id')
     @UseRoles({
         resource: 'exercise',
         action: CrudOperationEnum.PATCH,
