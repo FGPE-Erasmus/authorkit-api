@@ -12,6 +12,9 @@ export async function mail(template: string, recipient: string, data: any): Prom
         auth: {
             user: config.mail.user,
             pass: config.mail.password
+        },
+        tls: {
+            rejectUnauthorized: false
         }
     });
 

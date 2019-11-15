@@ -11,7 +11,8 @@ import {
     Param,
     Patch,
     Delete,
-    Get
+    Get,
+    Query
 } from '@nestjs/common';
 import { ApiResponse, ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile, ApiImplicitBody } from '@nestjs/swagger';
 import { CrudController, Override, ParsedBody, ParsedRequest, CrudRequest, Crud, CrudAuth } from '@nestjsx/crud';
@@ -215,7 +216,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
 
     /* Extra Files */
 
-    @Get('/:id/files/:pathname')
+    @Get('/:id/files/read')
     @UseRoles({
         resource: 'exercise',
         action: CrudOperationEnum.READ,
@@ -224,7 +225,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
     @UseContextAccessEvaluator(evaluateUserContextAccess)
     async getFeedbackGenerator(
         @Param('id') exercise_id: string,
-        @Param('pathname') pathname: string
+        @Query('pathname') pathname: string
     ): Promise<string> {
         return this.service.getExtraFileContents(exercise_id, pathname);
     }
