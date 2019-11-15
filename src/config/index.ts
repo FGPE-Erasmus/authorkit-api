@@ -81,6 +81,7 @@ interface Config {
         level: string;
         transports?: any[];
     };
+    ui_base_url: string;
     validator: {
         options: {
             validationError: {
@@ -198,5 +199,6 @@ export const config: Config = {
             min_length: parseInt(process.env.VALIDATOR_PASSWORD_MIN_LENGTH || '6', 10),
             enforce_strong: /true/i.test(process.env.VALIDATOR_PASSWORD_ENFORCE_STRONG)
         }
-    }
+    },
+    ui_base_url: process.env.UI_BASE_URL
 };

@@ -162,6 +162,7 @@ export class UserController implements CrudController<UserEntity> {
                     app_name: config.name,
                     app_host: config.host,
                     app_port: config.port,
+                    ui_base_url: config.ui_base_url,
                     firstname: user.first_name,
                     lastname: user.last_name,
                     token
@@ -184,6 +185,7 @@ export class UserController implements CrudController<UserEntity> {
                     app_name: config.name,
                     app_host: config.host,
                     app_port: config.port,
+                    ui_base_url: config.ui_base_url,
                     firstname: user.first_name,
                     lastname: user.last_name
                 }
@@ -206,6 +208,7 @@ export class UserController implements CrudController<UserEntity> {
                     app_name: config.name,
                     app_host: config.host,
                     app_port: config.port,
+                    ui_base_url: config.ui_base_url,
                     firstname: user.first_name,
                     lastname: user.last_name,
                     token
@@ -228,6 +231,7 @@ export class UserController implements CrudController<UserEntity> {
                     app_name: config.name,
                     app_host: config.host,
                     app_port: config.port,
+                    ui_base_url: config.ui_base_url,
                     firstname: user.first_name,
                     lastname: user.last_name
                 }

@@ -14,7 +14,7 @@ html(xmlns="http://www.w3.org/1999/xhtml")
                         table(width="100%")
                             tr
                                 td.content-block
-                                    img(src="images/fgpe-logo.jpg" alt="FGPE Logo" class="logo")
+                                    img(src="/images/fgpe-logo.jpg" alt="FGPE Logo" class="logo")
                     .content
                         table.main(width="100%" cellpadding="0" cellspacing="0" itemprop="action" itemscope="" itemtype="http://schema.org/ResetPasswordAction")
                             tr
@@ -35,7 +35,7 @@ html(xmlns="http://www.w3.org/1999/xhtml")
                                                     | If you have made that request, please confirm and choose a new password by clicking the link below.
                                         tr
                                             td.content-block.text-center(itemprop="handler" itemscope="" itemtype="http://schema.org/HttpActionHandler")
-                                                a.btn-primary.text-secondary(href="http://fgpe.usz.edu.pl/authorkit/reset-password?key=" + token itemprop="url") Reset my password
+                                                a.btn-primary.text-secondary(href=ui_base_url + "/pages/reset-password?token=" + token itemprop="url") Reset my password
                                         tr
                                             td.content-block
                                                 p
