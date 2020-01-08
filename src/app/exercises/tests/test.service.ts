@@ -1,13 +1,14 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToClass } from 'class-transformer';
 
 import { AppLogger } from '../../app.logger';
 import { GithubApiService } from '../../github-api/github-api.service';
+import { ExerciseEntity } from '../entity/exercise.entity';
 import { ExerciseTestEntity } from '../entity/exercise-test.entity';
 import { ExerciseTestSetEntity } from '../entity/exercise-test-set.entity';
-import { ResourceEntity, ExerciseEntity } from '../entity';
-import { plainToClass } from 'class-transformer';
+import { ResourceEntity } from '../../_helpers/entity/resource.entity';
 
 @Injectable()
 export class TestService {

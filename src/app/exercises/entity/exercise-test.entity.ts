@@ -6,7 +6,7 @@ import { CrudValidationGroups } from '@nestjsx/crud';
 
 import { ExtendedEntity } from '../../_helpers';
 import { ExerciseEntity } from './exercise.entity';
-import { ResourceEntity } from './resource.entity';
+import { ResourceEntity } from '../../_helpers';
 import { ExerciseTestSetEntity } from './exercise-test-set.entity';
 
 const { CREATE, UPDATE } = CrudValidationGroups;

@@ -2,9 +2,9 @@ import { Column } from 'typeorm';
 import { Field } from 'type-graphql';
 import { IsString, IsOptional, IsDefined, IsEnum, MaxLength, IsEmpty } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
+import { ApiModelProperty } from '@nestjs/swagger';
 
 import { TextFormat } from './text-format.enum';
-import { ApiModelProperty } from '@nestjs/swagger';
 import { TrackedFileEntity } from './tracked-file.entity';
 
 const { CREATE, UPDATE } = CrudValidationGroups;

@@ -1,5 +1,5 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, Get, Query, BadRequestException } from '@nestjs/common';
-import { Client, ClientProxy, Transport, TcpOptions } from '@nestjs/microservices';
+import { Body, Controller, HttpCode, Post, UseGuards, Get, Query, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Client, ClientProxy, Transport } from '@nestjs/microservices';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiImplicitBody, ApiModelProperty, ApiResponse, ApiUseTags } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
@@ -7,17 +7,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { config } from '../../config';
-import { RestException } from '../_helpers';
 import { DeepPartial } from '../_helpers/database';
 import { Profile } from '../_helpers/decorators';
 import { AppLogger } from '../app.logger';
 import { USER_CMD_PASSWORD_NEW, USER_CMD_PASSWORD_RESET, USER_CMD_REGISTER, USER_CMD_REGISTER_VERIFY } from '../user';
 import { UserEntity } from '../user/entity';
-import { UserErrorEnum } from '../user/user-error.enum';
 import { UserService } from '../user/user.service';
-import { AuthService } from './auth.service';
 import { CredentialsDto } from './dto/credentials.dto';
-import { FacebookTokenDto } from './dto/facebook-token.dto';
 import { JwtDto } from './dto/jwt.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { UserEntityDto } from './dto/user-entity.dto';
@@ -26,6 +22,7 @@ import { createAuthToken, verifyToken } from './jwt';
 import { PasswordResetDto } from './dto/password-reset.dto';
 import { PasswordTokenDto } from './dto/password-token.dto';
 import { VerifyResendDto } from './dto/verify-resend.dto';
+import { TokenDto } from './dto/token.dto';
 
 export class TestDto {
     @ApiModelProperty()
@@ -46,11 +43,9 @@ export class AuthController {
     private logger = new AppLogger(AuthController.name);
 
     constructor(
-        private readonly authService: AuthService,
         private readonly userService: UserService,
         @InjectRepository(UserEntity) protected readonly repository: Repository<UserEntity>
     ) {
-
     }
 
     @Post('login')
@@ -67,8 +62,12 @@ export class AuthController {
     @ApiImplicitBody({ required: true, type: UserEntityDto, name: 'UserEntityDto' })
     @ApiResponse({ status: 204, description: 'NO_CONTENT' })
     public async register(@Body() data: DeepPartial<UserEntity>): Promise<void> {
-        const user = await this.userService.register(data);
         this.logger.debug(`[register] User ${data.email} register`);
+        let user = await this.userService.findByEmail(data.email);
+        if (user) {
+            throw new ConflictException('User already exists.');
+        }
+        user = await this.userService.register(data);
         this.client.send({ cmd: USER_CMD_REGISTER }, user).subscribe(() => { }, error => {
             this.logger.error(error, '');
         });
@@ -80,8 +79,16 @@ export class AuthController {
     @ApiResponse({ status: 200, description: 'OK', type: JwtDto })
     public async registerVerify(@Query('token') activationToken: string): Promise<JwtDto> {
         this.logger.debug(`[registerVerify] Token ${activationToken}`);
-        const token = await verifyToken(activationToken, config.auth.verify.secret);
+        let token: TokenDto;
+        try {
+            token = await verifyToken(activationToken, config.auth.verify.secret);
+        } catch (err) {
+            throw new BadRequestException(`Invalid token - ${err.message}`);
+        }
         const user = await this.userService.findOne(token.id);
+        if (!user) {
+            throw new NotFoundException(`User ${user.email} was not found`);
+        }
         if (user.is_verified) {
             throw new BadRequestException(`User ${user.email} already verified`);
         }
@@ -139,9 +146,10 @@ export class AuthController {
         const token = await verifyToken(body.resetToken, config.auth.password_reset.secret);
         const user = await this.userService.updatePassword({ id: token.id, password: body.password });
         this.logger.debug(`[passwordNew] Send change password email for user ${user.email}`);
-        this.client.send({ cmd: USER_CMD_PASSWORD_NEW }, user).subscribe(() => { }, error => {
-            this.logger.error(error, '');
-        });
+        this.client.send({ cmd: USER_CMD_PASSWORD_NEW }, user)
+            .subscribe(() => { }, error => {
+                this.logger.error(error, '');
+            });
     }
 
     @Post('refresh')
@@ -157,7 +165,7 @@ export class AuthController {
     @HttpCode(200)
     @UseGuards(AuthGuard('facebook-token'))
     @ApiResponse({ status: 200, description: 'OK', type: JwtDto })
-    public async fbSignIn(@Body() fbToken: FacebookTokenDto, @Profile() profile: FacebookProfile): Promise<JwtDto> {
+    public async fbSignIn(@Profile() profile: FacebookProfile): Promise<JwtDto> {
         this.logger.debug(`[fbSignIn] Facebook facebook_id ${profile.id}`);
         let user = await this.userService.findOne({ where: { facebook_id: profile.id } });
         if (!user) {

@@ -3,11 +3,11 @@ import { Permission } from 'accesscontrol';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { AppLogger } from '..';
+import { AppLogger } from '../app.logger';
 
 /**
- * Interceptor that automatically filter response attributes based on access control
- * permissions.
+ * Interceptor that automatically filters response attributes based on access
+ * control permissions.
  */
 @Injectable()
 export class AccessControlResponseInterceptor implements NestInterceptor {
@@ -15,6 +15,8 @@ export class AccessControlResponseInterceptor implements NestInterceptor {
     private logger = new AppLogger(AccessControlResponseInterceptor.name);
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+        this.logger.debug('intercepting response for access control filtering ...');
+
         const { permissions } = context.switchToHttp().getRequest();
 
         return next.handle().pipe(

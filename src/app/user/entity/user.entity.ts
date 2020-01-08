@@ -1,17 +1,18 @@
 import { ApiModelProperty } from '@nestjs/swagger';
 import { CrudValidationGroups } from '@nestjsx/crud';
-import { IsEmail, IsOptional, IsString, MinLength, Validate, IsEnum, IsArray, IsDefined, MaxLength, IsBoolean, IsEmpty } from 'class-validator';
-import { Column, Entity, ObjectIdColumn, ObjectID, OneToMany, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, JoinColumn } from 'typeorm';
-import { Exclude, Transform } from 'class-transformer';
+import { IsEmail, IsOptional, IsString, MinLength, Validate, IsEnum, IsArray, IsDefined, MaxLength, IsEmpty } from 'class-validator';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { Field } from 'type-graphql';
+import { DateTime } from 'luxon';
 
 import { config } from '../../../config';
 import { ExtendedEntity, Lazy, passwordHash, PasswordValidator } from '../../_helpers';
 import { UserRole } from '../../access-control';
-import { ProjectEntity, PermissionEntity } from '../../project/entity';
+import { PermissionEntity } from '../../permissions/entity';
+import { ProjectEntity } from '../../project/entity';
 import { ExerciseEntity } from '../../exercises/entity';
 import { UniqueEmailValidator } from '../../_helpers/validators/unique-email.validator';
-import { DateTime } from 'luxon';
 
 const { CREATE, UPDATE } = CrudValidationGroups;
 

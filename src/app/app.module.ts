@@ -10,12 +10,16 @@ import { HealthCheckModule } from './healthcheck/healthcheck.module';
 import { UserModule } from './user/user.module';
 import { SharedModule } from './shared/shared.module';
 import { ProjectModule } from './project/project.module';
+import { PermissionModule } from './permissions/permission.module';
+import { ExerciseModule } from './exercises/exercise.module';
+import { GamificationLayerModule } from './gamification-layers/gamification-layer.module';
+import { ChallengeModule } from './gamification-layers/challenges/challenge.module';
+import { LeaderboardModule } from './gamification-layers/leaderboards/leaderboard.module';
 import { GqlConfigService, RequestContextMiddleware } from './_helpers';
 import { ProjectContextMiddleware } from './project/project-context.middleware';
 import { ProjectController } from './project/project.controller';
 import { ExerciseContextMiddleware } from './exercises/exercise-context.middleware';
 import { ExerciseController } from './exercises/exercise.controller';
-import { ExerciseModule } from './exercises/exercise.module';
 import { TestController } from './exercises/tests/test.controller';
 import { TestSetController } from './exercises/testsets/testset.controller';
 import { TestSetContextMiddleware } from './exercises/testsets/testset-context.middleware';
@@ -26,9 +30,13 @@ import { TestSetContextMiddleware } from './exercises/testsets/testset-context.m
         CommandModule,
         HealthCheckModule,
         AuthModule,
+        PermissionModule,
         UserModule,
         ProjectModule,
         ExerciseModule,
+        GamificationLayerModule,
+        ChallengeModule,
+        LeaderboardModule,
         GraphQLModule.forRootAsync({
             imports: [SharedModule, UserModule],
             useClass: GqlConfigService

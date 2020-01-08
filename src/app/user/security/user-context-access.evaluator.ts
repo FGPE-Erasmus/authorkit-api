@@ -1,8 +1,8 @@
 import { RequestContext } from '../../_helpers';
-import { UserContextAccessEvaluator, UserContextAccess } from '../../access-control';
+import { UserContextAccessEvaluator, IUserContextAccess } from '../../access-control';
 
 export const evaluateUserContextAccess: UserContextAccessEvaluator =
-    async function (): Promise<UserContextAccess> {
+    async function (): Promise<IUserContextAccess> {
         const req = RequestContext.currentRequest();
         const user = req['user'];
         let user_id = req.params.id || req.body.id;

@@ -4,7 +4,7 @@ import { ApiModelProperty } from '@nestjs/swagger';
 import { IsDefined, IsOptional, IsEmpty, IsUUID } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
-import { ExecutableEntity } from './executable.entity';
+import { ExecutableEntity } from '../../_helpers';
 import { ExerciseEntity } from './exercise.entity';
 
 const { CREATE, UPDATE } = CrudValidationGroups;

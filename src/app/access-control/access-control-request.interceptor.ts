@@ -2,11 +2,11 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nes
 import { Permission } from 'accesscontrol';
 import { Observable } from 'rxjs';
 
-import { AppLogger } from '..';
+import { AppLogger } from '../app.logger';
 
 /**
- * Interceptor that automatically filter request attributes based on access control
- * permissions.
+ * Interceptor that automatically filters request attributes based on access
+ * control permissions.
  */
 @Injectable()
 export class AccessControlRequestInterceptor implements NestInterceptor {
@@ -14,13 +14,14 @@ export class AccessControlRequestInterceptor implements NestInterceptor {
     private logger = new AppLogger(AccessControlRequestInterceptor.name);
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+        this.logger.debug('intercepting request for access control filtering ...');
+
         const request = context.switchToHttp().getRequest();
-        const { permissions } = request;
 
         this.logger.silly('before ... ' + JSON.stringify(request.body));
 
-        if (permissions) {
-            const result = permissions.reduce((acc: any, permission: Permission) => {
+        if (request.permissions) {
+            const result = request.permissions.reduce((acc: any, permission: Permission) => {
                 return permission.filter(acc);
             }, request.body);
             request.body = result;

@@ -1,7 +1,6 @@
 import { InputType, Field } from 'type-graphql';
 import { IsEnum } from 'class-validator';
 
-import { ProjectAccessLevel } from '../entity/project-access-level.enum';
 import { UserContextRole } from 'app/access-control/user-context-role.enum';
 
 @InputType()

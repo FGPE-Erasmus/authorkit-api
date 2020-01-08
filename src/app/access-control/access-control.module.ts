@@ -9,7 +9,7 @@ import { ACOptions } from './ac-options.interface';
 export class AccessControlModule {
 
     /**
-     * Register a pre-defined roles
+     * Register pre-defined roles
      * @param {AccessRulesBuilder} rules list containing the access grant
      * @param {ACOptions} options  configurable options definitions. See the structure of this object in the examples.
      */

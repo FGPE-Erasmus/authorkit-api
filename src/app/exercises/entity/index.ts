@@ -2,12 +2,6 @@ export * from './exercise-difficulty.enum';
 export * from './exercise-status.enum';
 export * from './exercise-type.enum';
 export * from './resource-type.enum';
-export * from './text-format.enum';
-
-export * from './code.entity';
-export * from './executable.entity';
-export * from './formatted-text.entity';
-export * from './resource.entity';
 
 export * from './exercise-static-corrector.entity';
 export * from './exercise-dynamic-corrector.entity';

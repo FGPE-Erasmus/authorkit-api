@@ -1,14 +1,15 @@
 import { ApiModelProperty } from '@nestjs/swagger';
 import { Entity, Column, OneToMany, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Field } from 'type-graphql';
-import { IsString, IsOptional, Length, MaxLength, IsEnum, IsNotEmpty, Validate, IsDefined, IsEmpty } from 'class-validator';
+import { IsString, IsOptional, Length, MaxLength, IsEnum, IsDefined, IsEmpty } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
-import { ExtendedEntity, GithubReponameValidator, GithubUsernameValidator, Lazy } from '../../_helpers';
+import { ExtendedEntity, Lazy } from '../../_helpers';
 import { UserEntity } from '../../user/entity/user.entity';
+import { PermissionEntity } from '../../permissions/entity/permission.entity';
 import { ExerciseEntity } from '../../exercises/entity/exercise.entity';
+import { GamificationLayerEntity } from '../../gamification-layers/entity';
 import { ProjectStatus } from './project-status.enum';
-import { PermissionEntity } from './permission.entity';
 
 const { CREATE, UPDATE } = CrudValidationGroups;
 
@@ -42,7 +43,7 @@ export class ProjectEntity extends ExtendedEntity {
     @ApiModelProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
-    @ManyToOne(type => UserEntity, user => user.projects)
+    @ManyToOne(() => UserEntity, user => user.projects)
     @JoinColumn({ name: 'owner_id' })
     @Column('uuid', { nullable: false })
     @Field()
@@ -64,7 +65,7 @@ export class ProjectEntity extends ExtendedEntity {
         enum: ProjectStatus,
         default: ProjectStatus.DRAFT
     })
-    @Field(type => ProjectStatus)
+    @Field(() => ProjectStatus)
     public status: ProjectStatus = ProjectStatus.DRAFT;
 
     /* @ApiModelProperty()
@@ -96,6 +97,10 @@ export class ProjectEntity extends ExtendedEntity {
     @OneToMany(() => ExerciseEntity, exercise => exercise.project_id, { lazy: true })
     @Field(() => [ExerciseEntity])
     public exercises: Lazy<ExerciseEntity[]>;
+
+    @OneToMany(() => GamificationLayerEntity, gl => gl.project_id, { lazy: true })
+    @Field(() => [GamificationLayerEntity])
+    public gamification_layers: Lazy<GamificationLayerEntity[]>;
 
     /* public getSshCloneUrl(): string {
         return `git@github.com:${this.repo_owner}/${this.repo_name}.git`;

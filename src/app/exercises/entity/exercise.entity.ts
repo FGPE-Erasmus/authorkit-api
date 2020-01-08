@@ -4,8 +4,9 @@ import { CrudValidationGroups } from '@nestjsx/crud';
 import { Field } from 'type-graphql';
 import { IsString, MaxLength, IsEnum, IsNotEmpty, Validate, IsEmpty, IsOptional, IsDefined, IsUUID, IsArray } from 'class-validator';
 
-import { UserEntity } from '../../user/entity';
-import { ProjectEntity } from '../../project/entity';
+import { TrackedFileEntity } from '../../_helpers';
+import { UserEntity } from '../../user/entity/user.entity';
+import { ProjectEntity } from '../../project/entity/project.entity';
 
 import { ExerciseDifficulty } from './exercise-difficulty.enum';
 import { ExerciseType } from './exercise-type.enum';
@@ -23,7 +24,6 @@ import { ExerciseSolutionEntity } from './exercise-solution.entity';
 import { ExerciseTemplateEntity } from './exercise-template.entity';
 import { ExerciseTestSetEntity } from './exercise-test-set.entity';
 import { ExerciseTestEntity } from './exercise-test.entity';
-import { TrackedFileEntity } from './tracked-file.entity';
 
 const { CREATE, UPDATE } = CrudValidationGroups;
 
@@ -68,7 +68,7 @@ export class ExerciseEntity extends TrackedFileEntity {
     @IsDefined({ groups: [CREATE] })
     @IsNotEmpty({ always: true })
     @IsUUID('4', { always: true })
-    @ManyToOne(() => ProjectEntity, project => project.id, { onDelete: 'CASCADE' })
+    @ManyToOne(() => ProjectEntity, project => project.exercises, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'project_id' })
     @Column('uuid', { nullable: false })
     public project_id: string;

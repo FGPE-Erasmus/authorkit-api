@@ -30,7 +30,7 @@ CrudConfigService.load({
     routes: {
         exclude: ['createManyBase'],
         updateOneBase: {
-            allowParamsOverride: true
+            allowParamsOverride: false
         },
         deleteOneBase: {
             returnDeleted: true

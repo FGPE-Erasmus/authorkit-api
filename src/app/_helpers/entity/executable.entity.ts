@@ -1,5 +1,5 @@
 import { ApiModelProperty } from '@nestjs/swagger';
-import { Column, PrimaryColumn } from 'typeorm';
+import { Column } from 'typeorm';
 import { Field } from 'type-graphql';
 import { IsOptional, IsDefined, IsString, MaxLength, IsEmpty } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';

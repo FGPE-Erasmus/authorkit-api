@@ -4,7 +4,7 @@ import { Field } from 'type-graphql';
 import { IsOptional, IsDefined, IsEmpty, IsUUID } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
-import { CodeEntity } from './code.entity';
+import { CodeEntity } from '../../_helpers';
 import { ExerciseEntity } from './exercise.entity';
 
 const { CREATE, UPDATE } = CrudValidationGroups;

@@ -1,7 +1,8 @@
-import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
-import { DeepPartial } from '../../_helpers/database';
-import { UserEntity } from '../../user/entity';
+import { sign, verify } from 'jsonwebtoken';
+
 import { config } from '../../../config';
+import { DeepPartial } from '../../_helpers/database/deep-partial';
+import { UserEntity } from '../../user/entity/user.entity';
 import { TokenDto } from '../dto/token.dto';
 
 export async function createAuthToken({ id }: DeepPartial<UserEntity>) {

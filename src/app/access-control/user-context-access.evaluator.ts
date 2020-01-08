@@ -1,3 +1,3 @@
-import { UserContextAccess } from './user-context-access.interface';
+import { IUserContextAccess } from './user-context-access.interface';
 
-export type UserContextAccessEvaluator = () => UserContextAccess | Promise<UserContextAccess>;
+export type UserContextAccessEvaluator = () => IUserContextAccess | Promise<IUserContextAccess>;

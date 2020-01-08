@@ -1,8 +1,8 @@
 import { Column } from 'typeorm';
 import { IsOptional } from 'class-validator';
-
-import { ExtendedEntity } from '../../_helpers';
 import { Exclude } from 'class-transformer';
+
+import { ExtendedEntity } from './extended-entity';
 
 export class TrackedFileEntity extends ExtendedEntity {
 

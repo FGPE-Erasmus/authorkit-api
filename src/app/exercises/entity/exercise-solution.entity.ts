@@ -3,7 +3,7 @@ import { Entity, PrimaryColumn, ManyToOne, Column, JoinColumn, PrimaryGeneratedC
 import { Field } from 'type-graphql';
 import { IsDefined, IsOptional, IsEmpty, IsUUID } from 'class-validator';
 
-import { CodeEntity } from './code.entity';
+import { CodeEntity } from '../../_helpers';
 import { ExerciseEntity } from './exercise.entity';
 import { CrudValidationGroups } from '@nestjsx/crud';
 

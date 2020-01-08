@@ -6,7 +6,7 @@ import { InjectAccessRulesBuilder } from './decorators/inject-access-rules-build
 import { AccessRulesBuilder } from './access-rules.builder';
 import { Role } from './role.interface';
 import { UserContextAccessEvaluator } from './user-context-access.evaluator';
-import { UserContextAccess } from './user-context-access.interface';
+import { IUserContextAccess } from './user-context-access.interface';
 import { ResourcePossession } from './resource-possession.enum';
 
 @Injectable()
@@ -55,7 +55,7 @@ export class ACGuard<User extends any = any> implements CanActivate {
         return user.roles;
     }
 
-    protected async getUserAccessInfoForContext(context: ExecutionContext): Promise<UserContextAccess> {
+    protected async getUserAccessInfoForContext(context: ExecutionContext): Promise<IUserContextAccess> {
         const contextAccessInfoEvaluator = this.reflector.get<UserContextAccessEvaluator>(
             'access-evaluator', context.getHandler());
         if (!contextAccessInfoEvaluator) {

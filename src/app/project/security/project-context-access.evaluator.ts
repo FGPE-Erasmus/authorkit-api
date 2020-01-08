@@ -1,9 +1,9 @@
 import { RequestContext } from '../../_helpers';
 import { UserContextAccessEvaluator } from '../../access-control/user-context-access.evaluator';
-import { UserContextAccess } from '../../access-control/user-context-access.interface';
+import { IUserContextAccess } from '../../access-control/user-context-access.interface';
 
 export const evaluateUserContextAccess: UserContextAccessEvaluator =
-    async function (): Promise<UserContextAccess> {
+    async function (): Promise<IUserContextAccess> {
         const req = RequestContext.currentRequest();
         const user = req['user'];
         if (!user || !user.permissions) {
