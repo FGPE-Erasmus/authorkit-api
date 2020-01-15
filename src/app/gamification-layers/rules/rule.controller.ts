@@ -91,7 +91,7 @@ export class RuleController implements CrudController<RuleEntity> {
         let accessLevel: AccessLevel;
         if (glFilterIndex < 0 && challengeFilterIndex < 0) {
             throw new BadRequestException('Rules must be listed per gamification layer or challenge');
-        } else if (glFilterIndex > 0) {
+        } else if (glFilterIndex >= 0) {
             accessLevel = await this.glservice.getAccessLevel(
                 parsedReq.parsed.filter[glFilterIndex].value, user.id);
         } else {

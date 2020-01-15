@@ -20,22 +20,22 @@ export class LeaderboardEmitter {
 
     constructor() { }
 
-    public sendCreate(challenge: LeaderboardEntity): void {
-        this.client.send({ cmd: LEADERBOARD_CMD_CREATE }, challenge)
+    public sendCreate(leaderboard: LeaderboardEntity): void {
+        this.client.send({ cmd: LEADERBOARD_CMD_CREATE }, leaderboard)
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });
     }
 
-    public sendUpdate(challenge: LeaderboardEntity): void {
-        this.client.send({ cmd: LEADERBOARD_CMD_UPDATE }, challenge)
+    public sendUpdate(leaderboard: LeaderboardEntity): void {
+        this.client.send({ cmd: LEADERBOARD_CMD_UPDATE }, leaderboard)
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });
     }
 
-    public sendDelete(challenge: LeaderboardEntity): void {
-        this.client.send({ cmd: LEADERBOARD_CMD_DELETE }, challenge)
+    public sendDelete(leaderboard: LeaderboardEntity): void {
+        this.client.send({ cmd: LEADERBOARD_CMD_DELETE }, leaderboard)
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });

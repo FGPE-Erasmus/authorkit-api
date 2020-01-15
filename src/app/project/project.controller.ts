@@ -1,101 +1,63 @@
-import { Controller, UseGuards, Post, HttpCode, HttpStatus, Param, Body, UseInterceptors } from '@nestjs/common';
+import { Controller, UseGuards, Post, HttpCode, HttpStatus, Param, Body, UseInterceptors, Req, ForbiddenException } from '@nestjs/common';
 import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody, CrudAuth } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiUseTags, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 
-import { RequestContext } from '../_helpers';
 import { AppLogger } from '../app.logger';
-import {
-    UseRoles,
-    ResourcePossession,
-    CrudOperationEnum,
-    UseContextAccessEvaluator,
-    ACGuard,
-    AccessControlRequestInterceptor,
-    AccessControlResponseInterceptor
-} from '../access-control';
-import { UserEntity } from '../user/entity/user.entity';
+import { User } from '../_helpers/decorators/user.decorator';
+import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { ProjectEntity } from './entity/project.entity';
 import { ProjectService } from './project.service';
-import { evaluateUserContextAccess } from './security/project-context-access.evaluator';
 import { ProjectCommand } from './project.command';
+import { ProjectEmitter } from './project.emitter';
 
 @ApiUseTags('projects')
 @Controller('projects')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'), ACGuard)
+@UseGuards(AuthGuard('jwt'))
 @Crud({
     model: {
         type: ProjectEntity
     },
     routes: {
-        exclude: ['createManyBase'],
         getManyBase: {
-            interceptors: [AccessControlResponseInterceptor],
-            decorators: [
-                UseRoles({
-                    resource: 'project',
-                    action: CrudOperationEnum.LIST,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
+            interceptors: [],
+            decorators: []
         },
         getOneBase: {
-            interceptors: [AccessControlResponseInterceptor],
-            decorators: [
-                UseRoles({
-                    resource: 'project',
-                    action: CrudOperationEnum.READ,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
+            interceptors: [],
+            decorators: []
+        },
+        createOneBase: {
+            interceptors: [],
+            decorators: []
         },
         updateOneBase: {
-            interceptors: [AccessControlRequestInterceptor],
-            decorators: [
-                UseRoles({
-                    resource: 'project',
-                    action: CrudOperationEnum.PATCH,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
+            interceptors: [],
+            decorators: []
         },
         replaceOneBase: {
-            interceptors: [AccessControlRequestInterceptor],
-            decorators: [
-                UseRoles({
-                    resource: 'project',
-                    action: CrudOperationEnum.UPDATE,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
+            interceptors: [],
+            decorators: []
         },
         deleteOneBase: {
             interceptors: [],
-            decorators: [
-                UseRoles({
-                    resource: 'project',
-                    action: CrudOperationEnum.DELETE,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ],
+            decorators: [],
             returnDeleted: true
         }
     },
     query: {
         join: {
             permissions: {
-                eager: true
+            },
+            exercises: {
+            },
+            gamification_layers: {
             }
         }
     }
 })
-@CrudAuth({
+/* @CrudAuth({
     property: 'user',
     filter: (user: UserEntity) => ({
         $or: [
@@ -103,14 +65,15 @@ import { ProjectCommand } from './project.command';
             { 'permissions.user_id': user.id }
         ]
     })
-})
+}) */
 export class ProjectController implements CrudController<ProjectEntity> {
 
     private logger = new AppLogger(ProjectController.name);
 
     constructor(
         readonly service: ProjectService,
-        readonly projectCmd: ProjectCommand
+        readonly emitter: ProjectEmitter,
+        readonly command: ProjectCommand
     ) { }
 
     get base(): CrudController<ProjectEntity> {
@@ -122,25 +85,101 @@ export class ProjectController implements CrudController<ProjectEntity> {
     @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'NO CONTENT' })
     public async import(): Promise<void> {
         this.logger.silly(`[importProjects] execute `);
-        return this.projectCmd.create(20);
+        return this.command.create(20);
     }
 
     @Override()
-    @UseRoles({
-        resource: 'project',
-        action: CrudOperationEnum.CREATE,
-        possession: ResourcePossession.ANY
-    })
-    @UseContextAccessEvaluator(evaluateUserContextAccess)
-    @UseInterceptors(AccessControlRequestInterceptor)
-    createOne(
-        @ParsedRequest() req: CrudRequest,
+    async getOne(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest
+    ) {
+        const accessLevel = await this.service.getAccessLevel(req.params.id, user.id);
+        if (accessLevel < AccessLevel.VIEWER) {
+            throw new ForbiddenException('You do not have sufficient privileges');
+        }
+        return this.base.getOneBase(parsedReq);
+    }
+
+    @Override()
+    async getMany(
+        @User() user: any,
+        @ParsedRequest() parsedReq: CrudRequest
+    ) {
+        parsedReq.parsed.join.push({ field: 'permissions' });
+        parsedReq.parsed.filter.push({ field: 'permissions.access_level', operator: 'gte', value: AccessLevel.VIEWER });
+        parsedReq.parsed.filter.push({ field: 'permissions.user_id', operator: 'eq', value: user.id });
+        return this.base.getManyBase(parsedReq);
+    }
+
+    @Override()
+    async createOne(
+        @User() user: any,
+        @ParsedRequest() parsedReq: CrudRequest,
         @ParsedBody() dto: ProjectEntity
     ) {
         if (!dto.owner_id) {
-            dto.owner_id = RequestContext.currentUser().id;
+            dto.owner_id = user.id;
         }
-        return this.base.createOneBase(req, dto);
+        const project = await this.base.createOneBase(parsedReq, dto);
+        this.emitter.sendCreate(project);
+        return project;
+    }
+
+    @Override()
+    async updateOne(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest,
+        @ParsedBody() dto: ProjectEntity
+    ) {
+        const accessLevel = await this.service.getAccessLevel(
+            req.params.id, user.id);
+        if (accessLevel < AccessLevel.CONTRIBUTOR) {
+            throw new ForbiddenException(`You do not have sufficient privileges`);
+        }
+        const project = await this.base.updateOneBase(parsedReq, dto);
+        this.emitter.sendUpdate(project);
+        return project;
+    }
+
+    @Override()
+    async replaceOne(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest,
+        @ParsedBody() dto: ProjectEntity
+    ) {
+        const accessLevel = await this.service.getAccessLevel(
+            req.params.id, user.id);
+        if (accessLevel < AccessLevel.CONTRIBUTOR) {
+            throw new ForbiddenException(`You do not have sufficient privileges`);
+        }
+        if (!dto.owner_id) {
+            dto.owner_id = user.id;
+        }
+        const project = await this.base.replaceOneBase(parsedReq, dto);
+        this.emitter.sendUpdate(project);
+        return project;
+    }
+
+    @Override()
+    async deleteOne(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest
+    ) {
+        const accessLevel = await this.service.getAccessLevel(
+            req.params.id, user.id);
+        if (accessLevel < AccessLevel.CONTRIBUTOR) {
+            throw new ForbiddenException(
+                `You do not have sufficient privileges`);
+        }
+        const project = await this.base.deleteOneBase(parsedReq);
+        if (project) {
+            this.emitter.sendDelete(project);
+        }
+        return project;
     }
 }
 

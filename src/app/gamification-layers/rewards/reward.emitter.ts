@@ -20,22 +20,22 @@ export class RewardEmitter {
 
     constructor() { }
 
-    public sendCreate(challenge: RewardEntity): void {
-        this.client.send({ cmd: REWARD_CMD_CREATE }, challenge)
+    public sendCreate(reward: RewardEntity): void {
+        this.client.send({ cmd: REWARD_CMD_CREATE }, reward)
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });
     }
 
-    public sendUpdate(challenge: RewardEntity): void {
-        this.client.send({ cmd: REWARD_CMD_UPDATE }, challenge)
+    public sendUpdate(reward: RewardEntity): void {
+        this.client.send({ cmd: REWARD_CMD_UPDATE }, reward)
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });
     }
 
-    public sendDelete(challenge: RewardEntity): void {
-        this.client.send({ cmd: REWARD_CMD_DELETE }, challenge)
+    public sendDelete(reward: RewardEntity): void {
+        this.client.send({ cmd: REWARD_CMD_DELETE }, reward)
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });

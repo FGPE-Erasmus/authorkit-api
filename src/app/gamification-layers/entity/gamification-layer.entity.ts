@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { CrudValidationGroups } from '@nestjsx/crud';
 import { ApiModelProperty } from '@nestjs/swagger';
-import { IsOptional, IsEmpty, IsDefined, IsNotEmpty, IsString, MaxLength, IsUUID, IsArray } from 'class-validator';
+import { IsOptional, IsEmpty, IsDefined, IsNotEmpty, IsString, MaxLength, IsUUID, IsArray, IsEnum } from 'class-validator';
 import { Field } from 'type-graphql';
 
 import { TrackedFileEntity } from '../../_helpers/entity/tracked-file.entity';
@@ -12,6 +12,7 @@ import { RuleEntity } from '../rules/entity/rule.entity';
 import { RewardEntity } from '../rewards/entity/reward.entity';
 import { LeaderboardEntity } from '../leaderboards/entity/leaderboard.entity';
 import { FeedbackGeneratorEntity } from './feedback-generator.entity';
+import { GamificationLayerStatus } from './gamification-layer-status.enum';
 
 const { CREATE, UPDATE } = CrudValidationGroups;
 
@@ -70,38 +71,33 @@ export class GamificationLayerEntity extends TrackedFileEntity {
     @Column('simple-array', { default: [] })
     public keywords: string[];
 
-    @OneToMany(() => ChallengeEntity, challenge => challenge.gl_id, {
-        cascade: true,
-        eager: true
+    @ApiModelProperty()
+    @IsOptional({ always: true })
+    @IsEnum(GamificationLayerStatus, { always: true })
+    @Column({
+        type: 'enum',
+        enum: GamificationLayerStatus,
+        default: GamificationLayerStatus.DRAFT
     })
+    public status: GamificationLayerStatus;
+
+    @OneToMany(() => ChallengeEntity, challenge => challenge.gl_id)
     @Field(() => [ChallengeEntity])
     public challenges: ChallengeEntity[];
 
-    @OneToMany(() => RuleEntity, rule => rule.gl_id, {
-        cascade: true,
-        eager: true
-    })
+    @OneToMany(() => RuleEntity, rule => rule.gl_id)
     @Field(() => [RuleEntity])
     public rules: RuleEntity[];
 
-    @OneToMany(() => RewardEntity, reward => reward.gl_id, {
-        cascade: true,
-        eager: true
-    })
+    @OneToMany(() => RewardEntity, reward => reward.gl_id)
     @Field(() => [RewardEntity])
     public rewards: RewardEntity[];
 
-    @OneToMany(() => LeaderboardEntity, leaderboard => leaderboard.gl_id, {
-        cascade: true,
-        eager: true
-    })
+    @OneToMany(() => LeaderboardEntity, leaderboard => leaderboard.gl_id)
     @Field(() => [LeaderboardEntity])
     public leaderboards: LeaderboardEntity[];
 
-    @OneToMany(() => FeedbackGeneratorEntity, fg => fg.gl_id, {
-        cascade: true,
-        eager: true
-    })
+    @OneToMany(() => FeedbackGeneratorEntity, fg => fg.gl_id)
     @Field(() => [FeedbackGeneratorEntity])
     public feedback_generators: FeedbackGeneratorEntity[];
 }

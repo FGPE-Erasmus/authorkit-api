@@ -1,7 +1,7 @@
 import { ApiModelProperty } from '@nestjs/swagger';
-import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, OneToMany, ManyToMany, JoinTable, OneToOne, RelationId } from 'typeorm';
 import { Field } from 'type-graphql';
-import { IsOptional, IsEmpty, IsDefined, IsUUID, IsNotEmpty, IsString, MaxLength, IsEnum, IsArray } from 'class-validator';
+import { IsOptional, IsEmpty, IsDefined, IsUUID, IsNotEmpty, IsString, MaxLength, IsEnum, IsArray, IsNumber } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
 import { TrackedFileEntity } from '../../../_helpers/entity/tracked-file.entity';
@@ -28,7 +28,7 @@ export class RewardEntity extends TrackedFileEntity {
     @IsUUID('4', { always: true })
     @ManyToOne(() => GamificationLayerEntity, gl => gl.rewards, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'gl_id' })
-    @Column('uuid', { nullable: true })
+    @Column('uuid', { nullable: false })
     @Field()
     public gl_id: string;
 
@@ -60,7 +60,8 @@ export class RewardEntity extends TrackedFileEntity {
     public description: string;
 
     @ApiModelProperty()
-    @IsOptional({ always: true })
+    @IsOptional({ groups: [UPDATE] })
+    @IsDefined({ groups: [CREATE] })
     @IsEnum(RewardKind, { always: true })
     @Column({
         type: 'enum',
@@ -69,39 +70,79 @@ export class RewardEntity extends TrackedFileEntity {
     public kind: RewardKind;
 
     @ApiModelProperty()
-    @ManyToMany(() => ExerciseEntity)
-    @JoinTable()
-    @Field(() => [ExerciseEntity])
-    public unlockables: ExerciseEntity[];
+    @IsOptional({ always: true })
+    @IsNumber({ allowNaN: false, allowInfinity: false }, { always: true })
+    @Column('real', { nullable: true })
+    @Field()
+    public amount: number;
 
     @ApiModelProperty()
-    @ManyToMany(() => ExerciseEntity)
-    @JoinTable()
+    @ManyToMany(() => ExerciseEntity, exercise => exercise.unlocked_by)
+    @JoinTable({
+        joinColumn: { name: 'reward_id', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'exercise_id', referencedColumnName: 'id' }
+    })
     @Field(() => [ExerciseEntity])
-    public revealables: ExerciseEntity[];
+    public unlockable_exercises: ExerciseEntity[];
+
+    @RelationId((reward: RewardEntity) => reward.unlockable_exercises)
+    public unlockable_exercise_ids: string[];
 
     @ApiModelProperty()
-    @IsOptional({ groups: [UPDATE] })
-    @IsDefined({ groups: [CREATE] })
+    @ManyToMany(() => ChallengeEntity, challenge => challenge.unlocked_by)
+    @JoinTable({
+        joinColumn: { name: 'reward_id', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'challenge_id', referencedColumnName: 'id' }
+    })
+    @Field(() => [ChallengeEntity])
+    public unlockable_challenges: ChallengeEntity[];
+
+    @RelationId((reward: RewardEntity) => reward.unlockable_challenges)
+    public unlockable_challenge_ids: string[];
+
+    @ApiModelProperty()
+    @ManyToMany(() => ExerciseEntity, exercise => exercise.revealed_by)
+    @JoinTable({
+        joinColumn: { name: 'reward_id', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'exercise_id', referencedColumnName: 'id' }
+    })
+    @Field(() => [ExerciseEntity])
+    public revealable_exercises: ExerciseEntity[];
+
+    @RelationId((reward: RewardEntity) => reward.revealable_exercises)
+    public revealable_exercise_ids: string[];
+
+    @ApiModelProperty()
+    @ManyToMany(() => ChallengeEntity, challenge => challenge.revealed_by)
+    @JoinTable({
+        joinColumn: { name: 'reward_id', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'challenge_id', referencedColumnName: 'id' }
+    })
+    @Field(() => [ChallengeEntity])
+    public revealable_challenges: ChallengeEntity[];
+
+    @RelationId((reward: RewardEntity) => reward.revealable_challenges)
+    public revealable_challenge_ids: string[];
+
+    @ApiModelProperty()
+    @IsOptional({ always: true })
     @IsArray({ always: true })
     @IsString({ always: true, each: true })
     @MaxLength(250, { always: true, each: true })
-    @Column('simple-array', { default: [] })
+    @Column('simple-array', { default: '' })
     public hints: string[];
 
     @ApiModelProperty()
-    @IsOptional({ groups: [UPDATE] })
-    @IsDefined({ groups: [CREATE] })
+    @IsOptional({ always: true })
     @IsArray({ always: true })
     @IsString({ always: true, each: true })
     @MaxLength(250, { always: true, each: true })
-    @Column('simple-array', { default: [] })
+    @Column('simple-array', { default: '' })
     public congratulations: string[];
 
-    @OneToMany(() => CriteriaEntity, criteria => criteria.reward_id, {
-        cascade: true,
-        eager: true
-    })
-    @Field(() => [CriteriaEntity])
-    public criteria: CriteriaEntity[];
+    @ApiModelProperty()
+    @IsOptional({ always: true })
+    @Column('simple-json', { nullable: true })
+    @Field(() => CriteriaEntity)
+    public criteria: CriteriaEntity;
 }

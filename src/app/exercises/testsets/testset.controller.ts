@@ -1,19 +1,19 @@
-import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
+import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor, Req, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { Crud, CrudController } from '@nestjsx/crud';
+import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
 
 import { AppLogger } from '../../app.logger';
-import { ACGuard, UseRoles, CrudOperationEnum, ResourcePossession, UseContextAccessEvaluator } from '../../access-control';
-import { evaluateUserContextAccess } from '../../project/security/project-context-access.evaluator';
+import { User } from '../../_helpers/decorators/user.decorator';
+import { AccessLevel } from '../../permissions/entity/access-level.enum';
+import { ExerciseTestSetEntity } from '../entity/exercise-test-set.entity';
+import { ExerciseService } from '../exercise.service';
 import { TestSetService } from './testset.service';
-import { ExerciseTestSetEntity } from '../entity';
 
 @Controller('exercises/:exercise_id/testsets')
 @ApiUseTags('exercises/:exercise_id/testsets')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'), ACGuard)
-@UseInterceptors(ClassSerializerInterceptor)
+@UseGuards(AuthGuard('jwt'))
 @Crud({
     model: {
         type: ExerciseTestSetEntity
@@ -32,69 +32,27 @@ import { ExerciseTestSetEntity } from '../entity';
     routes: {
         getManyBase: {
             interceptors: [],
-            decorators: [
-                UseRoles({
-                    resource: 'exercise',
-                    action: CrudOperationEnum.LIST,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
+            decorators: []
         },
         getOneBase: {
             interceptors: [],
-            decorators: [
-                UseRoles({
-                    resource: 'exercise',
-                    action: CrudOperationEnum.READ,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
+            decorators: []
         },
         createOneBase: {
             interceptors: [],
-            decorators: [
-                UseRoles({
-                    resource: 'exercise',
-                    action: CrudOperationEnum.PATCH,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
+            decorators: []
         },
         updateOneBase: {
             interceptors: [],
-            decorators: [
-                UseRoles({
-                    resource: 'exercise',
-                    action: CrudOperationEnum.PATCH,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
+            decorators: []
         },
         replaceOneBase: {
             interceptors: [],
-            decorators: [
-                UseRoles({
-                    resource: 'exercise',
-                    action: CrudOperationEnum.UPDATE,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
+            decorators: []
         },
         deleteOneBase: {
             interceptors: [],
-            decorators: [
-                UseRoles({
-                    resource: 'exercise',
-                    action: CrudOperationEnum.DELETE,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ],
+            decorators: [],
             returnDeleted: true
         }
     }
@@ -104,10 +62,98 @@ export class TestSetController implements CrudController<ExerciseTestSetEntity> 
     private logger = new AppLogger(TestSetController.name);
 
     constructor(
-        readonly service: TestSetService
+        readonly service: TestSetService,
+        readonly exerciseService: ExerciseService
     ) {}
 
     get base(): CrudController<ExerciseTestSetEntity> {
         return this;
+    }
+
+    @Override()
+    async getOne(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest
+    ) {
+        const accessLevel = await this.exerciseService.getAccessLevel(req.params.exercise_id, user.id);
+        if (accessLevel < AccessLevel.VIEWER) {
+            throw new ForbiddenException('You do not have sufficient privileges');
+        }
+        return this.base.getOneBase(parsedReq);
+    }
+
+    @Override()
+    async getMany(
+        @User() user: any,
+        @ParsedRequest() parsedReq: CrudRequest
+    ) {
+        const exerciseFilterIndex = parsedReq.parsed.filter
+            .findIndex(f => f.field === 'exercise_id' && f.operator === 'eq');
+        if (exerciseFilterIndex < 0) {
+            throw new BadRequestException('Test sets must be listed per exercise');
+        }
+        const accessLevel = await this.exerciseService.getAccessLevel(
+            parsedReq.parsed.filter[exerciseFilterIndex].value, user.id);
+        if (accessLevel < AccessLevel.VIEWER) {
+            throw new ForbiddenException(`You do not have sufficient privileges`);
+        }
+        return this.base.getManyBase(parsedReq);
+    }
+
+    @Override()
+    async createOne(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest,
+        @ParsedBody() dto: ExerciseTestSetEntity
+    ) {
+        const accessLevel = await this.exerciseService.getAccessLevel(req.params.exercise_id, user.id);
+        if (accessLevel < AccessLevel.CONTRIBUTOR) {
+            throw new ForbiddenException(`You do not have sufficient privileges`);
+        }
+        return this.base.createOneBase(parsedReq, dto);
+    }
+
+    @Override()
+    async updateOne(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest,
+        @ParsedBody() dto: ExerciseTestSetEntity
+    ) {
+        const accessLevel = await this.exerciseService.getAccessLevel(req.params.exercise_id, user.id);
+        if (accessLevel < AccessLevel.CONTRIBUTOR) {
+            throw new ForbiddenException(`You do not have sufficient privileges`);
+        }
+        return this.base.updateOneBase(parsedReq, dto);
+    }
+
+    @Override()
+    async replaceOne(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest,
+        @ParsedBody() dto: ExerciseTestSetEntity
+    ) {
+        const accessLevel = await this.exerciseService.getAccessLevel(req.params.exercise_id, user.id);
+        if (accessLevel < AccessLevel.CONTRIBUTOR) {
+            throw new ForbiddenException(`You do not have sufficient privileges`);
+        }
+        return this.base.replaceOneBase(parsedReq, dto);
+    }
+
+    @Override()
+    async deleteOne(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest
+    ) {
+        const accessLevel = await this.exerciseService.getAccessLevel(req.params.exercise_id, user.id);
+        if (accessLevel < AccessLevel.CONTRIBUTOR) {
+            throw new ForbiddenException(
+                `You do not have sufficient privileges`);
+        }
+        return this.base.deleteOneBase(parsedReq);
     }
 }

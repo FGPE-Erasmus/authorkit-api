@@ -1,16 +1,20 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { classToPlain } from 'class-transformer';
 import NodeCache = require('node-cache');
 
 import { config } from '../../config';
 import { AppLogger } from '../app.logger';
 import { RequestContext } from '../_helpers/request-context';
-import { RepositoryDto, FileCommitResponseDto } from './dto';
+import { asyncForEach } from '../_helpers';
+import { UserEntity } from '../user/entity/user.entity';
+import { UserService } from '../user/user.service';
 import { ProjectEntity } from '../project/entity/project.entity';
 import { ExerciseEntity } from '../exercises/entity/exercise.entity';
-import { GithubClient } from './github-api.client';
-import { FileContentsDto } from './dto/file-contents.dto';
 
+import { GithubClient } from './github-api.client';
+import { FileCommitResponseDto, FileContentsDto, RepositoryDto, TreeDto } from './dto';
 
 @Injectable()
 export class GithubApiService {
@@ -19,8 +23,8 @@ export class GithubApiService {
 
     private client_cache: NodeCache = new NodeCache({ maxKeys: 100, stdTTL: 0 });
 
-    constructor(/*
-        @InjectRepository(UserEntity) protected readonly userRepository: Repository<UserEntity>,
+    constructor(
+        readonly userService: UserService/*,
         @InjectRepository(ProjectEntity) protected readonly projectRepository: Repository<ProjectEntity> */) {
     }
 
@@ -90,7 +94,7 @@ export class GithubApiService {
             this.logger.debug(`[createOrUpdateExerciseTree] Create or update tree ${exercise.id} in Github repository \
                 ${exercise.project_id}`);
             const client = await this.getClientForToken(config.githubApi.secret);
-            const user = RequestContext.currentUser();
+            const user = await this.userService.findOne(exercise.owner_id);
             const result = await client.createOrUpdateFile(exercise.project_id, `${exercise.id}/metadata.json`, {
                 author: {
                     name: `${user.first_name} ${user.last_name}`,
@@ -120,13 +124,13 @@ export class GithubApiService {
         }
     }
 
-    public async deleteExerciseTree(exercise: ExerciseEntity): Promise<FileCommitResponseDto> {
+    public async deleteExerciseTree(exercise: ExerciseEntity): Promise<void> {
         try {
             this.logger.debug(`[deleteExerciseTree] Delete tree ${exercise.id} in Github repository \
                 ${exercise.project_id}`);
             const client = await this.getClientForToken(config.githubApi.secret);
-            const user = RequestContext.currentUser();
-            const result = await client.deleteFile(exercise.project_id, `${exercise.id}/metadata.json`, {
+            const user = await this.userService.findOne(exercise.owner_id);
+            await client.deleteFolder(exercise.project_id, exercise.id, {
                 author: {
                     name: `${user.first_name} ${user.last_name}`,
                     email: `${user.email}`
@@ -134,16 +138,10 @@ export class GithubApiService {
                 commiter: {
                     name: `${user.first_name} ${user.last_name}`,
                     email: `${user.email}`
-                },
-                sha: exercise.sha || undefined,
-                message: `Removed exercise ${exercise.id}`
+                }
             });
-            if (!result) {
-                throw new Error('Failed to delete tree.');
-            }
             this.logger.debug(`[deleteExerciseTree] Tree ${exercise.id} deleted in Github repository \
                 ${exercise.project_id}`);
-            return result;
         } catch (err) {
             this.logger.error(
                 `[deleteExerciseTree] Tree ${exercise.id} not deleted in Github repository ${exercise.project_id}, \
@@ -160,7 +158,6 @@ export class GithubApiService {
             this.logger.debug(`[getExerciseFileContents] Get ${pathname} contents in ${exercise.id} \
                 in Github repository ${exercise.project_id}`);
             const client = await this.getClientForToken(config.githubApi.secret);
-            const user = RequestContext.currentUser();
             const result = await client.getFileContents(
                 exercise.project_id,
                 pathname
@@ -187,7 +184,7 @@ export class GithubApiService {
             this.logger.debug(`[createExerciseFile] Create ${type} in ${exercise.id} \
                 in Github repository ${exercise.project_id}`);
             const client = await this.getClientForToken(config.githubApi.secret);
-            const user = RequestContext.currentUser();
+            const user = await this.userService.findOne(exercise.owner_id);
             const result = await client.createOrUpdateFile(
                 exercise.project_id,
                 `${exercise.id}/${type}/${file.originalname}`,
@@ -226,7 +223,7 @@ export class GithubApiService {
             this.logger.debug(`[updateExerciseFile] Update ${type} in ${exercise.id} \
                 in Github repository ${exercise.project_id}`);
             const client = await this.getClientForToken(config.githubApi.secret);
-            const user = RequestContext.currentUser();
+            const user = await this.userService.findOne(exercise.owner_id);
             const new_path = `${exercise.id}/${type}/${file.originalname}`;
             if (file_entity.pathname !== new_path) {
                 await this.deleteExerciseFile(exercise, file_entity);
@@ -273,7 +270,7 @@ export class GithubApiService {
             this.logger.debug(`[deleteExerciseFile] Delete file ${file_entity.pathname} in Github repository \
                 ${exercise.project_id}`);
             const client = await this.getClientForToken(config.githubApi.secret);
-            const user = RequestContext.currentUser();
+            const user = await this.userService.findOne(exercise.owner_id);
             const result = await client.deleteFile(exercise.project_id, file_entity.pathname, {
                 author: {
                     name: `${user.first_name} ${user.last_name}`,

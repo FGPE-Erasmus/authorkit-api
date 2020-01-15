@@ -4,6 +4,7 @@ import { MessagePattern } from '@nestjs/microservices';
 import { AppLogger } from '../../app.logger';
 
 import { REWARD_CMD_CREATE, REWARD_CMD_UPDATE, REWARD_CMD_DELETE } from './reward.constants';
+import { RewardEntity } from './entity/reward.entity';
 
 @Controller()
 export class RewardListener {
@@ -13,7 +14,7 @@ export class RewardListener {
     constructor() { }
 
     @MessagePattern({ cmd: REWARD_CMD_CREATE })
-    public async onRewardCreate(): Promise<void> {
+    public async onRewardCreate(reward: RewardEntity): Promise<void> {
         try {
             this.logger.debug(`[onRewardCreate] Create leaderboard in Github repository`);
             // TODO
@@ -24,7 +25,7 @@ export class RewardListener {
     }
 
     @MessagePattern({ cmd: REWARD_CMD_UPDATE })
-    public async onRewardUpdate(): Promise<void> {
+    public async onRewardUpdate(reward: RewardEntity): Promise<void> {
         try {
             this.logger.debug(`[onRewardUpdate] Update leaderboard in Github repository`);
             // TODO
@@ -35,13 +36,13 @@ export class RewardListener {
     }
 
     @MessagePattern({ cmd: REWARD_CMD_DELETE })
-    public async onRewardDelete(): Promise<void> {
+    public async onRewardDelete(reward: RewardEntity): Promise<void> {
         try {
-            this.logger.debug(`[onRewardDelete] Update leaderboard in Github repository`);
+            this.logger.debug(`[onRewardDelete] Delete leaderboard in Github repository`);
             // TODO
-            this.logger.debug('[onRewardDelete] Reward updated in Github repository');
+            this.logger.debug('[onRewardDelete] Reward deleted in Github repository');
         } catch (err) {
-            this.logger.error(`[onRewardDelete] Reward NOT updated in Github repository, because ${err.message}`, err.stack);
+            this.logger.error(`[onRewardDelete] Reward NOT deleted in Github repository, because ${err.message}`, err.stack);
         }
     }
 }

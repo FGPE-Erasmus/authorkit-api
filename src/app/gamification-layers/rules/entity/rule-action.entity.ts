@@ -1,34 +1,13 @@
 import { ApiModelProperty } from '@nestjs/swagger';
-import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, OneToMany, Index } from 'typeorm';
-import { Field } from 'type-graphql';
-import { IsOptional, IsEmpty, IsDefined, IsUUID, IsEnum, IsArray, IsString, MaxLength } from 'class-validator';
+import { Column } from 'typeorm';
+import { IsOptional, IsDefined, IsEnum, IsArray, IsString, MaxLength } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
-import { TrackedFileEntity } from '../../../_helpers';
 import { RuleActionType } from './rule-action-type.enum';
-import { RuleEntity } from './rule.entity';
 
 const { CREATE, UPDATE } = CrudValidationGroups;
 
-@Entity('gl-rule-action')
-export class RuleActionEntity extends TrackedFileEntity {
-
-    @ApiModelProperty()
-    @IsOptional({ groups: [UPDATE] })
-    @IsEmpty({ groups: [CREATE] })
-    @PrimaryGeneratedColumn('uuid')
-    @Field()
-    public id: string;
-
-    @ApiModelProperty()
-    @IsOptional({ always: true })
-    @IsUUID('4', { always: true })
-    @ManyToOne(() => RuleEntity, rule => rule.actions, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'rule_id' })
-    @Column('uuid', { nullable: false })
-    @Index()
-    @Field()
-    public rule_id: string;
+export class RuleActionEntity {
 
     @ApiModelProperty()
     @IsOptional({ always: true })

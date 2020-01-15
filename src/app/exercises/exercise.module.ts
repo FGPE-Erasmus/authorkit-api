@@ -5,11 +5,14 @@ import { AccessControlModule } from '../access-control/access-control.module';
 import { accessRules } from '../app.access-rules';
 import { UserModule } from '../user/user.module';
 import { ProjectModule } from '../project/project.module';
+import { GithubApiModule } from '../github-api/github-api.module';
 
 import { ExerciseCommand } from './exercise.command';
 import { ExercisePipe } from './pipe/exercise.pipe';
 import { ExerciseService } from './exercise.service';
 import { ExerciseController } from './exercise.controller';
+import { ExerciseListener } from './exercise.listener';
+import { ExerciseEmitter } from './exercise.emitter';
 import { ExerciseContextMiddleware } from './exercise-context.middleware';
 import {
     ExerciseEntity,
@@ -27,7 +30,6 @@ import {
     ExerciseTestGeneratorEntity,
     ExerciseTestSetEntity
 } from './entity';
-import { GithubApiModule } from '../github-api/github-api.module';
 import { TestController } from './tests/test.controller';
 import { TestService } from './tests/test.service';
 import { TestSetService } from './testsets/testset.service';
@@ -38,6 +40,7 @@ const PROVIDERS = [
     ExercisePipe,
     ExerciseContextMiddleware,
     ExerciseService,
+    ExerciseEmitter,
     TestSetService,
     TestService
 ];
@@ -67,7 +70,7 @@ const MODULES = [
 ];
 
 @Module({
-    controllers: [ExerciseController, TestSetController, TestController],
+    controllers: [ExerciseController, ExerciseListener, TestSetController, TestController],
     providers: [...PROVIDERS],
     imports: [...MODULES],
     exports: [ExerciseService, TestSetService, TestService]

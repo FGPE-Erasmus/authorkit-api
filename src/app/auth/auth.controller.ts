@@ -87,7 +87,7 @@ export class AuthController {
         }
         const user = await this.userService.findOne(token.id);
         if (!user) {
-            throw new NotFoundException(`User ${user.email} was not found`);
+            throw new NotFoundException('Activation token does not belong to a valid user');
         }
         if (user.is_verified) {
             throw new BadRequestException(`User ${user.email} already verified`);

@@ -59,6 +59,7 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
             throw new BadRequestException('Project id is required.');
         }
         const project = await super.replaceOne(req, dto);
+        await this.permissionService.updateOwnerPermission(project.id, project.owner_id);
         return project;
     }
 

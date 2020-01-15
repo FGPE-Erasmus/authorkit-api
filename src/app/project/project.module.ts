@@ -11,6 +11,8 @@ import { ProjectCommand } from './project.command';
 import { ProjectPipe } from './pipe/project.pipe';
 import { ProjectService } from './project.service';
 import { ProjectController } from './project.controller';
+import { ProjectListener } from './project.listener';
+import { ProjectEmitter } from './project.emitter';
 import { ProjectContextMiddleware } from './project-context.middleware';
 import { ProjectEntity } from './entity/project.entity';
 
@@ -18,7 +20,8 @@ const PROVIDERS = [
     ProjectService,
     ProjectCommand,
     ProjectPipe,
-    ProjectContextMiddleware
+    ProjectContextMiddleware,
+    ProjectEmitter
 ];
 
 const MODULES = [
@@ -31,7 +34,7 @@ const MODULES = [
 ];
 
 @Module({
-    controllers: [ProjectController],
+    controllers: [ProjectController, ProjectListener],
     providers: [...PROVIDERS],
     imports: [...MODULES],
     exports: [ProjectService]

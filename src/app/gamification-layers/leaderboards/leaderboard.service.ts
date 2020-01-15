@@ -52,13 +52,6 @@ export class LeaderboardService extends TypeOrmCrudService<LeaderboardEntity> {
 
     public async getAccessLevel(leaderboard_id: string, user_id: string): Promise<AccessLevel> {
         const leaderboard = await this.repository.findOne(leaderboard_id);
-        if (leaderboard.gl_id) {
-            return this.glService.getAccessLevel(
-                leaderboard.gl_id, user_id);
-        } else if (leaderboard.challenge_id) {
-            return this.challengeService.getAccessLevel(
-                leaderboard.challenge_id, user_id);
-        }
-        return AccessLevel.NONE;
+        return this.glService.getAccessLevel(leaderboard.gl_id, user_id);
     }
 }

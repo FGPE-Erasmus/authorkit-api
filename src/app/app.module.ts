@@ -15,6 +15,8 @@ import { ExerciseModule } from './exercises/exercise.module';
 import { GamificationLayerModule } from './gamification-layers/gamification-layer.module';
 import { ChallengeModule } from './gamification-layers/challenges/challenge.module';
 import { LeaderboardModule } from './gamification-layers/leaderboards/leaderboard.module';
+import { RewardModule } from './gamification-layers/rewards/reward.module';
+import { RuleModule } from './gamification-layers/rules/rule.module';
 import { GqlConfigService, RequestContextMiddleware } from './_helpers';
 import { ProjectContextMiddleware } from './project/project-context.middleware';
 import { ProjectController } from './project/project.controller';
@@ -37,6 +39,8 @@ import { TestSetContextMiddleware } from './exercises/testsets/testset-context.m
         GamificationLayerModule,
         ChallengeModule,
         LeaderboardModule,
+        RewardModule,
+        RuleModule,
         GraphQLModule.forRootAsync({
             imports: [SharedModule, UserModule],
             useClass: GqlConfigService

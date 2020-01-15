@@ -1,12 +1,14 @@
 import { ApiModelProperty } from '@nestjs/swagger';
-import { Entity, Column, ManyToOne, PrimaryGeneratedColumn, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, PrimaryGeneratedColumn, OneToMany, JoinColumn, ManyToMany } from 'typeorm';
 import { CrudValidationGroups } from '@nestjsx/crud';
 import { Field } from 'type-graphql';
-import { IsString, MaxLength, IsEnum, IsNotEmpty, Validate, IsEmpty, IsOptional, IsDefined, IsUUID, IsArray } from 'class-validator';
+import { IsString, MaxLength, IsEnum, IsNotEmpty, IsEmpty, IsOptional, IsDefined, IsUUID, IsArray } from 'class-validator';
 
 import { TrackedFileEntity } from '../../_helpers';
 import { UserEntity } from '../../user/entity/user.entity';
 import { ProjectEntity } from '../../project/entity/project.entity';
+import { ChallengeEntity } from '../../gamification-layers/challenges/entity/challenge.entity';
+import { RewardEntity } from '../../gamification-layers/rewards/entity/reward.entity';
 
 import { ExerciseDifficulty } from './exercise-difficulty.enum';
 import { ExerciseType } from './exercise-type.enum';
@@ -215,5 +217,17 @@ export class ExerciseEntity extends TrackedFileEntity {
     })
     @Field(() => [ExerciseTestSetEntity])
     public test_sets: ExerciseTestSetEntity[];
+
+    @ManyToMany(() => ChallengeEntity, challenge => challenge.exercises, { onDelete: 'CASCADE' })
+    @Field(() => [ChallengeEntity])
+    public challenges: ChallengeEntity[];
+
+    @ManyToMany(() => RewardEntity, reward => reward.unlockable_exercises, { onDelete: 'CASCADE' })
+    @Field(() => [RewardEntity])
+    public unlocked_by: RewardEntity[];
+
+    @ManyToMany(() => RewardEntity, reward => reward.revealable_exercises, { onDelete: 'CASCADE' })
+    @Field(() => [RewardEntity])
+    public revealed_by: RewardEntity[];
 
 }

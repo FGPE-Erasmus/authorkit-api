@@ -1,4 +1,4 @@
-import { Module, HttpModule, forwardRef } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 
 import { UserModule } from '../user/user.module';
 import { ProjectModule } from '../project/project.module';
@@ -9,8 +9,7 @@ const PROVIDERS = [
 ];
 
 const MODULES = [
-    /* HttpModule,
-    forwardRef(() => UserModule),
+    UserModule/* ,
     forwardRef(() => ProjectModule) */
 ];
 

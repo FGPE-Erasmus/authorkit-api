@@ -1,11 +1,13 @@
 import { Injectable, HttpService, InternalServerErrorException, BadRequestException, Type } from '@nestjs/common';
 import { Repository, DeepPartial } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CrudRequest } from '@nestjsx/crud';
+import { CrudRequest, GetManyDefaultResponse } from '@nestjsx/crud';
 import { TypeOrmCrudService } from '@nestjsx/crud-typeorm';
 
 import { AppLogger } from '../app.logger';
 import { getParamValueFromCrudRequest, asyncForEach } from '../_helpers';
+import { AccessLevel } from '../permissions/entity/access-level.enum';
+import { getAccessLevel } from '../_helpers/security/check-access-level';
 import { GithubApiService } from '../github-api/github-api.service';
 import { ExerciseEntity } from './entity/exercise.entity';
 import {
@@ -78,17 +80,16 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         super(repository);
     }
 
+    public async getOne(req: CrudRequest): Promise<ExerciseEntity> {
+        return super.getOne(req);
+    }
+
+    public async getMany(req: CrudRequest): Promise<GetManyDefaultResponse<ExerciseEntity> | ExerciseEntity[]> {
+        return super.getMany(req);
+    }
+
     public async createOne(req: CrudRequest, dto: ExerciseEntity): Promise<ExerciseEntity> {
-        const exercise = await super.createOne(req, dto);
-        try {
-            const result = await this.githubApiService.createOrUpdateExerciseTree(exercise);
-            await this.repository.update(exercise.id, { sha: result.content.sha });
-        } catch (e) {
-            console.log(e);
-            await this.repository.remove(exercise);
-            throw new InternalServerErrorException('Failed to create exercise tree', e);
-        }
-        return exercise;
+        return await super.createOne(req, dto);
     }
 
     public async updateOne(req: CrudRequest, dto: ExerciseEntity): Promise<ExerciseEntity> {
@@ -96,14 +97,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         if (!id) {
             throw new BadRequestException('Exercise id is required.');
         }
-        const exercise = await super.updateOne(req, dto);
-        try {
-            const result = await this.githubApiService.createOrUpdateExerciseTree(exercise);
-            await this.repository.update(exercise.id, { sha: result.content.sha });
-        } catch (e) {
-            throw new InternalServerErrorException('Failed to update exercise tree', e);
-        }
-        return exercise;
+        return await super.updateOne(req, dto);
     }
 
     public async replaceOne(req: CrudRequest, dto: ExerciseEntity): Promise<ExerciseEntity> {
@@ -111,14 +105,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         if (!id) {
             throw new BadRequestException('Exercise id is required.');
         }
-        const exercise = await super.updateOne(req, dto);
-        try {
-            const result = await this.githubApiService.createOrUpdateExerciseTree(exercise);
-            await this.repository.update(exercise.id, { sha: result.content.sha });
-        } catch (e) {
-            throw new InternalServerErrorException('Failed to update exercise tree', e);
-        }
-        return exercise;
+        return await super.replaceOne(req, dto);
     }
 
     public async deleteOne(req: CrudRequest): Promise<ExerciseEntity | void> {
@@ -126,7 +113,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         if (!id) {
             throw new BadRequestException('Exercise id is required.');
         }
-        const exercise = await this.repository.findOneOrFail(id);
+        /* const exercise = await this.repository.findOneOrFail(id);
         if (exercise.dynamic_correctors) {
             await asyncForEach(
                 exercise.dynamic_correctors,
@@ -192,8 +179,19 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                 exercise.tests.filter(c => !c.testset_id),
                 (c: ExerciseTestEntity) => this.testService.deleteFromGithub(c));
         }
-        await this.githubApiService.deleteExerciseTree(exercise);
+        await this.githubApiService.deleteExerciseTree(exercise); */
         return super.deleteOne(req);
+    }
+
+    public async getAccessLevel(exercise_id: string, user_id: string): Promise<AccessLevel> {
+        const access_level = await getAccessLevel(
+            [
+                { src_table: 'permission', dst_table: 'project', prop: 'project_id' },
+                { src_table: 'project', dst_table: 'exercise', prop: 'exercises' }
+            ],
+            `exercise.id = '${exercise_id}' AND permission.user_id = '${user_id}'`
+        );
+        return access_level;
     }
 
     /* Extra Files */

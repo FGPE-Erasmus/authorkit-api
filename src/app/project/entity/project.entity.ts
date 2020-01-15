@@ -90,11 +90,16 @@ export class ProjectEntity extends ExtendedEntity {
     @Field()
     public repo_name: string; */
 
-    @OneToMany(() => PermissionEntity, permission => permission.project_id, { cascade: true })
+    @OneToMany(() => PermissionEntity, permission => permission.project_id, {
+        cascade: false
+    })
     @Field(() => [PermissionEntity])
     public permissions: PermissionEntity[];
 
-    @OneToMany(() => ExerciseEntity, exercise => exercise.project_id, { lazy: true })
+    @OneToMany(() => ExerciseEntity, exercise => exercise.project_id, {
+        lazy: true,
+        cascade: false
+    })
     @Field(() => [ExerciseEntity])
     public exercises: Lazy<ExerciseEntity[]>;
 

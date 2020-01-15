@@ -57,16 +57,12 @@ import { GamificationLayerService } from './gamification-layer.service';
     query: {
         join: {
             'challenges': {
-                eager: true
             },
             'leaderboards': {
-                eager: true
             },
             'rewards': {
-                eager: true
             },
             'rules': {
-                eager: true
             }
         }
     }

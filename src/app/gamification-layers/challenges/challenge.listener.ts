@@ -4,6 +4,7 @@ import { MessagePattern } from '@nestjs/microservices';
 import { AppLogger } from '../../app.logger';
 
 import { CHALLENGE_CMD_CREATE, CHALLENGE_CMD_UPDATE, CHALLENGE_CMD_DELETE } from './challenge.constants';
+import { ChallengeEntity } from './entity/challenge.entity';
 
 @Controller()
 export class ChallengeListener {
@@ -13,7 +14,7 @@ export class ChallengeListener {
     constructor() { }
 
     @MessagePattern({ cmd: CHALLENGE_CMD_CREATE })
-    public async onChallengeCreate(): Promise<void> {
+    public async onChallengeCreate(challenge: ChallengeEntity): Promise<void> {
         try {
             this.logger.debug(`[onChallengeCreate] Create challenge in Github repository`);
             // TODO
@@ -24,7 +25,7 @@ export class ChallengeListener {
     }
 
     @MessagePattern({ cmd: CHALLENGE_CMD_UPDATE })
-    public async onChallengeUpdate(): Promise<void> {
+    public async onChallengeUpdate(challenge: ChallengeEntity): Promise<void> {
         try {
             this.logger.debug(`[onChallengeUpdate] Update challenge in Github repository`);
             // TODO
@@ -35,13 +36,13 @@ export class ChallengeListener {
     }
 
     @MessagePattern({ cmd: CHALLENGE_CMD_DELETE })
-    public async onChallengeDelete(): Promise<void> {
+    public async onChallengeDelete(challenge: ChallengeEntity): Promise<void> {
         try {
-            this.logger.debug(`[onChallengeDelete] Update challenge in Github repository`);
+            this.logger.debug(`[onChallengeDelete] Delete challenge in Github repository`);
             // TODO
-            this.logger.debug('[onChallengeDelete] Challenge updated in Github repository');
+            this.logger.debug('[onChallengeDelete] Challenge deleted in Github repository');
         } catch (err) {
-            this.logger.error(`[onChallengeDelete] Challenge NOT updated in Github repository, because ${err.message}`, err.stack);
+            this.logger.error(`[onChallengeDelete] Challenge NOT deleted in Github repository, because ${err.message}`, err.stack);
         }
     }
 

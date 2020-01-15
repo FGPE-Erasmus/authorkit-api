@@ -52,12 +52,6 @@ export class RewardService extends TypeOrmCrudService<RewardEntity> {
 
     public async getAccessLevel(reward_id: string, user_id: string): Promise<AccessLevel> {
         const reward = await this.repository.findOne(reward_id);
-        if (reward.gl_id) {
-            return this.glService.getAccessLevel(reward.gl_id, user_id);
-        } else if (reward.challenge_id) {
-            return this.challengeService.getAccessLevel(
-                reward.challenge_id, user_id);
-        }
-        return AccessLevel.NONE;
+        return this.glService.getAccessLevel(reward.gl_id, user_id);
     }
 }

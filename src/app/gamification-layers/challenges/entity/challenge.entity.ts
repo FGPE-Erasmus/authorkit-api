@@ -1,5 +1,5 @@
 import { ApiModelProperty } from '@nestjs/swagger';
-import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, OneToMany, ManyToMany, JoinTable, RelationId } from 'typeorm';
 import { Field } from 'type-graphql';
 import { IsOptional, IsEmpty, IsDefined, IsUUID, IsNotEmpty, IsString, MaxLength, IsArray, IsEnum, IsBoolean } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
@@ -64,8 +64,7 @@ export class ChallengeEntity extends TrackedFileEntity {
     public mode: ChallengeMode;
 
     @ApiModelProperty()
-    @IsOptional({ groups: [UPDATE] })
-    @IsDefined({ groups: [CREATE] })
+    @IsOptional({ always: true })
     @IsArray({ always: true })
     @IsString({ always: true, each: true })
     @MaxLength(150, { always: true, each: true })
@@ -130,13 +129,38 @@ export class ChallengeEntity extends TrackedFileEntity {
 
     /** refs */
 
-    @ManyToMany(() => ChallengeEntity)
-    @JoinTable()
+    @ApiModelProperty()
+    @IsOptional({ always: true })
+    @IsUUID('4', { always: true })
+    @ManyToOne(() => ChallengeEntity, challenge => challenge.sub_challenges, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'parent_challenge_id' })
+    @Column('uuid', { nullable: true })
+    @Field()
+    public parent_challenge_id: string;
+
+    @OneToMany(() => ChallengeEntity, challenge => challenge.parent_challenge_id)
     @Field(() => [ChallengeEntity])
     public sub_challenges: ChallengeEntity[];
 
-    @ManyToMany(() => ExerciseEntity)
-    @JoinTable()
+    @RelationId((challenge: ChallengeEntity) => challenge.sub_challenges)
+    public sub_challenge_ids: string[];
+
+    @ManyToMany(() => ExerciseEntity, exercise => exercise.challenges)
+    @JoinTable({
+        joinColumn: { name: 'challenge_id', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'exercise_id', referencedColumnName: 'id' }
+    })
     @Field(() => [ExerciseEntity])
     public exercises: ExerciseEntity[];
+
+    @RelationId((challenge: ChallengeEntity) => challenge.exercises)
+    public exercise_ids: string[];
+
+    @ManyToMany(() => RewardEntity, reward => reward.unlockable_exercises, { onDelete: 'CASCADE' })
+    @Field(() => [RewardEntity])
+    public unlocked_by: RewardEntity[];
+
+    @ManyToMany(() => RewardEntity, reward => reward.revealable_exercises, { onDelete: 'CASCADE' })
+    @Field(() => [RewardEntity])
+    public revealed_by: RewardEntity[];
 }

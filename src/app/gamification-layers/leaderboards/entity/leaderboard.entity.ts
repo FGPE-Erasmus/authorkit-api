@@ -24,22 +24,17 @@ export class LeaderboardEntity extends TrackedFileEntity {
     public id: string;
 
     @ApiModelProperty()
-    @IsOptional({ always: true })
-    @ValidateIf(o => !o.challenge_id || o.gl_id, { always: true })
+    @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
-    @NotSiblingOf(['challenge_id'], { always: true })
     @IsUUID('4', { always: true })
     @ManyToOne(() => GamificationLayerEntity, gl => gl.leaderboards, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'gl_id', referencedColumnName: 'id' })
-    @Column('uuid', { nullable: true })
+    @Column('uuid', { nullable: false })
     @Field()
     public gl_id: string;
 
     @ApiModelProperty()
     @IsOptional({ always: true })
-    @ValidateIf(o => !o.gl_id || o.challenge_id, { always: true })
-    @IsDefined({ groups: [CREATE] })
-    @NotSiblingOf(['gl_id'], { always: true })
     @IsUUID('4', { always: true })
     @ManyToOne(() => ChallengeEntity, challenge => challenge.leaderboards, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'challenge_id', referencedColumnName: 'id' })

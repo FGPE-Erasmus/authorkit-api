@@ -48,6 +48,22 @@ import { RewardEmitter } from './reward.emitter';
             decorators: [],
             returnDeleted: true
         }
+    },
+    query: {
+        join: {
+            gl_id: {
+            },
+            challenge_id: {
+            },
+            unlockable_exercises: {
+            },
+            unlockable_challenges: {
+            },
+            revealable_exercises: {
+            },
+            revealable_challenges: {
+            }
+        }
     }
 })
 export class RewardController implements CrudController<RewardEntity> {
@@ -91,7 +107,7 @@ export class RewardController implements CrudController<RewardEntity> {
         let accessLevel: AccessLevel;
         if (glFilterIndex < 0 && challengeFilterIndex < 0) {
             throw new BadRequestException('Rewards must be listed per gamification layer or challenge');
-        } else if (glFilterIndex > 0) {
+        } else if (glFilterIndex >= 0) {
             accessLevel = await this.glservice.getAccessLevel(
                 parsedReq.parsed.filter[glFilterIndex].value, user.id);
         } else {
@@ -110,14 +126,8 @@ export class RewardController implements CrudController<RewardEntity> {
         @ParsedRequest() parsedReq: CrudRequest,
         @ParsedBody() dto: RewardEntity
     ) {
-        let accessLevel: AccessLevel;
-        if (dto.gl_id) {
-            accessLevel = await this.glservice.getAccessLevel(
-                dto.gl_id, user.id);
-        } else {
-            accessLevel = await this.challengeservice.getAccessLevel(
-                dto.gl_id, user.id);
-        }
+        const accessLevel = await this.glservice.getAccessLevel(
+            dto.gl_id, user.id);
         if (accessLevel < AccessLevel.CONTRIBUTOR) {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }

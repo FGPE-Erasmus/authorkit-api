@@ -68,6 +68,35 @@ export class PermissionService extends TypeOrmCrudService<PermissionEntity> {
         return this.repository.save(permission);
     }
 
+    public async updateOwnerPermission(project_id: string, user_id: string): Promise<PermissionEntity> {
+        // find current owner permission
+        const permission = await this.repository.findOne({
+            where: {
+                project_id,
+                access_level: AccessLevel.OWNER
+            }
+        });
+        return permission;
+        /* if (permission.user_id === user_id) {
+            return permission;
+        }
+
+        // revoke current user permission
+        try {
+            await this.revoke(project_id, user_id);
+        } catch (error) {
+            // ignore error
+        }
+
+        // update owner permission
+        if (permission) {
+            permission.user_id = user_id;
+            return this.repository.save(permission);
+        } else {
+            return this.addOwnerPermission(project_id, user_id);
+        } */
+    }
+
     public async revoke(project_id: string, user_id: string) {
         const permission = await this.repository.findOne({
             where: {

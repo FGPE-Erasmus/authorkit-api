@@ -49,13 +49,10 @@ import { ChallengeEmitter } from './challenge.emitter';
     query: {
         join: {
             'leaderboards': {
-                eager: true
             },
             'rewards': {
-                eager: true
             },
             'rules': {
-                eager: true
             }
         }
     }

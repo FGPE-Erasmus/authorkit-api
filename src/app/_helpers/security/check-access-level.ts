@@ -37,8 +37,6 @@ export async function getAccessLevel(joins: Join[], condition: string): Promise<
     });
 
     const permission = await qb.where(condition).getMany();
-    console.log(permission);
-
     const access_level = permission.length ? permission[0].access_level : AccessLevel.NONE;
 
     return access_level;

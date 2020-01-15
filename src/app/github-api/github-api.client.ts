@@ -6,8 +6,17 @@ const Octokit = require('@octokit/rest');
 
 import { config } from '../../config';
 import { AppLogger } from '../app.logger';
-import { CreateRepoDto, RepositoryDto, UpdateRepoDto, UserDto, FileCommitDto, FileCommitResponseDto } from './dto';
-import { FileContentsDto } from './dto/file-contents.dto';
+import { asyncForEach } from '../_helpers';
+import {
+    CreateRepoDto,
+    RepositoryDto,
+    UpdateRepoDto,
+    UserDto,
+    FileCommitDto,
+    FileCommitResponseDto,
+    FileContentsDto,
+    TreeDto
+} from './dto';
 
 /**
  * Wrapper around Github Octokit REST client for authenticated users
@@ -51,6 +60,18 @@ export class GithubClient {
         }
     }
 
+    public async getTree(repo: string, tree_sha: string): Promise<TreeDto> {
+        try {
+            return from(this.octokit.git.getTree({ owner: this.owner, repo, tree_sha, recursive: 1 }))
+                .pipe(map(({ data }) => plainToClass(TreeDto, data)))
+                .toPromise();
+        } catch (e) {
+            this.logger.error(e.message, e.trace);
+            throw new Error(
+                `Failed to retrieve tree ${tree_sha} Github repository "${repo}" of "${this.owner}"`);
+        }
+    }
+
     public async updateRepository(repo: string, options: UpdateRepoDto): Promise<RepositoryDto> {
         try {
             return from(this.octokit.repos.update({ owner: this.owner, repo, ...options }))
@@ -76,6 +97,22 @@ export class GithubClient {
                     path
                 }))
                 .pipe(map(({ data }) => plainToClass(FileContentsDto, data)))
+                .toPromise();
+        } catch (e) {
+            this.logger.error(e.message, e.trace);
+            throw new Error(
+                `Failed to get contents of ${path} from Github repository "${repo}" of "${this.owner}"`);
+        }
+    }
+
+    public async getDirectoryContents(repo: string, path: string): Promise<FileContentsDto[]> {
+        try {
+            return from(this.octokit.repos.getContents({
+                    owner: this.owner,
+                    repo,
+                    path
+                }))
+                .pipe(map(({data}) => plainToClass(FileContentsDto, data as object[])))
                 .toPromise();
         } catch (e) {
             this.logger.error(e.message, e.trace);
@@ -118,6 +155,21 @@ export class GithubClient {
             throw new Error(
                 `Failed to delete file from Github repository "${repo}" of "${this.owner}" in ${path}`);
         }
+    }
+
+    public async deleteFolder(repo: string, path: string,
+        options: FileCommitDto): Promise<void> {
+        const items: FileContentsDto[] = await this.getDirectoryContents(repo, path);
+        await asyncForEach(items, (item: FileContentsDto) => {
+            if (item.type === 'file') {
+                return this.deleteFile(repo, item.path, {
+                    ...options,
+                    sha: item.sha || undefined,
+                    message: `Removed ${item.path}`
+                });
+            }
+            return this.deleteFolder(repo, item.path, options);
+        });
     }
 
     protected connectClient(authToken?: string): any {
