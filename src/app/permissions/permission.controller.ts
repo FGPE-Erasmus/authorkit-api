@@ -1,16 +1,13 @@
 import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
 import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { Crud, CrudController } from '@nestjsx/crud';
+import { CrudController } from '@nestjsx/crud';
 import { MessagePattern } from '@nestjs/microservices';
 
 import { AppLogger } from '../app.logger';
-import { PermissionLoaderInterceptor } from '../access-control/permission-loader.interceptor';
 
 import { PERMISSION_CMD_CREATE, PERMISSION_CMD_UPDATE, PERMISSION_CMD_DELETE } from './permission.constants';
-import { MinAccessLevel } from './decorators/min-access-level.decorator';
-import { MinAccessLevelGuard } from './guards/min-access-level.guard';
-import { AccessLevel, PermissionEntity } from './entity';
+import { PermissionEntity } from './entity';
 import { PermissionService } from './permission.service';
 
 @Controller('permissions')
@@ -123,7 +120,7 @@ export class PermissionController implements CrudController<PermissionEntity> {
     }
 
     @MessagePattern({ cmd: PERMISSION_CMD_CREATE })
-    public async onPermissionCreate(permission: PermissionEntity): Promise<void> {
+    public async onPermissionCreate(): Promise<void> {
         try {
             this.logger.debug(`[onPermissionCreate] Create permission in Github repository`);
             // TODO
@@ -134,7 +131,7 @@ export class PermissionController implements CrudController<PermissionEntity> {
     }
 
     @MessagePattern({ cmd: PERMISSION_CMD_UPDATE })
-    public async onPermissionUpdate(permission: PermissionEntity): Promise<void> {
+    public async onPermissionUpdate(): Promise<void> {
         try {
             this.logger.debug(`[onPermissionUpdate] Update permission in Github repository`);
             // TODO
@@ -145,7 +142,7 @@ export class PermissionController implements CrudController<PermissionEntity> {
     }
 
     @MessagePattern({ cmd: PERMISSION_CMD_DELETE })
-    public async onPermissionDelete(permission: PermissionEntity): Promise<void> {
+    public async onPermissionDelete(): Promise<void> {
         try {
             this.logger.debug(`[onPermissionDelete] Update permission in Github repository`);
             // TODO
