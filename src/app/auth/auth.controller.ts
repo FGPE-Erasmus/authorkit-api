@@ -108,7 +108,7 @@ export class AuthController {
         this.logger.debug(`[registerVerifyResend] Resend verification email to ${body.email}`);
         const user = await this.userService.findByEmail(body.email);
         if (!user) {
-            throw new BadRequestException(`User with email "${user.email}" does not exist.`);
+            throw new BadRequestException(`User with email "${body.email}" does not exist.`);
         }
         if (user.is_verified) {
             throw new BadRequestException(`User with email "${user.email}" already verified`);
@@ -127,6 +127,9 @@ export class AuthController {
         this.logger.debug(`[passwordReset] User ${body.email} starts password reset`);
         if (body.email) {
             const user = await this.userService.findByEmail(body.email);
+            if (!user) {
+                throw new BadRequestException(`User with email "${body.email}" does not exist.`);
+            }
             this.client
                 .send({ cmd: USER_CMD_PASSWORD_RESET }, user)
                 .subscribe(() => { }, error => {
