@@ -9,9 +9,12 @@ import { GithubApiModule } from '../github-api/github-api.module';
 import { GamificationLayerService } from './gamification-layer.service';
 import { GamificationLayerController } from './gamification-layer.controller';
 import { GamificationLayerEntity } from './entity/gamification-layer.entity';
+import { GamificationLayerEmitter } from './gamification-layer.emitter';
+import { GamificationLayerListener } from './gamification-layer.listener';
 
 const PROVIDERS = [
-    GamificationLayerService
+    GamificationLayerService,
+    GamificationLayerEmitter
 ];
 
 const MODULES = [
@@ -24,7 +27,7 @@ const MODULES = [
 ];
 
 @Module({
-    controllers: [GamificationLayerController],
+    controllers: [GamificationLayerController, GamificationLayerListener],
     providers: [...PROVIDERS],
     imports: [...MODULES],
     exports: [GamificationLayerService]

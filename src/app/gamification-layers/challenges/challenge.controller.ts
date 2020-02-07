@@ -14,6 +14,8 @@ import { ChallengeEmitter } from './challenge.emitter';
 
 @Controller('challenges')
 @ApiUseTags('challenges')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)
 @Crud({
     model: {
@@ -33,10 +35,6 @@ import { ChallengeEmitter } from './challenge.emitter';
             decorators: []
         },
         updateOneBase: {
-            interceptors: [],
-            decorators: []
-        },
-        replaceOneBase: {
             interceptors: [],
             decorators: []
         },
@@ -72,8 +70,6 @@ export class ChallengeController implements CrudController<ChallengeEntity> {
     }
 
     @Override()
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
     async getOne(
         @User() user: any,
         @Req() req,
@@ -88,8 +84,6 @@ export class ChallengeController implements CrudController<ChallengeEntity> {
     }
 
     @Override()
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
     async getMany(
         @User() user: any,
         @ParsedRequest() parsedReq: CrudRequest
@@ -109,8 +103,6 @@ export class ChallengeController implements CrudController<ChallengeEntity> {
     }
 
     @Override()
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
     async createOne(
         @User() user: any,
         @ParsedRequest() parsedReq: CrudRequest,
@@ -122,13 +114,11 @@ export class ChallengeController implements CrudController<ChallengeEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const challenge = await this.base.createOneBase(parsedReq, dto);
-        this.emitter.sendCreate(challenge);
+        this.emitter.sendCreate(user, challenge);
         return challenge;
     }
 
     @Override()
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
     async updateOne(
         @User() user: any,
         @Req() req,
@@ -141,11 +131,11 @@ export class ChallengeController implements CrudController<ChallengeEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const challenge = await this.base.updateOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(challenge);
+        this.emitter.sendUpdate(user, challenge);
         return challenge;
     }
 
-    @Override()
+    /* @Override()
     @ApiBearerAuth()
     @UseGuards(AuthGuard('jwt'))
     async replaceOne(
@@ -162,7 +152,7 @@ export class ChallengeController implements CrudController<ChallengeEntity> {
         const challenge = await this.base.replaceOneBase(parsedReq, dto);
         this.emitter.sendUpdate(challenge);
         return challenge;
-    }
+    } */
 
     @Override()
     @ApiBearerAuth()
@@ -179,8 +169,8 @@ export class ChallengeController implements CrudController<ChallengeEntity> {
                 `You do not have sufficient privileges`);
         }
         const challenge = await this.base.deleteOneBase(parsedReq);
-        if (challenge instanceof ChallengeEntity) {
-            this.emitter.sendDelete(challenge);
+        if (challenge) {
+            this.emitter.sendDelete(user, challenge);
         }
         return challenge;
     }

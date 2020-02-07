@@ -3,6 +3,7 @@ import { Client, Transport, ClientProxy } from '@nestjs/microservices';
 
 import { config } from '../../../config';
 import { AppLogger } from '../../app.logger';
+import { UserEntity } from '../../user/entity/user.entity';
 
 import { REWARD_CMD_CREATE, REWARD_CMD_UPDATE, REWARD_CMD_DELETE } from './reward.constants';
 import { RewardEntity } from './entity/reward.entity';
@@ -20,22 +21,22 @@ export class RewardEmitter {
 
     constructor() { }
 
-    public sendCreate(reward: RewardEntity): void {
-        this.client.send({ cmd: REWARD_CMD_CREATE }, reward)
+    public sendCreate(user: UserEntity, reward: RewardEntity): void {
+        this.client.send({ cmd: REWARD_CMD_CREATE }, { user, reward })
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });
     }
 
-    public sendUpdate(reward: RewardEntity): void {
-        this.client.send({ cmd: REWARD_CMD_UPDATE }, reward)
+    public sendUpdate(user: UserEntity, reward: RewardEntity): void {
+        this.client.send({ cmd: REWARD_CMD_UPDATE }, { user, reward })
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });
     }
 
-    public sendDelete(reward: RewardEntity): void {
-        this.client.send({ cmd: REWARD_CMD_DELETE }, reward)
+    public sendDelete(user: UserEntity, reward: RewardEntity): void {
+        this.client.send({ cmd: REWARD_CMD_DELETE }, { user, reward })
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });

@@ -39,10 +39,6 @@ import { RewardEmitter } from './reward.emitter';
             interceptors: [],
             decorators: []
         },
-        replaceOneBase: {
-            interceptors: [],
-            decorators: []
-        },
         deleteOneBase: {
             interceptors: [],
             decorators: [],
@@ -132,7 +128,7 @@ export class RewardController implements CrudController<RewardEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const reward = await this.base.createOneBase(parsedReq, dto);
-        this.emitter.sendCreate(reward);
+        this.emitter.sendCreate(user, reward);
         return reward;
     }
 
@@ -149,11 +145,11 @@ export class RewardController implements CrudController<RewardEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const reward = await this.base.updateOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(reward);
+        this.emitter.sendUpdate(user, reward);
         return reward;
     }
 
-    @Override()
+    /* @Override()
     async replaceOne(
         @User() user: any,
         @Req() req,
@@ -166,9 +162,9 @@ export class RewardController implements CrudController<RewardEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const reward = await this.base.replaceOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(reward);
+        this.emitter.sendUpdate(user, reward);
         return reward;
-    }
+    } */
 
     @Override()
     async deleteOne(
@@ -184,7 +180,7 @@ export class RewardController implements CrudController<RewardEntity> {
         }
         const reward = await this.base.deleteOneBase(parsedReq);
         if (reward instanceof RewardEntity) {
-            this.emitter.sendDelete(reward);
+            this.emitter.sendDelete(user, reward);
         }
         return reward;
     }

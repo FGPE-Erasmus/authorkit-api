@@ -1,112 +1,52 @@
-import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
+import {
+    Controller,
+    UseGuards,
+    UseInterceptors,
+    ClassSerializerInterceptor,
+    Req,
+    Body,
+    ForbiddenException,
+    Post
+} from '@nestjs/common';
 import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { CrudController } from '@nestjsx/crud';
-import { MessagePattern } from '@nestjs/microservices';
+import { CrudController, Crud, Override, ParsedRequest, CrudRequest } from '@nestjsx/crud';
 
 import { AppLogger } from '../app.logger';
+import { User } from '../_helpers/decorators/user.decorator';
 
-import { PERMISSION_CMD_CREATE, PERMISSION_CMD_UPDATE, PERMISSION_CMD_DELETE } from './permission.constants';
-import { PermissionEntity } from './entity';
+import { PermissionEntity, AccessLevel } from './entity';
 import { PermissionService } from './permission.service';
+import { ShareDto } from './dto/share.dto';
 
 @Controller('permissions')
 @ApiUseTags('permissions')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)
-/* @Crud({
+@Crud({
     model: {
         type: PermissionEntity
     },
     routes: {
         getManyBase: {
-            interceptors: [
-                new PermissionLoaderInterceptor(
-                    ['query', 'project_id'],
-                    [
-                        { src_table: 'permission', 'dst_table': 'project', prop: 'project_id' }
-                    ],
-                    'permission.project_id = :id'
-                )
-            ],
-            decorators: [
-                UseGuards(MinAccessLevelGuard),
-                MinAccessLevel(AccessLevel.ADMIN)
-            ]
+            interceptors: [],
+            decorators: []
         },
         getOneBase: {
-            interceptors: [
-                new PermissionLoaderInterceptor(
-                    ['params', 'id'],
-                    [
-                        { src_table: 'permission', 'dst_table': 'project', prop: 'project_id' }
-                    ],
-                    'permission.id = :id'
-                )
-            ],
-            decorators: [
-                UseGuards(MinAccessLevelGuard),
-                MinAccessLevel(AccessLevel.ADMIN)
-            ]
-        },
-        createOneBase: {
-            interceptors: [
-                new PermissionLoaderInterceptor(
-                    ['body', 'project_id'],
-                    [],
-                    'permission.project_id = :id'
-                )
-            ],
-            decorators: [
-                UseGuards(MinAccessLevelGuard),
-                MinAccessLevel(AccessLevel.ADMIN)
-            ]
-        },
-        updateOneBase: {
-            interceptors: [
-                new PermissionLoaderInterceptor(
-                    ['params', 'id'],
-                    [
-                        { src_table: 'permission', 'dst_table': 'project', prop: 'project_id' }
-                    ],
-                    'permission.id = :id'
-                )
-            ],
-            decorators: [
-                UseGuards(MinAccessLevelGuard),
-                MinAccessLevel(AccessLevel.ADMIN)
-            ]
-        },
-        replaceOneBase: {
-            interceptors: [
-                new PermissionLoaderInterceptor(
-                    ['body', 'project_id'],
-                    [],
-                    'permission.project_id = :id'
-                )
-            ],
-            decorators: [
-                UseGuards(MinAccessLevelGuard),
-                MinAccessLevel(AccessLevel.ADMIN)
-            ]
-        },
-        deleteOneBase: {
-            interceptors: [
-                new PermissionLoaderInterceptor(
-                    ['body', 'project_id'],
-                    [],
-                    'permission.project_id = :id'
-                )
-            ],
-            decorators: [
-                UseGuards(MinAccessLevelGuard),
-                MinAccessLevel(AccessLevel.ADMIN)
-            ],
-            returnDeleted: true
+            interceptors: [],
+            decorators: []
+        }
+    },
+    query: {
+        join: {
+            projects: {
+            },
+            users: {
+            }
         }
     }
-}) */
+})
 export class PermissionController implements CrudController<PermissionEntity> {
 
     private logger = new AppLogger(PermissionController.name);
@@ -119,36 +59,93 @@ export class PermissionController implements CrudController<PermissionEntity> {
         return this;
     }
 
-    @MessagePattern({ cmd: PERMISSION_CMD_CREATE })
-    public async onPermissionCreate(): Promise<void> {
-        try {
-            this.logger.debug(`[onPermissionCreate] Create permission in Github repository`);
-            // TODO
-            this.logger.debug('[onPermissionCreate] Permission created in Github repository');
-        } catch (err) {
-            this.logger.error(`[onPermissionCreate] Permission NOT created in Github repository, because ${err.message}`, err.stack);
+    @Override()
+    async getMany(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest
+    ) {
+        const projectFilterIndex = parsedReq.parsed.filter
+            .findIndex(f => f.field === 'project_id' && f.operator === 'eq');
+        const userFilterIndex = parsedReq.parsed.filter
+            .findIndex(f => f.field === 'user_id' && f.operator === 'eq');
+        if (projectFilterIndex < 0) {
+            if (userFilterIndex < 0) {
+                parsedReq.parsed.filter.push({ field: 'user_id', operator: 'eq', value: user.id });
+                return this.base.getManyBase(parsedReq);
+            } else if (parsedReq.parsed.filter[userFilterIndex].value === user.id) {
+                return this.base.getManyBase(parsedReq);
+            } else {
+                throw new ForbiddenException('You do not have sufficient privileges');
+            }
         }
+        if (userFilterIndex > 0 && parsedReq.parsed.filter[userFilterIndex].value === user.id) {
+            return this.base.getManyBase(parsedReq);
+        }
+        const accessLevel = await this.service.getAccessLevel(
+            parsedReq.parsed.filter[projectFilterIndex].value,
+            user.id
+        );
+        if (accessLevel < AccessLevel.ADMIN) {
+            throw new ForbiddenException('You do not have sufficient privileges');
+        }
+        return this.base.getManyBase(parsedReq);
     }
 
-    @MessagePattern({ cmd: PERMISSION_CMD_UPDATE })
-    public async onPermissionUpdate(): Promise<void> {
-        try {
-            this.logger.debug(`[onPermissionUpdate] Update permission in Github repository`);
-            // TODO
-            this.logger.debug('[onPermissionUpdate] Permission updated in Github repository');
-        } catch (err) {
-            this.logger.error(`[onPermissionUpdate] Permission NOT updated in Github repository, because ${err.message}`, err.stack);
+    @Override()
+    async getOne(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest
+    ) {
+        const permission = await this.base.getOneBase(parsedReq);
+        if (user.id === permission.user_id) {
+            return permission;
         }
+        const accessLevel = await this.service.getAccessLevel(
+            permission.project_id,
+            user.id
+        );
+        if (accessLevel < AccessLevel.ADMIN) {
+            throw new ForbiddenException('You do not have sufficient privileges');
+        }
+        return permission;
     }
 
-    @MessagePattern({ cmd: PERMISSION_CMD_DELETE })
-    public async onPermissionDelete(): Promise<void> {
-        try {
-            this.logger.debug(`[onPermissionDelete] Update permission in Github repository`);
-            // TODO
-            this.logger.debug('[onPermissionDelete] Permission updated in Github repository');
-        } catch (err) {
-            this.logger.error(`[onPermissionDelete] Permission NOT updated in Github repository, because ${err.message}`, err.stack);
+    @Post('share')
+    async share(
+        @User() user: any,
+        @Req() req,
+        @Body() share: ShareDto
+    ) {
+        const accessLevel = await this.service.getAccessLevel(share.project_id, user.id);
+        if (accessLevel < AccessLevel.ADMIN) {
+            throw new ForbiddenException('You do not have sufficient privileges');
         }
+        if (accessLevel < share.access_level) {
+            throw new ForbiddenException('You do not have sufficient privileges');
+        }
+        const otherAccessLevel = await this.service.getAccessLevel(share.project_id, share.user_id);
+        if (otherAccessLevel === AccessLevel.OWNER) {
+            throw new ForbiddenException('You shall not modify owner\'s access to the project');
+        }
+        await this.service.share(share.project_id, share.user_id, share.access_level);
+    }
+
+    @Post('revoke')
+    async revoke(
+        @User() user: any,
+        @Req() req,
+        @Body() share: ShareDto
+    ) {
+        const accessLevel = await this.service.getAccessLevel(share.project_id, user.id);
+        if (accessLevel < AccessLevel.ADMIN) {
+            throw new ForbiddenException('You do not have sufficient privileges');
+        }
+        const otherAccessLevel = await this.service.getAccessLevel(share.project_id, share.user_id);
+        if (otherAccessLevel === AccessLevel.OWNER) {
+            throw new ForbiddenException('You shall not modify owner\'s access to the project');
+        }
+        await this.service.revoke(share.project_id, share.user_id);
     }
 }

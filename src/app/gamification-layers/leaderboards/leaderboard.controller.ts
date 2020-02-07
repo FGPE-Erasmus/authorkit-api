@@ -39,10 +39,6 @@ import { LeaderboardEmitter } from './leaderboard.emitter';
             interceptors: [],
             decorators: []
         },
-        replaceOneBase: {
-            interceptors: [],
-            decorators: []
-        },
         deleteOneBase: {
             interceptors: [],
             decorators: [],
@@ -129,7 +125,7 @@ export class LeaderboardController implements CrudController<LeaderboardEntity> 
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const leaderboard = await this.base.createOneBase(parsedReq, dto);
-        this.emitter.sendCreate(leaderboard);
+        this.emitter.sendCreate(user, leaderboard);
         return leaderboard;
     }
 
@@ -146,11 +142,11 @@ export class LeaderboardController implements CrudController<LeaderboardEntity> 
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const leaderboard = await this.base.updateOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(leaderboard);
+        this.emitter.sendUpdate(user, leaderboard);
         return leaderboard;
     }
 
-    @Override()
+    /* @Override()
     async replaceOne(
         @User() user: any,
         @Req() req,
@@ -165,7 +161,7 @@ export class LeaderboardController implements CrudController<LeaderboardEntity> 
         const leaderboard = await this.base.replaceOneBase(parsedReq, dto);
         this.emitter.sendUpdate(leaderboard);
         return leaderboard;
-    }
+    } */
 
     @Override()
     async deleteOne(
@@ -181,7 +177,7 @@ export class LeaderboardController implements CrudController<LeaderboardEntity> 
         }
         const leaderboard = await this.base.deleteOneBase(parsedReq);
         if (leaderboard instanceof LeaderboardEntity) {
-            this.emitter.sendDelete(leaderboard);
+            this.emitter.sendDelete(user, leaderboard);
         }
         return leaderboard;
     }

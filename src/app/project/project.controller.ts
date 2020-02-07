@@ -57,15 +57,6 @@ import { ProjectEmitter } from './project.emitter';
         }
     }
 })
-/* @CrudAuth({
-    property: 'user',
-    filter: (user: UserEntity) => ({
-        $or: [
-            { 'owner_id': user.id },
-            { 'permissions.user_id': user.id }
-        ]
-    })
-}) */
 export class ProjectController implements CrudController<ProjectEntity> {
 
     private logger = new AppLogger(ProjectController.name);

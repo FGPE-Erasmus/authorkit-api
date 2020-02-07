@@ -1,11 +1,12 @@
-import { MessagePattern, Client, Transport, ClientProxy } from '@nestjs/microservices';
+import { Injectable } from '@nestjs/common';
+import { Client, Transport, ClientProxy } from '@nestjs/microservices';
 
 import { config } from '../../../config';
 import { AppLogger } from '../../app.logger';
+import { UserEntity } from '../../user/entity/user.entity';
 
 import { LEADERBOARD_CMD_CREATE, LEADERBOARD_CMD_UPDATE, LEADERBOARD_CMD_DELETE } from './leaderboard.constants';
 import { LeaderboardEntity } from './entity/leaderboard.entity';
-import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class LeaderboardEmitter {
@@ -20,22 +21,22 @@ export class LeaderboardEmitter {
 
     constructor() { }
 
-    public sendCreate(leaderboard: LeaderboardEntity): void {
-        this.client.send({ cmd: LEADERBOARD_CMD_CREATE }, leaderboard)
+    public sendCreate(user: UserEntity, leaderboard: LeaderboardEntity): void {
+        this.client.send({ cmd: LEADERBOARD_CMD_CREATE }, { user, leaderboard })
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });
     }
 
-    public sendUpdate(leaderboard: LeaderboardEntity): void {
-        this.client.send({ cmd: LEADERBOARD_CMD_UPDATE }, leaderboard)
+    public sendUpdate(user: UserEntity, leaderboard: LeaderboardEntity): void {
+        this.client.send({ cmd: LEADERBOARD_CMD_UPDATE }, { user, leaderboard })
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });
     }
 
-    public sendDelete(leaderboard: LeaderboardEntity): void {
-        this.client.send({ cmd: LEADERBOARD_CMD_DELETE }, leaderboard)
+    public sendDelete(user: UserEntity, leaderboard: LeaderboardEntity): void {
+        this.client.send({ cmd: LEADERBOARD_CMD_DELETE }, { user, leaderboard })
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });

@@ -39,10 +39,6 @@ import { RuleEmitter } from './rule.emitter';
             interceptors: [],
             decorators: []
         },
-        replaceOneBase: {
-            interceptors: [],
-            decorators: []
-        },
         deleteOneBase: {
             interceptors: [],
             decorators: [],
@@ -122,7 +118,7 @@ export class RuleController implements CrudController<RuleEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const rule = await this.base.createOneBase(parsedReq, dto);
-        this.emitter.sendCreate(rule);
+        this.emitter.sendCreate(user, rule);
         return rule;
     }
 
@@ -139,11 +135,11 @@ export class RuleController implements CrudController<RuleEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const rule = await this.base.updateOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(rule);
+        this.emitter.sendUpdate(user, rule);
         return rule;
     }
 
-    @Override()
+    /* @Override()
     async replaceOne(
         @User() user: any,
         @Req() req,
@@ -158,7 +154,7 @@ export class RuleController implements CrudController<RuleEntity> {
         const rule = await this.base.replaceOneBase(parsedReq, dto);
         this.emitter.sendUpdate(rule);
         return rule;
-    }
+    } */
 
     @Override()
     async deleteOne(
@@ -173,8 +169,8 @@ export class RuleController implements CrudController<RuleEntity> {
                 `You do not have sufficient privileges`);
         }
         const rule = await this.base.deleteOneBase(parsedReq);
-        if (rule instanceof RuleEntity) {
-            this.emitter.sendDelete(rule);
+        if (rule) {
+            this.emitter.sendDelete(user, rule);
         }
         return rule;
     }

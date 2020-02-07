@@ -17,6 +17,7 @@ import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { ProjectService } from '../project/project.service';
 import { GamificationLayerEntity } from './entity/gamification-layer.entity';
 import { GamificationLayerService } from './gamification-layer.service';
+import { GamificationLayerEmitter } from './gamification-layer.emitter';
 
 @Controller('gamification-layers')
 @ApiUseTags('gamification-layers')
@@ -44,10 +45,6 @@ import { GamificationLayerService } from './gamification-layer.service';
             interceptors: [],
             decorators: []
         },
-        replaceOneBase: {
-            interceptors: [],
-            decorators: []
-        },
         deleteOneBase: {
             interceptors: [],
             decorators: [],
@@ -71,6 +68,7 @@ export class GamificationLayerController implements CrudController<GamificationL
 
     constructor(
         readonly service: GamificationLayerService,
+        readonly emitter: GamificationLayerEmitter,
         readonly projectService: ProjectService
     ) { }
 
@@ -122,7 +120,9 @@ export class GamificationLayerController implements CrudController<GamificationL
         if (!dto.owner_id) {
             dto.owner_id = user.id;
         }
-        return this.base.createOneBase(parsedReq, dto);
+        const gamificationLayer = await this.base.createOneBase(parsedReq, dto);
+        this.emitter.sendCreate(user, gamificationLayer);
+        return gamificationLayer;
     }
 
     @Override()
@@ -136,24 +136,9 @@ export class GamificationLayerController implements CrudController<GamificationL
         if (accessLevel < AccessLevel.CONTRIBUTOR) {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
-        return this.base.updateOneBase(parsedReq, dto);
-    }
-
-    @Override()
-    async replaceOne(
-        @User() user: any,
-        @Req() req,
-        @ParsedRequest() parsedReq: CrudRequest,
-        @ParsedBody() dto: GamificationLayerEntity
-    ) {
-        const accessLevel = await this.service.getAccessLevel(req.params.id, user.id);
-        if (accessLevel < AccessLevel.CONTRIBUTOR) {
-            throw new ForbiddenException(`You do not have sufficient privileges`);
-        }
-        if (!dto.owner_id) {
-            dto.owner_id = user.id;
-        }
-        return this.base.replaceOneBase(parsedReq, dto);
+        const gamificationLayer = await this.base.updateOneBase(parsedReq, dto);
+        this.emitter.sendUpdate(user, gamificationLayer);
+        return gamificationLayer;
     }
 
     @Override()
@@ -166,6 +151,10 @@ export class GamificationLayerController implements CrudController<GamificationL
         if (accessLevel < AccessLevel.CONTRIBUTOR) {
             throw new ForbiddenException(
                 `You do not have sufficient privileges`);
+        }
+        const gamificationLayer = await this.base.deleteOneBase(parsedReq);
+        if (gamificationLayer) {
+            this.emitter.sendDelete(user, gamificationLayer);
         }
         return this.base.deleteOneBase(parsedReq);
     }

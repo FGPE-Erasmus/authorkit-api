@@ -3,6 +3,7 @@ import { Client, Transport, ClientProxy } from '@nestjs/microservices';
 
 import { config } from '../../../config';
 import { AppLogger } from '../../app.logger';
+import { UserEntity } from '../../user/entity/user.entity';
 
 import { RULE_CMD_CREATE, RULE_CMD_UPDATE, RULE_CMD_DELETE } from './rule.constants';
 import { RuleEntity } from './entity/rule.entity';
@@ -20,22 +21,22 @@ export class RuleEmitter {
 
     constructor() { }
 
-    public sendCreate(rule: RuleEntity): void {
-        this.client.send({ cmd: RULE_CMD_CREATE }, rule)
+    public sendCreate(user: UserEntity, rule: RuleEntity): void {
+        this.client.send({ cmd: RULE_CMD_CREATE }, { user, rule })
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });
     }
 
-    public sendUpdate(rule: RuleEntity): void {
-        this.client.send({ cmd: RULE_CMD_UPDATE }, rule)
+    public sendUpdate(user: UserEntity, rule: RuleEntity): void {
+        this.client.send({ cmd: RULE_CMD_UPDATE }, { user, rule })
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });
     }
 
-    public sendDelete(rule: RuleEntity): void {
-        this.client.send({ cmd: RULE_CMD_DELETE }, rule)
+    public sendDelete(user: UserEntity, rule: RuleEntity): void {
+        this.client.send({ cmd: RULE_CMD_DELETE }, { user, rule })
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });

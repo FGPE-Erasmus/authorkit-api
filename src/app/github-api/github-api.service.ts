@@ -1,20 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { classToPlain } from 'class-transformer';
 import NodeCache = require('node-cache');
 
 import { config } from '../../config';
 import { AppLogger } from '../app.logger';
-import { RequestContext } from '../_helpers/request-context';
-import { asyncForEach } from '../_helpers';
 import { UserEntity } from '../user/entity/user.entity';
 import { UserService } from '../user/user.service';
 import { ProjectEntity } from '../project/entity/project.entity';
 import { ExerciseEntity } from '../exercises/entity/exercise.entity';
 
 import { GithubClient } from './github-api.client';
-import { FileCommitResponseDto, FileContentsDto, RepositoryDto, TreeDto } from './dto';
+import { FileCommitResponseDto, FileContentsDto, RepositoryDto } from './dto';
 
 @Injectable()
 export class GithubApiService {
@@ -293,6 +289,121 @@ export class GithubApiService {
             this.logger.error(
                 `[deleteExerciseFile] File ${file_entity.pathname} not deleted in Github repository \
                     ${exercise.project_id}, because ${JSON.stringify(err.message)}`,
+                err.stack
+            );
+            throw err;
+        }
+    }
+
+    public async createFile(user: UserEntity, repo: string, path: string, content: any): Promise<FileCommitResponseDto> {
+        try {
+            this.logger.debug(`[createFile] Create file ${path} in Github repository ${repo}`);
+            const client = await this.getClientForToken(config.githubApi.secret);
+            const result = await client.createOrUpdateFile(repo, path, {
+                author: {
+                    name: `${user.first_name} ${user.last_name}`,
+                    email: `${user.email}`
+                },
+                commiter: {
+                    name: `${user.first_name} ${user.last_name}`,
+                    email: `${user.email}`
+                },
+                content: Buffer.from(JSON.stringify(content)).toString('base64'),
+                message: `created file ${path}`
+            });
+            if (!result) {
+                throw new Error('Failed to create file');
+            }
+            this.logger.debug(`[createFile] File ${path} created in Github repository ${repo}`);
+            return result;
+        } catch (err) {
+            this.logger.error(
+                `[createFile] File ${path} not created in Github repository ${repo}, because ${JSON.stringify(err.message)}`,
+                err.stack
+            );
+            throw err;
+        }
+    }
+
+    public async updateFile(user: UserEntity, repo: string, path: string, sha: string, content: any): Promise<FileCommitResponseDto> {
+        try {
+            this.logger.debug(`[updateFile] Update file ${path} in Github repository ${repo}`);
+            const client = await this.getClientForToken(config.githubApi.secret);
+            const result = await client.createOrUpdateFile(repo, path, {
+                author: {
+                    name: `${user.first_name} ${user.last_name}`,
+                    email: `${user.email}`
+                },
+                commiter: {
+                    name: `${user.first_name} ${user.last_name}`,
+                    email: `${user.email}`
+                },
+                content: Buffer.from(JSON.stringify(content)).toString('base64'),
+                message: `updated file ${path}`,
+                sha
+            });
+            if (!result) {
+                throw new Error('Failed to update file');
+            }
+            this.logger.debug(`[updateFile] File ${path} updated in Github repository ${repo}`);
+            return result;
+        } catch (err) {
+            this.logger.error(
+                `[updateFile] File ${path} not updated in Github repository ${repo}, because ${JSON.stringify(err.message)}`,
+                err.stack
+            );
+            throw err;
+        }
+    }
+
+    public async deleteFile(user: UserEntity, repo: string, path: string, sha: string): Promise<FileCommitResponseDto> {
+        try {
+            this.logger.debug(`[deleteFile] Delete file ${path} in Github repository ${repo}`);
+            const client = await this.getClientForToken(config.githubApi.secret);
+            const result = await client.deleteFile(repo, path, {
+                author: {
+                    name: `${user.first_name} ${user.last_name}`,
+                    email: `${user.email}`
+                },
+                commiter: {
+                    name: `${user.first_name} ${user.last_name}`,
+                    email: `${user.email}`
+                },
+                message: `deleted file ${path}`,
+                sha
+            });
+            if (!result) {
+                throw new Error('Failed to delete file');
+            }
+            this.logger.debug(`[deleteFile] File ${path} deleted in Github repository ${repo}`);
+            return result;
+        } catch (err) {
+            this.logger.error(
+                `[deleteFile] File ${path} not deleted in Github repository ${repo}, because ${JSON.stringify(err.message)}`,
+                err.stack
+            );
+            throw err;
+        }
+    }
+
+    public async deleteFolder(user: UserEntity, repo: string, path: string): Promise<void> {
+        try {
+            this.logger.debug(`[deleteFolder] Delete folder ${path} in Github repository ${repo}`);
+            const client = await this.getClientForToken(config.githubApi.secret);
+            await client.deleteFolder(repo, path, {
+                author: {
+                    name: `${user.first_name} ${user.last_name}`,
+                    email: `${user.email}`
+                },
+                commiter: {
+                    name: `${user.first_name} ${user.last_name}`,
+                    email: `${user.email}`
+                }
+            });
+            this.logger.debug(`[deleteFolder] Folder ${path} deleted in Github repository ${repo}`);
+        } catch (err) {
+            this.logger.error(
+                `[deleteFolder] Folder ${path} not deleted in Github repository ${repo}, because ${JSON.stringify(err.message)}`,
                 err.stack
             );
             throw err;
