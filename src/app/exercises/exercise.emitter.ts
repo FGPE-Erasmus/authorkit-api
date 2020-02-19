@@ -3,6 +3,7 @@ import { Client, Transport, ClientProxy } from '@nestjs/microservices';
 
 import { AppLogger } from '../app.logger';
 import { config } from '../../config';
+import { UserEntity } from '../user/entity/user.entity';
 
 import { EXERCISE_CMD_CREATE, EXERCISE_CMD_UPDATE, EXERCISE_CMD_DELETE } from './exercise.constants';
 import { ExerciseEntity } from './entity/exercise.entity';
@@ -20,22 +21,22 @@ export class ExerciseEmitter {
 
     constructor() { }
 
-    public sendCreate(exercise: ExerciseEntity): void {
-        this.client.send({ cmd: EXERCISE_CMD_CREATE }, exercise)
+    public sendCreate(user: UserEntity, exercise: ExerciseEntity): void {
+        this.client.send({ cmd: EXERCISE_CMD_CREATE }, { user, exercise })
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });
     }
 
-    public sendUpdate(exercise: ExerciseEntity): void {
-        this.client.send({ cmd: EXERCISE_CMD_UPDATE }, exercise)
+    public sendUpdate(user: UserEntity, exercise: ExerciseEntity): void {
+        this.client.send({ cmd: EXERCISE_CMD_UPDATE }, { user, exercise })
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });
     }
 
-    public sendDelete(exercise: ExerciseEntity): void {
-        this.client.send({ cmd: EXERCISE_CMD_DELETE }, exercise)
+    public sendDelete(user: UserEntity, exercise: ExerciseEntity): void {
+        this.client.send({ cmd: EXERCISE_CMD_DELETE }, { user, exercise })
             .subscribe(() => { }, error => {
                 this.logger.error(error, '');
             });

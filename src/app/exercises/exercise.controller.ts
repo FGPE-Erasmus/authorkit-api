@@ -1,7 +1,5 @@
 import {
     Post,
-    HttpCode,
-    HttpStatus,
     UseInterceptors,
     Controller,
     ClassSerializerInterceptor,
@@ -17,15 +15,15 @@ import {
     ForbiddenException,
     BadRequestException
 } from '@nestjs/common';
-import { ApiResponse, ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile, ApiImplicitBody } from '@nestjs/swagger';
+import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile, ApiImplicitBody } from '@nestjs/swagger';
 import { CrudController, Override, ParsedBody, ParsedRequest, CrudRequest, Crud } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-import { AppLogger } from '../app.logger';
 import { User } from '../_helpers/decorators/user.decorator';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { ProjectService } from '../project/project.service';
+
 import { ExerciseEntity } from './entity/exercise.entity';
 import { ExerciseStaticCorrectorEntity } from './entity/exercise-static-corrector.entity';
 import { ExerciseDynamicCorrectorEntity } from './entity/exercise-dynamic-corrector.entity';
@@ -68,16 +66,12 @@ import { ExerciseEmitter } from './exercise.emitter';
             interceptors: [],
             decorators: []
         },
-        replaceOneBase: {
-            interceptors: [],
-            decorators: []
-        },
         deleteOneBase: {
             interceptors: [],
             decorators: [],
             returnDeleted: true
         }
-    }/*  */,
+    },
     query: {
         join: {
             'instructions': {
@@ -111,7 +105,6 @@ import { ExerciseEmitter } from './exercise.emitter';
 })
 export class ExerciseController implements CrudController<ExerciseEntity> {
 
-    private logger = new AppLogger(ExerciseController.name);
 
     constructor(
         readonly service: ExerciseService,
@@ -124,13 +117,13 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         return this;
     }
 
-    @Post('import')
+    /* @Post('import')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'NO CONTENT' })
     public async import(): Promise<void> {
         this.logger.silly(`[import] execute `);
         return this.command.create(20);
-    }
+    } */
 
     @Override()
     async getOne(
@@ -177,7 +170,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
             dto.owner_id = user.id;
         }
         const exercise = await this.base.createOneBase(parsedReq, dto);
-        this.emitter.sendCreate(exercise);
+        this.emitter.sendCreate(user, exercise);
         return exercise;
     }
 
@@ -193,11 +186,11 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const exercise = await this.base.updateOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(exercise);
+        this.emitter.sendUpdate(user, exercise);
         return exercise;
     }
 
-    @Override()
+    /* @Override()
     async replaceOne(
         @User() user: any,
         @Req() req,
@@ -212,9 +205,9 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
             dto.owner_id = user.id;
         }
         const exercise = await this.base.replaceOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(exercise);
+        this.emitter.sendUpdate(user, exercise);
         return exercise;
-    }
+    } */
 
     @Override()
     async deleteOne(
@@ -229,7 +222,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         }
         const exercise = await this.base.deleteOneBase(parsedReq);
         if (exercise) {
-            this.emitter.sendDelete(exercise);
+            this.emitter.sendDelete(user, exercise);
         }
         return exercise;
     }

@@ -26,23 +26,16 @@ import {
     ExerciseStatementEntity,
     ExerciseStaticCorrectorEntity,
     ExerciseTemplateEntity,
-    ExerciseTestEntity,
-    ExerciseTestGeneratorEntity,
-    ExerciseTestSetEntity
+    ExerciseTestGeneratorEntity
 } from './entity';
-import { TestController } from './tests/test.controller';
-import { TestService } from './tests/test.service';
-import { TestSetService } from './testsets/testset.service';
-import { TestSetController } from './testsets/testset.controller';
+
 
 const PROVIDERS = [
     ExerciseCommand,
     ExercisePipe,
     ExerciseContextMiddleware,
     ExerciseService,
-    ExerciseEmitter,
-    TestSetService,
-    TestService
+    ExerciseEmitter
 ];
 
 const MODULES = [
@@ -58,9 +51,7 @@ const MODULES = [
         ExerciseStatementEntity,
         ExerciseStaticCorrectorEntity,
         ExerciseTemplateEntity,
-        ExerciseTestEntity,
-        ExerciseTestGeneratorEntity,
-        ExerciseTestSetEntity
+        ExerciseTestGeneratorEntity
     ]),
     AccessControlModule.forRoles(accessRules),
     HttpModule,
@@ -70,9 +61,9 @@ const MODULES = [
 ];
 
 @Module({
-    controllers: [ExerciseController, ExerciseListener, TestSetController, TestController],
+    controllers: [ExerciseController, ExerciseListener],
     providers: [...PROVIDERS],
     imports: [...MODULES],
-    exports: [ExerciseService, TestSetService, TestService]
+    exports: [ExerciseService]
 })
 export class ExerciseModule {}

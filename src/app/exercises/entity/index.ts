@@ -14,7 +14,5 @@ export * from './exercise-skeleton.entity';
 export * from './exercise-solution.entity';
 export * from './exercise-statement.entity';
 export * from './exercise-template.entity';
-export * from './exercise-test.entity';
-export * from './exercise-test-set.entity';
 
 export * from './exercise.entity';

@@ -22,9 +22,22 @@ import { ProjectContextMiddleware } from './project/project-context.middleware';
 import { ProjectController } from './project/project.controller';
 import { ExerciseContextMiddleware } from './exercises/exercise-context.middleware';
 import { ExerciseController } from './exercises/exercise.controller';
-import { TestController } from './exercises/tests/test.controller';
-import { TestSetController } from './exercises/testsets/testset.controller';
-import { TestSetContextMiddleware } from './exercises/testsets/testset-context.middleware';
+import { TestController } from './tests/test.controller';
+import { TestSetController } from './testsets/testset.controller';
+import { TestSetContextMiddleware } from './testsets/testset-context.middleware';
+import { TestSetModule } from './testsets/testset.module';
+import { TestModule } from './tests/test.module';
+import { DynamicCorrectorModule } from './dynamic-correctors/dynamic-corrector.module';
+import { EmbeddableModule } from './embeddables/embeddable.module';
+import { FeedbackGeneratorModule } from './feedback-generators/feedback-generator.module';
+import { InstructionModule } from './instructions/instruction.module';
+import { LibraryModule } from './libraries/library.module';
+import { SolutionModule } from './solutions/solution.module';
+import { StatementModule } from './statements/statement.module';
+import { StaticCorrectorModule } from './static-correctors/static-corrector.module';
+import { TemplateModule } from './templates/template.module';
+import { TestGeneratorModule } from './test-generators/test-generator.module';
+import { SkeletonModule } from './skeletons/skeleton.module';
 
 @Module({
     imports: [
@@ -36,6 +49,19 @@ import { TestSetContextMiddleware } from './exercises/testsets/testset-context.m
         UserModule,
         ProjectModule,
         ExerciseModule,
+        TestSetModule,
+        TestModule,
+        DynamicCorrectorModule,
+        EmbeddableModule,
+        FeedbackGeneratorModule,
+        InstructionModule,
+        LibraryModule,
+        SkeletonModule,
+        SolutionModule,
+        StatementModule,
+        StaticCorrectorModule,
+        TemplateModule,
+        TestGeneratorModule,
         GamificationLayerModule,
         ChallengeModule,
         LeaderboardModule,

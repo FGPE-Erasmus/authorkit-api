@@ -34,7 +34,7 @@ export class ChallengeListener {
                 user,
                 gamificationLayer.project_id,
                 `gamification-layers/${challenge.gl_id}/challenges/${challenge.id}/metadata.json`,
-                {
+                Buffer.from(JSON.stringify({
                     id: challenge.id,
                     name: challenge.name,
                     description: challenge.description,
@@ -45,7 +45,7 @@ export class ChallengeListener {
                     hidden: challenge.hidden,
                     difficulty: challenge.difficulty,
                     children: challenge.sub_challenge_ids
-                }
+                })).toString('base64')
             );
             await this.repository.update(challenge.id, { sha: res.content.sha });
             this.logger.debug('[onChallengeCreate] Challenge created in Github repository');
@@ -66,7 +66,7 @@ export class ChallengeListener {
                 gamificationLayer.project_id,
                 `gamification-layers/${challenge.gl_id}/challenges/${challenge.id}/metadata.json`,
                 challenge.sha,
-                {
+                Buffer.from(JSON.stringify({
                     id: challenge.id,
                     name: challenge.name,
                     description: challenge.description,
@@ -77,7 +77,7 @@ export class ChallengeListener {
                     hidden: challenge.hidden,
                     difficulty: challenge.difficulty,
                     children: challenge.sub_challenge_ids
-                }
+                })).toString('base64')
             );
             await this.repository.update(challenge.id, { sha: res.content.sha });
             this.logger.debug('[onChallengeUpdate] Challenge updated in Github repository');

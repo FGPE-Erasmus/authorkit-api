@@ -39,7 +39,7 @@ export class RewardListener {
                 user,
                 gamificationLayer.project_id,
                 path,
-                {
+                Buffer.from(JSON.stringify({
                     id: reward.id,
                     name: reward.name,
                     description: reward.description,
@@ -56,7 +56,7 @@ export class RewardListener {
                     congratulations: reward.congratulations,
                     hints: reward.hints,
                     criteria: reward.criteria
-                }
+                })).toString('base64')
             );
             await this.repository.update(reward.id, { sha: res.content.sha });
             this.logger.debug('[onRewardCreate] Reward created in Github repository');
@@ -82,7 +82,7 @@ export class RewardListener {
                 gamificationLayer.project_id,
                 path,
                 reward.sha,
-                {
+                Buffer.from(JSON.stringify({
                     id: reward.id,
                     name: reward.name,
                     description: reward.description,
@@ -99,7 +99,7 @@ export class RewardListener {
                     congratulations: reward.congratulations,
                     hints: reward.hints,
                     criteria: reward.criteria
-                }
+                })).toString('base64')
             );
             await this.repository.update(reward.id, { sha: res.content.sha });
             this.logger.debug('[onRewardUpdate] Reward updated in Github repository');

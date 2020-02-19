@@ -1,11 +1,11 @@
-import { Injectable, HttpService, InternalServerErrorException, BadRequestException, Type } from '@nestjs/common';
-import { Repository, DeepPartial } from 'typeorm';
+import { Injectable, InternalServerErrorException, BadRequestException, Type } from '@nestjs/common';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CrudRequest, GetManyDefaultResponse } from '@nestjsx/crud';
 import { TypeOrmCrudService } from '@nestjsx/crud-typeorm';
 
 import { AppLogger } from '../app.logger';
-import { getParamValueFromCrudRequest, asyncForEach } from '../_helpers';
+import { getParamValueFromCrudRequest } from '../_helpers';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
 import { GithubApiService } from '../github-api/github-api.service';
@@ -21,18 +21,15 @@ import {
     ExerciseStatementEntity,
     ExerciseStaticCorrectorEntity,
     ExerciseTemplateEntity,
-    ExerciseTestGeneratorEntity,
-    ExerciseTestSetEntity,
-    ExerciseTestEntity
+    ExerciseTestGeneratorEntity
 } from './entity';
 import { plainToClass } from 'class-transformer';
-import { TestSetService } from './testsets/testset.service';
-import { TestService } from './tests/test.service';
+import { TestSetService } from '../testsets/testset.service';
+import { TestService } from '../tests/test.service';
 
 @Injectable()
 export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
-    private logger = new AppLogger(ExerciseService.name);
 
     constructor(
         @InjectRepository(ExerciseEntity)
@@ -70,10 +67,6 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
         @InjectRepository(ExerciseTestGeneratorEntity)
         protected readonly testGeneratorRepository: Repository<ExerciseTestGeneratorEntity>,
-
-        protected readonly testSetService: TestSetService,
-
-        protected readonly testService: TestService,
 
         protected readonly githubApiService: GithubApiService
     ) {

@@ -38,13 +38,13 @@ export class GamificationLayerListener {
                 user,
                 gamificationLayer.project_id,
                 `gamification-layers/${gamificationLayer.id}/metadata.json`,
-                {
+                Buffer.from(JSON.stringify({
                     id: gamificationLayer.id,
                     name: gamificationLayer.name,
                     description: gamificationLayer.description,
                     keywords: gamificationLayer.keywords,
                     status: gamificationLayer.status
-                }
+                })).toString('base64')
             );
             await this.repository.update(gamificationLayer.id, { sha: res.content.sha });
             this.logger.debug('[onGamificationLayerCreate] Gamification layer created in Github repository');
@@ -68,13 +68,13 @@ export class GamificationLayerListener {
                 gamificationLayer.project_id,
                 `gamification-layers/${gamificationLayer.id}/metadata.json`,
                 gamificationLayer.sha,
-                {
+                Buffer.from(JSON.stringify({
                     id: gamificationLayer.id,
                     name: gamificationLayer.name,
                     description: gamificationLayer.description,
                     keywords: gamificationLayer.keywords,
                     status: gamificationLayer.status
-                }
+                })).toString('base64')
             );
             await this.repository.update(gamificationLayer.id, { sha: res.content.sha });
             this.logger.debug('[onGamificationLayerUpdate] Gamification layer updated in Github repository');

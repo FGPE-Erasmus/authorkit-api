@@ -39,12 +39,12 @@ export class LeaderboardListener {
                 user,
                 gamificationLayer.project_id,
                 path,
-                {
+                Buffer.from(JSON.stringify({
                     id: leaderboard.id,
                     name: leaderboard.name,
                     metrics: leaderboard.metrics,
                     sorting_orders: leaderboard.sorting_orders
-                }
+                })).toString('base64')
             );
             await this.repository.update(leaderboard.id, { sha: res.content.sha });
             this.logger.debug('[onLeaderboardCreate] Leaderboard created in Github repository');
@@ -70,12 +70,12 @@ export class LeaderboardListener {
                 gamificationLayer.project_id,
                 path,
                 leaderboard.sha,
-                {
+                Buffer.from(JSON.stringify({
                     id: leaderboard.id,
                     name: leaderboard.name,
                     metrics: leaderboard.metrics,
                     sorting_orders: leaderboard.sorting_orders
-                }
+                })).toString('base64')
             );
             await this.repository.update(leaderboard.id, { sha: res.content.sha });
             this.logger.debug('[onLeaderboardUpdate] Leaderboard updated in Github repository');

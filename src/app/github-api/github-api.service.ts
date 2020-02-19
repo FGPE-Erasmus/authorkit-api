@@ -295,7 +295,7 @@ export class GithubApiService {
         }
     }
 
-    public async createFile(user: UserEntity, repo: string, path: string, content: any): Promise<FileCommitResponseDto> {
+    public async createFile(user: UserEntity, repo: string, path: string, content: string): Promise<FileCommitResponseDto> {
         try {
             this.logger.debug(`[createFile] Create file ${path} in Github repository ${repo}`);
             const client = await this.getClientForToken(config.githubApi.secret);
@@ -308,7 +308,7 @@ export class GithubApiService {
                     name: `${user.first_name} ${user.last_name}`,
                     email: `${user.email}`
                 },
-                content: Buffer.from(JSON.stringify(content)).toString('base64'),
+                content,
                 message: `created file ${path}`
             });
             if (!result) {
@@ -325,7 +325,7 @@ export class GithubApiService {
         }
     }
 
-    public async updateFile(user: UserEntity, repo: string, path: string, sha: string, content: any): Promise<FileCommitResponseDto> {
+    public async updateFile(user: UserEntity, repo: string, path: string, sha: string, content: string): Promise<FileCommitResponseDto> {
         try {
             this.logger.debug(`[updateFile] Update file ${path} in Github repository ${repo}`);
             const client = await this.getClientForToken(config.githubApi.secret);
@@ -338,7 +338,7 @@ export class GithubApiService {
                     name: `${user.first_name} ${user.last_name}`,
                     email: `${user.email}`
                 },
-                content: Buffer.from(JSON.stringify(content)).toString('base64'),
+                content,
                 message: `updated file ${path}`,
                 sha
             });
@@ -380,6 +380,30 @@ export class GithubApiService {
         } catch (err) {
             this.logger.error(
                 `[deleteFile] File ${path} not deleted in Github repository ${repo}, because ${JSON.stringify(err.message)}`,
+                err.stack
+            );
+            throw err;
+        }
+    }
+
+    public async getFileContents(user: UserEntity, repo: string, path: string):
+            Promise<FileContentsDto> {
+        try {
+            this.logger.debug(`[getFileContents] Get ${path} contents from Github repository ${repo}`);
+            const client = await this.getClientForToken(config.githubApi.secret);
+            const result = await client.getFileContents(
+                repo,
+                path
+            );
+            if (!result) {
+                throw new Error(`Failed to get ${path} contents`);
+            }
+            this.logger.debug(`[getFileContents] Contents of ${path} retrieved from Github repository ${repo}`);
+            return result;
+        } catch (err) {
+            this.logger.error(
+                `[getFileContents] Contents of ${path} not retrieved from Github repository ${repo}, \
+                    because ${JSON.stringify(err.message)}`,
                 err.stack
             );
             throw err;

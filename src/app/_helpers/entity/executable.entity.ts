@@ -10,6 +10,10 @@ const { CREATE, UPDATE } = CrudValidationGroups;
 
 export class ExecutableEntity extends TrackedFileEntity {
 
+    @Column('simple-json', { nullable: true })
+    @Field(() => TrackedFileEntity)
+    public file: TrackedFileEntity;
+
     @ApiModelProperty()
     @IsEmpty({ always: true })
     @Column('varchar', { nullable: false })

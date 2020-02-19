@@ -39,12 +39,12 @@ export class RuleListener {
                 user,
                 gamificationLayer.project_id,
                 path,
-                {
+                Buffer.from(JSON.stringify({
                     id: rule.id,
                     name: rule.name,
                     criteria: rule.criteria,
                     actions: rule.actions
-                }
+                })).toString('base64')
             );
             await this.repository.update(rule.id, { sha: res.content.sha });
             this.logger.debug('[onRuleCreate] Rule created in Github repository');
@@ -69,12 +69,12 @@ export class RuleListener {
                 user,
                 gamificationLayer.project_id,
                 path,
-                {
+                Buffer.from(JSON.stringify({
                     id: rule.id,
                     name: rule.name,
                     criteria: rule.criteria,
                     actions: rule.actions
-                }
+                })).toString('base64')
             );
             await this.repository.update(rule.id, { sha: res.content.sha });
             this.logger.debug('[onRuleUpdate] Rule updated in Github repository');
