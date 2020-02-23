@@ -2,6 +2,8 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { AppLogger } from '../app.logger';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
@@ -9,8 +11,14 @@ import { GithubApiService } from '../github-api/github-api.service';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { UserEntity } from '../user/entity';
+
+import {
+    SOLUTION_SYNC_QUEUE,
+    SOLUTION_SYNC_CREATE,
+    SOLUTION_SYNC_UPDATE,
+    SOLUTION_SYNC_DELETE
+} from './solution.constants';
 import { SolutionEntity } from './entity/solution.entity';
-import { SolutionEmitter } from './solution.emitter';
 
 
 @Injectable()
@@ -22,7 +30,7 @@ export class SolutionService {
         @InjectRepository(SolutionEntity)
         protected readonly repository: Repository<SolutionEntity>,
 
-        protected readonly emitter: SolutionEmitter,
+        @InjectQueue(SOLUTION_SYNC_QUEUE) private readonly solutionSyncQueue: Queue,
 
         protected readonly githubApiService: GithubApiService,
         protected readonly exerciseService: ExerciseService
@@ -58,7 +66,7 @@ export class SolutionService {
         dto.pathname = file.originalname;
         try {
             const entity = await this.repository.save(plainToClass(SolutionEntity, dto));
-            this.emitter.sendCreate(user, entity, file);
+            this.solutionSyncQueue.add(SOLUTION_SYNC_CREATE, { user, entity, file });
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to create solution`, e);
@@ -74,7 +82,7 @@ export class SolutionService {
             const entity = await this.repository.save(
                 plainToClass(SolutionEntity, { ...solution, ...dto })
             );
-            this.emitter.sendUpdate(user, entity, file);
+            this.solutionSyncQueue.add(SOLUTION_SYNC_UPDATE, { user, entity, file });
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to update solution`, e);
@@ -88,7 +96,7 @@ export class SolutionService {
         } catch (e) {
             throw new InternalServerErrorException(`Failed to delete solution`, e);
         }
-        this.emitter.sendDelete(user, entity);
+        this.solutionSyncQueue.add(SOLUTION_SYNC_DELETE, { user, entity });
         return entity;
     }
 

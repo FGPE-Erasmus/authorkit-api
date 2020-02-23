@@ -1,25 +1,43 @@
 import { HttpModule, Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 
+import { config } from '../../config';
 import { UserModule } from '../user/user.module';
 import { GithubApiModule } from '../github-api/github-api.module';
 import { ExerciseModule } from '../exercises/exercise.module';
 
 import { EmbeddableEntity } from './entity/embeddable.entity';
 import { EmbeddableController } from './embeddable.controller';
-import { EmbeddableListener } from './embeddable.listener';
+import { EmbeddableSyncProcessor } from './embeddable-sync.processor';
 import { EmbeddableService } from './embeddable.service';
-import { EmbeddableEmitter } from './embeddable.emitter';
+import { EMBEDDABLE_SYNC_QUEUE } from './embeddable.constants';
 
 const PROVIDERS = [
     EmbeddableService,
-    EmbeddableEmitter
+    EmbeddableSyncProcessor
 ];
 
 const MODULES = [
     TypeOrmModule.forFeature([
         EmbeddableEntity
     ]),
+    BullModule.registerQueue({
+        name: EMBEDDABLE_SYNC_QUEUE,
+        redis: {
+          host: config.queueing.host,
+          port: config.queueing.port
+        },
+        defaultJobOptions: {
+            attempts: 5,
+            backoff: {
+                type: 'exponential',
+                delay: 2000
+            },
+            lifo: true,
+            removeOnComplete: true
+        }
+    }),
     HttpModule,
     forwardRef(() => UserModule),
     GithubApiModule,
@@ -27,7 +45,7 @@ const MODULES = [
 ];
 
 @Module({
-    controllers: [EmbeddableController, EmbeddableListener],
+    controllers: [EmbeddableController],
     providers: [...PROVIDERS],
     imports: [...MODULES],
     exports: [EmbeddableService]

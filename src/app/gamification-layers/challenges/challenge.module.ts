@@ -1,29 +1,47 @@
-import { HttpModule, Module } from '@nestjs/common';
+import { HttpModule, Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 
-import { GamificationLayerModule } from '../gamification-layer.module';
+import { config } from '../../../config';
 import { GithubApiModule } from '../../github-api/github-api.module';
+import { GamificationLayerModule } from '../gamification-layer.module';
 
+import { CHALLENGE_SYNC_QUEUE } from './challenge.constants';
 import { ChallengeService } from './challenge.service';
 import { ChallengeController } from './challenge.controller';
 import { ChallengeEntity } from './entity/challenge.entity';
-import { ChallengeEmitter } from './challenge.emitter';
-import { ChallengeListener } from './challenge.listener';
+import { ChallengeSyncProcessor } from './challenge-sync.processor';
 
 const PROVIDERS = [
     ChallengeService,
-    ChallengeEmitter
+    ChallengeSyncProcessor
 ];
 
 const MODULES = [
     TypeOrmModule.forFeature([ChallengeEntity]),
+    BullModule.registerQueue({
+        name: CHALLENGE_SYNC_QUEUE,
+        redis: {
+          host: config.queueing.host,
+          port: config.queueing.port
+        },
+        defaultJobOptions: {
+            attempts: 5,
+            backoff: {
+                type: 'exponential',
+                delay: 2000
+            },
+            lifo: true,
+            removeOnComplete: true
+        }
+    }),
     HttpModule,
     GamificationLayerModule,
     GithubApiModule
 ];
 
 @Module({
-    controllers: [ChallengeController, ChallengeListener],
+    controllers: [ChallengeController],
     providers: [...PROVIDERS],
     imports: [...MODULES],
     exports: [ChallengeService]

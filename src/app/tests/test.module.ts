@@ -1,26 +1,44 @@
 import { HttpModule, Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 
+import { config } from '../../config';
 import { UserModule } from '../user/user.module';
 import { GithubApiModule } from '../github-api/github-api.module';
 import { ExerciseModule } from '../exercises/exercise.module';
 import { TestSetModule } from '../testsets/testset.module';
 
+import { TEST_SYNC_QUEUE } from './test.constants';
 import { TestEntity } from './entity/test.entity';
 import { TestController } from './test.controller';
-import { TestListener } from './test.listener';
+import { TestSyncProcessor } from './test-sync.processor';
 import { TestService } from './test.service';
-import { TestEmitter } from './test.emitter';
 
 const PROVIDERS = [
     TestService,
-    TestEmitter
+    TestSyncProcessor
 ];
 
 const MODULES = [
     TypeOrmModule.forFeature([
         TestEntity
     ]),
+    BullModule.registerQueue({
+        name: TEST_SYNC_QUEUE,
+        redis: {
+          host: config.queueing.host,
+          port: config.queueing.port
+        },
+        defaultJobOptions: {
+            attempts: 5,
+            backoff: {
+                type: 'exponential',
+                delay: 2000
+            },
+            lifo: true,
+            removeOnComplete: true
+        }
+    }),
     HttpModule,
     forwardRef(() => UserModule),
     GithubApiModule,
@@ -29,9 +47,9 @@ const MODULES = [
 ];
 
 @Module({
-    controllers: [TestController, TestListener],
+    controllers: [TestController],
     providers: [...PROVIDERS],
     imports: [...MODULES],
-    exports: [TestService]
+    exports: [TestService, TestSyncProcessor]
 })
 export class TestModule {}

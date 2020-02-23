@@ -1,40 +1,57 @@
 import { HttpModule, Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 
-import { accessRules } from '../app.access-rules';
-import { AccessControlModule } from '../access-control/access-control.module';
+import { config } from '../../config';
 import { PermissionModule } from '../permissions/permission.module';
 import { UserModule } from '../user/user.module';
 import { GithubApiModule } from '../github-api/github-api.module';
+import { ExerciseModule } from '../exercises/exercise.module';
+import { GamificationLayerModule } from '../gamification-layers/gamification-layer.module';
 
-import { ProjectCommand } from './project.command';
 import { ProjectPipe } from './pipe/project.pipe';
 import { ProjectService } from './project.service';
 import { ProjectController } from './project.controller';
-import { ProjectListener } from './project.listener';
-import { ProjectEmitter } from './project.emitter';
-import { ProjectContextMiddleware } from './project-context.middleware';
 import { ProjectEntity } from './entity/project.entity';
+import { PROJECT_SYNC_QUEUE } from './project.constants';
+import { ProjectSyncProcessor } from './project-sync.processor';
+
 
 const PROVIDERS = [
     ProjectService,
-    ProjectCommand,
     ProjectPipe,
-    ProjectContextMiddleware,
-    ProjectEmitter
+    ProjectSyncProcessor
 ];
 
 const MODULES = [
     TypeOrmModule.forFeature([ProjectEntity]),
-    AccessControlModule.forRoles(accessRules),
+    BullModule.registerQueue({
+        name: PROJECT_SYNC_QUEUE,
+        redis: {
+          host: config.queueing.host,
+          port: config.queueing.port
+        },
+        defaultJobOptions: {
+            attempts: 5,
+            backoff: {
+                type: 'exponential',
+                delay: 2000
+            },
+            lifo: true,
+            removeOnComplete: true
+        }
+    }),
     HttpModule,
     forwardRef(() => PermissionModule),
     UserModule,
-    GithubApiModule
+    GithubApiModule,
+
+    forwardRef(() => ExerciseModule),
+    forwardRef(() => GamificationLayerModule)
 ];
 
 @Module({
-    controllers: [ProjectController, ProjectListener],
+    controllers: [ProjectController],
     providers: [...PROVIDERS],
     imports: [...MODULES],
     exports: [ProjectService]

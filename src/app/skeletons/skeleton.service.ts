@@ -2,6 +2,8 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { AppLogger } from '../app.logger';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
@@ -9,8 +11,14 @@ import { GithubApiService } from '../github-api/github-api.service';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { UserEntity } from '../user/entity';
+
+import {
+    SKELETON_SYNC_QUEUE,
+    SKELETON_SYNC_CREATE,
+    SKELETON_SYNC_UPDATE,
+    SKELETON_SYNC_DELETE
+} from './skeleton.constants';
 import { SkeletonEntity } from './entity/skeleton.entity';
-import { SkeletonEmitter } from './skeleton.emitter';
 
 
 @Injectable()
@@ -22,7 +30,7 @@ export class SkeletonService {
         @InjectRepository(SkeletonEntity)
         protected readonly repository: Repository<SkeletonEntity>,
 
-        protected readonly emitter: SkeletonEmitter,
+        @InjectQueue(SKELETON_SYNC_QUEUE) private readonly skeletonSyncQueue: Queue,
 
         protected readonly githubApiService: GithubApiService,
         protected readonly exerciseService: ExerciseService
@@ -58,7 +66,7 @@ export class SkeletonService {
         dto.pathname = file.originalname;
         try {
             const entity = await this.repository.save(plainToClass(SkeletonEntity, dto));
-            this.emitter.sendCreate(user, entity, file);
+            this.skeletonSyncQueue.add(SKELETON_SYNC_CREATE, { user, entity, file });
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to create skeleton`, e);
@@ -74,7 +82,7 @@ export class SkeletonService {
             const entity = await this.repository.save(
                 plainToClass(SkeletonEntity, { ...skeleton, ...dto })
             );
-            this.emitter.sendUpdate(user, entity, file);
+            this.skeletonSyncQueue.add(SKELETON_SYNC_UPDATE, { user, entity, file });
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to update skeleton`, e);
@@ -88,7 +96,7 @@ export class SkeletonService {
         } catch (e) {
             throw new InternalServerErrorException(`Failed to delete skeleton`, e);
         }
-        this.emitter.sendDelete(user, entity);
+        this.skeletonSyncQueue.add(SKELETON_SYNC_DELETE, { user, entity });
         return entity;
     }
 

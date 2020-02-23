@@ -5,6 +5,7 @@ import { IsOptional, IsEmpty, IsUUID } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
 import { ExecutableEntity } from '../../_helpers';
+import { GamificationLayerEntity } from '../../gamification-layers/entity/gamification-layer.entity';
 import { ExerciseEntity } from '../../exercises/entity/exercise.entity';
 
 const { CREATE, UPDATE } = CrudValidationGroups;
@@ -24,7 +25,16 @@ export class FeedbackGeneratorEntity extends ExecutableEntity {
     @IsUUID('4', { always: true })
     @ManyToOne(() => ExerciseEntity, exercise => exercise.feedback_generators, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'exercise_id' })
-    @Column('uuid', { nullable: false })
+    @Column('uuid', { nullable: true })
     @Field()
     public exercise_id: string;
+
+    @ApiModelProperty()
+    @IsOptional({ always: true })
+    @IsUUID('4', { always: true })
+    @ManyToOne(() => GamificationLayerEntity, gl => gl.feedback_generators, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'gl_id' })
+    @Column('uuid', { nullable: true })
+    @Field()
+    public gl_id: string;
 }

@@ -1,7 +1,6 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
 import { UserModule } from '../user/user.module';
-import { ProjectModule } from '../project/project.module';
 import { GithubApiService } from './github-api.service';
 
 const PROVIDERS = [
@@ -9,8 +8,7 @@ const PROVIDERS = [
 ];
 
 const MODULES = [
-    UserModule/* ,
-    forwardRef(() => ProjectModule) */
+    UserModule
 ];
 
 @Module({

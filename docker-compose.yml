@@ -9,6 +9,7 @@ services:
     restart: unless-stopped
     depends_on:
       - db
+      - redis
     volumes:
       - ./src:/usr/src/app/src
       - ./.env:/usr/src/app/.env
@@ -85,6 +86,15 @@ services:
     volumes:
       - ./docker/postgres/data:/var/lib/postgresql/data
       - ./docker/postgres/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    networks:
+      - fgpe-authorkit-api-network
+
+  # Redis to support queueing
+  redis:
+    image: redis
+    container_name: fgpe-authorkit-api-queueing
+    ports:
+      - 6379:6379
     networks:
       - fgpe-authorkit-api-network
 

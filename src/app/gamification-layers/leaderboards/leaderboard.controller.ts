@@ -1,7 +1,9 @@
-import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor, Req, ForbiddenException, BadRequestException, Inject } from '@nestjs/common';
+import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor, Req, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CrudController, Crud, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { AppLogger } from '../../app.logger';
 import { User } from '../../_helpers/decorators/user.decorator';
@@ -9,9 +11,14 @@ import { AccessLevel } from '../../permissions/entity/access-level.enum';
 import { GamificationLayerService } from '../gamification-layer.service';
 import { ChallengeService } from '../challenges/challenge.service';
 
+import {
+    LEADERBOARD_SYNC_QUEUE,
+    LEADERBOARD_SYNC_CREATE,
+    LEADERBOARD_SYNC_UPDATE,
+    LEADERBOARD_SYNC_DELETE
+} from './leaderboard.constants';
 import { LeaderboardService } from './leaderboard.service';
 import { LeaderboardEntity } from './entity/leaderboard.entity';
-import { LeaderboardEmitter } from './leaderboard.emitter';
 
 @Controller('leaderboards')
 @ApiUseTags('leaderboards')
@@ -65,7 +72,7 @@ export class LeaderboardController implements CrudController<LeaderboardEntity> 
 
     constructor(
         readonly service: LeaderboardService,
-        readonly emitter: LeaderboardEmitter,
+        @InjectQueue(LEADERBOARD_SYNC_QUEUE) private readonly leaderboardSyncQueue: Queue,
         readonly glservice: GamificationLayerService,
         readonly challengeservice: ChallengeService
     ) { }
@@ -125,7 +132,7 @@ export class LeaderboardController implements CrudController<LeaderboardEntity> 
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const leaderboard = await this.base.createOneBase(parsedReq, dto);
-        this.emitter.sendCreate(user, leaderboard);
+        this.leaderboardSyncQueue.add(LEADERBOARD_SYNC_CREATE, { user, leaderboard });
         return leaderboard;
     }
 
@@ -142,26 +149,9 @@ export class LeaderboardController implements CrudController<LeaderboardEntity> 
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const leaderboard = await this.base.updateOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(user, leaderboard);
+        this.leaderboardSyncQueue.add(LEADERBOARD_SYNC_UPDATE, { user, leaderboard });
         return leaderboard;
     }
-
-    /* @Override()
-    async replaceOne(
-        @User() user: any,
-        @Req() req,
-        @ParsedRequest() parsedReq: CrudRequest,
-        @ParsedBody() dto: LeaderboardEntity
-    ) {
-        const accessLevel = await this.service.getAccessLevel(
-            req.params.id, user.id);
-        if (accessLevel < AccessLevel.CONTRIBUTOR) {
-            throw new ForbiddenException(`You do not have sufficient privileges`);
-        }
-        const leaderboard = await this.base.replaceOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(leaderboard);
-        return leaderboard;
-    } */
 
     @Override()
     async deleteOne(
@@ -177,7 +167,7 @@ export class LeaderboardController implements CrudController<LeaderboardEntity> 
         }
         const leaderboard = await this.base.deleteOneBase(parsedReq);
         if (leaderboard instanceof LeaderboardEntity) {
-            this.emitter.sendDelete(user, leaderboard);
+            this.leaderboardSyncQueue.add(LEADERBOARD_SYNC_DELETE, { user, leaderboard });
         }
         return leaderboard;
     }

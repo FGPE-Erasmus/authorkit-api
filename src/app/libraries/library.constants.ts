@@ -1,4 +1,4 @@
-export const LIBRARY_TOKEN = 'LibraryRepositoryToken';
-export const LIBRARY_CMD_CREATE = 'onLibraryCreateCmd';
-export const LIBRARY_CMD_UPDATE = 'onLibraryUpdateCmd';
-export const LIBRARY_CMD_DELETE = 'onLibraryDeleteCmd';
+export const LIBRARY_SYNC_QUEUE = 'LIBRARY_SYNC_QUEUE';
+export const LIBRARY_SYNC_CREATE = 'LIBRARY_SYNC_CREATE';
+export const LIBRARY_SYNC_UPDATE = 'LIBRARY_SYNC_UPDATE';
+export const LIBRARY_SYNC_DELETE = 'LIBRARY_SYNC_DELETE';

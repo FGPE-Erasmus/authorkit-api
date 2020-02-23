@@ -1,3 +1,4 @@
-export const CHALLENGE_CMD_CREATE = 'onChallengeCreateCmd';
-export const CHALLENGE_CMD_UPDATE = 'onChallengeUpdateCmd';
-export const CHALLENGE_CMD_DELETE = 'onChallengeDeleteCmd';
+export const CHALLENGE_SYNC_QUEUE = 'CHALLENGE_SYNC_QUEUE';
+export const CHALLENGE_SYNC_CREATE = 'CHALLENGE_SYNC_CREATE';
+export const CHALLENGE_SYNC_UPDATE = 'CHALLENGE_SYNC_UPDATE';
+export const CHALLENGE_SYNC_DELETE = 'CHALLENGE_SYNC_DELETE';

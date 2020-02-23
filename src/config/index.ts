@@ -27,6 +27,10 @@ interface Config {
         templatesDir: string
     };
     database: ConnectionOptions;
+    queueing: {
+        host: string,
+        port: number
+    };
     auth: {
         domain: string;
         access: {
@@ -123,6 +127,10 @@ export const config: Config = {
         entities: [
             __dirname + '/../**/entity/*.entity{.ts,.js}'
         ]
+    },
+    queueing: {
+        host: process.env.QUEUEING_HOST,
+        port: parseInt(process.env.QUEUEING_PORT, 10)
     },
     auth: {
         domain: process.env.AUTH_DOMAIN,

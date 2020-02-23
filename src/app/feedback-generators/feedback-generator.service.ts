@@ -2,6 +2,8 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { AppLogger } from '../app.logger';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
@@ -9,8 +11,14 @@ import { GithubApiService } from '../github-api/github-api.service';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { UserEntity } from '../user/entity';
+
+import {
+    FEEDBACK_GENERATOR_SYNC_QUEUE,
+    FEEDBACK_GENERATOR_SYNC_CREATE,
+    FEEDBACK_GENERATOR_SYNC_UPDATE,
+    FEEDBACK_GENERATOR_SYNC_DELETE
+} from './feedback-generator.constants';
 import { FeedbackGeneratorEntity } from './entity/feedback-generator.entity';
-import { FeedbackGeneratorEmitter } from './feedback-generator.emitter';
 
 
 @Injectable()
@@ -22,7 +30,7 @@ export class FeedbackGeneratorService {
         @InjectRepository(FeedbackGeneratorEntity)
         protected readonly repository: Repository<FeedbackGeneratorEntity>,
 
-        protected readonly emitter: FeedbackGeneratorEmitter,
+        @InjectQueue(FEEDBACK_GENERATOR_SYNC_QUEUE) private readonly feedbackGeneratorSyncQueue: Queue,
 
         protected readonly githubApiService: GithubApiService,
         protected readonly exerciseService: ExerciseService
@@ -58,7 +66,10 @@ export class FeedbackGeneratorService {
         dto.pathname = file.originalname;
         try {
             const entity = await this.repository.save(plainToClass(FeedbackGeneratorEntity, dto));
-            this.emitter.sendCreate(user, entity, file);
+            this.feedbackGeneratorSyncQueue.add(
+                FEEDBACK_GENERATOR_SYNC_CREATE,
+                { user, entity, file }
+            );
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to create feedback generator`, e);
@@ -67,14 +78,20 @@ export class FeedbackGeneratorService {
 
     public async updateOne(user: UserEntity, id: string, dto: FeedbackGeneratorEntity, file: any):
             Promise<FeedbackGeneratorEntity> {
-        const feedback_generator = await this.repository.findOneOrFail(id);
-        delete dto.exercise_id;
         dto.pathname = file.originalname;
         try {
-            const entity = await this.repository.save(
-                plainToClass(FeedbackGeneratorEntity, { ...feedback_generator, ...dto })
+            await this.repository.update(
+                id,
+                {
+                    command_line: dto.command_line,
+                    pathname: dto.pathname
+                }
             );
-            this.emitter.sendUpdate(user, entity, file);
+            const entity = await this.repository.findOneOrFail(id);
+            this.feedbackGeneratorSyncQueue.add(
+                FEEDBACK_GENERATOR_SYNC_UPDATE,
+                { user, entity, file }
+            );
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to update feedback generator`, e);
@@ -88,7 +105,10 @@ export class FeedbackGeneratorService {
         } catch (e) {
             throw new InternalServerErrorException(`Failed to delete feedback generator`, e);
         }
-        this.emitter.sendDelete(user, entity);
+        this.feedbackGeneratorSyncQueue.add(
+            FEEDBACK_GENERATOR_SYNC_DELETE,
+            { user, entity }
+        );
         return entity;
     }
 

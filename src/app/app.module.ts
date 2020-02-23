@@ -18,13 +18,7 @@ import { LeaderboardModule } from './gamification-layers/leaderboards/leaderboar
 import { RewardModule } from './gamification-layers/rewards/reward.module';
 import { RuleModule } from './gamification-layers/rules/rule.module';
 import { GqlConfigService, RequestContextMiddleware } from './_helpers';
-import { ProjectContextMiddleware } from './project/project-context.middleware';
 import { ProjectController } from './project/project.controller';
-import { ExerciseContextMiddleware } from './exercises/exercise-context.middleware';
-import { ExerciseController } from './exercises/exercise.controller';
-import { TestController } from './tests/test.controller';
-import { TestSetController } from './testsets/testset.controller';
-import { TestSetContextMiddleware } from './testsets/testset-context.middleware';
 import { TestSetModule } from './testsets/testset.module';
 import { TestModule } from './tests/test.module';
 import { DynamicCorrectorModule } from './dynamic-correctors/dynamic-corrector.module';
@@ -84,14 +78,5 @@ export class AppModule {
         consumer
             .apply(RequestContextMiddleware)
             .forRoutes({ path: '*', method: RequestMethod.ALL });
-        consumer
-            .apply(ProjectContextMiddleware)
-            .forRoutes(ProjectController);
-        consumer
-            .apply(ExerciseContextMiddleware)
-            .forRoutes(ExerciseController, TestSetController, TestController);
-        consumer
-            .apply(TestSetContextMiddleware)
-            .forRoutes(TestSetController);
     }
 }

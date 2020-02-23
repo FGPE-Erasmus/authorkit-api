@@ -1,23 +1,41 @@
 import { HttpModule, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 
+import { config } from '../../../config';
 import { GithubApiModule } from '../../github-api/github-api.module';
 import { GamificationLayerModule } from '../gamification-layer.module';
 import { ChallengeModule } from '../challenges/challenge.module';
 
+import { RULE_SYNC_QUEUE } from './rule.constants';
 import { RuleService } from './rule.service';
 import { RuleController } from './rule.controller';
 import { RuleEntity } from './entity/rule.entity';
-import { RuleEmitter } from './rule.emitter';
-import { RuleListener } from './rule.listener';
+import { RuleSyncProcessor } from './rule-sync.processor';
 
 const PROVIDERS = [
     RuleService,
-    RuleEmitter
+    RuleSyncProcessor
 ];
 
 const MODULES = [
     TypeOrmModule.forFeature([RuleEntity]),
+    BullModule.registerQueue({
+        name: RULE_SYNC_QUEUE,
+        redis: {
+          host: config.queueing.host,
+          port: config.queueing.port
+        },
+        defaultJobOptions: {
+            attempts: 5,
+            backoff: {
+                type: 'exponential',
+                delay: 2000
+            },
+            lifo: true,
+            removeOnComplete: true
+        }
+    }),
     HttpModule,
     GamificationLayerModule,
     ChallengeModule,
@@ -25,9 +43,9 @@ const MODULES = [
 ];
 
 @Module({
-    controllers: [RuleController, RuleListener],
+    controllers: [RuleController],
     providers: [...PROVIDERS],
     imports: [...MODULES],
-    exports: [RuleService]
+    exports: [RuleService, RuleSyncProcessor]
 })
 export class RuleModule {}

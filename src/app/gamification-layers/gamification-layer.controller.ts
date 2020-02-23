@@ -5,19 +5,31 @@ import {
     UseGuards,
     Req,
     ForbiddenException,
-    BadRequestException
+    BadRequestException,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Header,
+    Res,
+    InternalServerErrorException
 } from '@nestjs/common';
 import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CrudController, Override, ParsedBody, ParsedRequest, CrudRequest, Crud } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { User } from '../_helpers/decorators/user.decorator';
-import { getAccessLevel } from '../_helpers/security/check-access-level';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { ProjectService } from '../project/project.service';
 import { GamificationLayerEntity } from './entity/gamification-layer.entity';
 import { GamificationLayerService } from './gamification-layer.service';
-import { GamificationLayerEmitter } from './gamification-layer.emitter';
+import {
+    GAMIFICATION_LAYER_SYNC_QUEUE,
+    GAMIFICATION_LAYER_SYNC_CREATE,
+    GAMIFICATION_LAYER_SYNC_UPDATE,
+    GAMIFICATION_LAYER_SYNC_DELETE
+} from './gamification-layer.constants';
 
 @Controller('gamification-layers')
 @ApiUseTags('gamification-layers')
@@ -68,12 +80,36 @@ export class GamificationLayerController implements CrudController<GamificationL
 
     constructor(
         readonly service: GamificationLayerService,
-        readonly emitter: GamificationLayerEmitter,
+        @InjectQueue(GAMIFICATION_LAYER_SYNC_QUEUE) private readonly gamificationLayerSyncQueue: Queue,
         readonly projectService: ProjectService
     ) { }
 
     get base(): CrudController<GamificationLayerEntity> {
         return this;
+    }
+
+    @Get(':id/export')
+    @HttpCode(HttpStatus.OK)
+    @Header('Content-Type', 'application/octet-stream')
+    async export(
+        @User() user: any,
+        @Req() req,
+        @Res() res
+    ) {
+        const accessLevel = await this.service.getAccessLevel(req.params.id, user.id);
+        if (accessLevel < AccessLevel.VIEWER) {
+            throw new ForbiddenException('You do not have sufficient privileges');
+        }
+        res.set(
+            'Content-Disposition',
+            `attachment; filename=${req.params.id}.${req.query.format || 'zip'}`
+        );
+        try {
+            await this.service.export(user, req.params.id, req.query.format || 'zip', res);
+            res.end();
+        } catch (err) {
+            throw new InternalServerErrorException('Archive creation failed');
+        }
     }
 
     @Override()
@@ -121,7 +157,10 @@ export class GamificationLayerController implements CrudController<GamificationL
             dto.owner_id = user.id;
         }
         const gamificationLayer = await this.base.createOneBase(parsedReq, dto);
-        this.emitter.sendCreate(user, gamificationLayer);
+        this.gamificationLayerSyncQueue.add(
+            GAMIFICATION_LAYER_SYNC_CREATE,
+            { user, gamificationLayer }
+        );
         return gamificationLayer;
     }
 
@@ -137,7 +176,10 @@ export class GamificationLayerController implements CrudController<GamificationL
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const gamificationLayer = await this.base.updateOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(user, gamificationLayer);
+        this.gamificationLayerSyncQueue.add(
+            GAMIFICATION_LAYER_SYNC_UPDATE,
+            { user, gamificationLayer }
+        );
         return gamificationLayer;
     }
 
@@ -154,8 +196,11 @@ export class GamificationLayerController implements CrudController<GamificationL
         }
         const gamificationLayer = await this.base.deleteOneBase(parsedReq);
         if (gamificationLayer) {
-            this.emitter.sendDelete(user, gamificationLayer);
+            this.gamificationLayerSyncQueue.add(
+                GAMIFICATION_LAYER_SYNC_DELETE,
+                { user, gamificationLayer }
+            );
         }
-        return this.base.deleteOneBase(parsedReq);
+        return gamificationLayer;
     }
 }

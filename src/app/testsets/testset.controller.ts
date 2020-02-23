@@ -2,13 +2,20 @@ import { Controller, UseGuards, Req, ForbiddenException, BadRequestException } f
 import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { User } from '../_helpers/decorators/user.decorator';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { ExerciseService } from '../exercises/exercise.service';
 
+import {
+    TESTSET_SYNC_QUEUE,
+    TESTSET_SYNC_CREATE,
+    TESTSET_SYNC_UPDATE,
+    TESTSET_SYNC_DELETE
+} from './testset.constants';
 import { TestSetService } from './testset.service';
-import { TestSetEmitter } from './testset.emitter';
 import { TestSetEntity } from './entity/testset.entity';
 
 @Controller('testsets')
@@ -20,10 +27,6 @@ import { TestSetEntity } from './entity/testset.entity';
         type: TestSetEntity
     },
     params: {
-        exercise_id: {
-          field: 'exercise_id',
-          type: 'uuid'
-        },
         id: {
           field: 'id',
           type: 'uuid',
@@ -56,10 +59,9 @@ import { TestSetEntity } from './entity/testset.entity';
 })
 export class TestSetController implements CrudController<TestSetEntity> {
 
-
     constructor(
-        readonly emitter: TestSetEmitter,
         readonly service: TestSetService,
+        @InjectQueue(TESTSET_SYNC_QUEUE) private readonly testsetSyncQueue: Queue,
         readonly exerciseService: ExerciseService
     ) {}
 
@@ -105,12 +107,14 @@ export class TestSetController implements CrudController<TestSetEntity> {
         @ParsedRequest() parsedReq: CrudRequest,
         @ParsedBody() dto: TestSetEntity
     ) {
-        const accessLevel = await this.exerciseService.getAccessLevel(req.params.exercise_id, user.id);
+        const accessLevel = await this.exerciseService.getAccessLevel(dto.exercise_id, user.id);
         if (accessLevel < AccessLevel.CONTRIBUTOR) {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const testset = await this.base.createOneBase(parsedReq, dto);
-        this.emitter.sendCreate(user, testset);
+        this.testsetSyncQueue.add(
+            TESTSET_SYNC_CREATE, { user, testset }
+        );
         return testset;
     }
 
@@ -121,12 +125,14 @@ export class TestSetController implements CrudController<TestSetEntity> {
         @ParsedRequest() parsedReq: CrudRequest,
         @ParsedBody() dto: TestSetEntity
     ) {
-        const accessLevel = await this.exerciseService.getAccessLevel(req.params.exercise_id, user.id);
+        const accessLevel = await this.service.getAccessLevel(req.params.id, user.id);
         if (accessLevel < AccessLevel.CONTRIBUTOR) {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const testset = await this.base.updateOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(user, testset);
+        this.testsetSyncQueue.add(
+            TESTSET_SYNC_UPDATE, { user, testset }
+        );
         return testset;
     }
 
@@ -136,14 +142,16 @@ export class TestSetController implements CrudController<TestSetEntity> {
         @Req() req,
         @ParsedRequest() parsedReq: CrudRequest
     ) {
-        const accessLevel = await this.exerciseService.getAccessLevel(req.params.exercise_id, user.id);
+        const accessLevel = await this.service.getAccessLevel(req.params.id, user.id);
         if (accessLevel < AccessLevel.CONTRIBUTOR) {
             throw new ForbiddenException(
                 `You do not have sufficient privileges`);
         }
         const testset = await this.base.deleteOneBase(parsedReq);
         if (testset) {
-            this.emitter.sendDelete(user, testset);
+            this.testsetSyncQueue.add(
+                TESTSET_SYNC_DELETE, { user, testset }
+            );
         }
         return testset;
     }

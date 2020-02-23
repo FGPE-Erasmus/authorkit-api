@@ -1,4 +1,4 @@
-export const EMBEDDABLE_TOKEN = 'EmbeddableRepositoryToken';
-export const EMBEDDABLE_CMD_CREATE = 'onEmbeddableCreateCmd';
-export const EMBEDDABLE_CMD_UPDATE = 'onEmbeddableUpdateCmd';
-export const EMBEDDABLE_CMD_DELETE = 'onEmbeddableDeleteCmd';
+export const EMBEDDABLE_SYNC_QUEUE = 'EMBEDDABLE_SYNC_QUEUE';
+export const EMBEDDABLE_SYNC_CREATE = 'EMBEDDABLE_SYNC_CREATE';
+export const EMBEDDABLE_SYNC_UPDATE = 'EMBEDDABLE_SYNC_UPDATE';
+export const EMBEDDABLE_SYNC_DELETE = 'EMBEDDABLE_SYNC_DELETE';

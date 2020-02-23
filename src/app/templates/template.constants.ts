@@ -1,4 +1,4 @@
-export const TEMPLATE_TOKEN = 'TemplateRepositoryToken';
-export const TEMPLATE_CMD_CREATE = 'onTemplateCreateCmd';
-export const TEMPLATE_CMD_UPDATE = 'onTemplateUpdateCmd';
-export const TEMPLATE_CMD_DELETE = 'onTemplateDeleteCmd';
+export const TEMPLATE_SYNC_QUEUE = 'TEMPLATE_SYNC_QUEUE';
+export const TEMPLATE_SYNC_CREATE = 'TEMPLATE_SYNC_CREATE';
+export const TEMPLATE_SYNC_UPDATE = 'TEMPLATE_SYNC_UPDATE';
+export const TEMPLATE_SYNC_DELETE = 'TEMPLATE_SYNC_DELETE';

@@ -1,18 +1,26 @@
 import { Body, Controller, HttpCode, Post, UseGuards, Get, Query, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { Client, ClientProxy, Transport } from '@nestjs/microservices';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiImplicitBody, ApiModelProperty, ApiResponse, ApiUseTags } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { config } from '../../config';
 import { DeepPartial } from '../_helpers/database';
 import { Profile } from '../_helpers/decorators';
 import { AppLogger } from '../app.logger';
-import { USER_CMD_PASSWORD_NEW, USER_CMD_PASSWORD_RESET, USER_CMD_REGISTER, USER_CMD_REGISTER_VERIFY } from '../user';
+import {
+    USER_EMAIL_QUEUE,
+    USER_EMAIL_REGISTER,
+    USER_EMAIL_REGISTER_VERIFY,
+    USER_EMAIL_PASSWORD_RESET,
+    USER_EMAIL_PASSWORD_NEW
+} from '../user/user.constants';
 import { UserEntity } from '../user/entity';
 import { UserService } from '../user/user.service';
+
 import { CredentialsDto } from './dto/credentials.dto';
 import { JwtDto } from './dto/jwt.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -34,16 +42,11 @@ export class TestDto {
 @Controller('auth')
 export class AuthController {
 
-    @Client({
-        transport: Transport.TCP,
-        options: config.microservice.options
-    })
-    private client: ClientProxy;
-
     private logger = new AppLogger(AuthController.name);
 
     constructor(
         private readonly userService: UserService,
+        @InjectQueue(USER_EMAIL_QUEUE) private readonly userEmailQueue: Queue,
         @InjectRepository(UserEntity) protected readonly repository: Repository<UserEntity>
     ) {
     }
@@ -68,9 +71,7 @@ export class AuthController {
             throw new ConflictException('User already exists.');
         }
         user = await this.userService.register(data);
-        this.client.send({ cmd: USER_CMD_REGISTER }, user).subscribe(() => { }, error => {
-            this.logger.error(error, '');
-        });
+        this.userEmailQueue.add(USER_EMAIL_REGISTER, { user });
         this.logger.debug(`[register] Send registration email for email ${data.email}`);
     }
 
@@ -93,9 +94,7 @@ export class AuthController {
             throw new BadRequestException(`User ${user.email} already verified`);
         }
         await this.repository.update(token.id, { is_verified: true });
-        this.client.send({ cmd: USER_CMD_REGISTER_VERIFY }, user).subscribe(() => { }, error => {
-            this.logger.error(error, '');
-        });
+        this.userEmailQueue.add(USER_EMAIL_REGISTER_VERIFY, { user });
         this.logger.debug(`[registerVerify] Sent command register verify for user id ${user.id}`);
         return createAuthToken(user);
     }
@@ -113,9 +112,7 @@ export class AuthController {
         if (user.is_verified) {
             throw new BadRequestException(`User with email "${user.email}" already verified`);
         }
-        this.client.send({ cmd: USER_CMD_REGISTER }, user).subscribe(() => { }, error => {
-            this.logger.error(error, '');
-        });
+        this.userEmailQueue.add(USER_EMAIL_REGISTER, { user });
         this.logger.debug(`[registerVerifyResend] Sent command registry verify for email ${body.email}`);
     }
 
@@ -130,11 +127,7 @@ export class AuthController {
             if (!user) {
                 throw new BadRequestException(`User with email "${body.email}" does not exist.`);
             }
-            this.client
-                .send({ cmd: USER_CMD_PASSWORD_RESET }, user)
-                .subscribe(() => { }, error => {
-                    this.logger.error(error, '');
-                });
+            this.userEmailQueue.add(USER_EMAIL_PASSWORD_RESET, { user });
         } else {
             throw new BadRequestException('User email is required');
         }
@@ -149,10 +142,7 @@ export class AuthController {
         const token = await verifyToken(body.resetToken, config.auth.password_reset.secret);
         const user = await this.userService.updatePassword({ id: token.id, password: body.password });
         this.logger.debug(`[passwordNew] Send change password email for user ${user.email}`);
-        this.client.send({ cmd: USER_CMD_PASSWORD_NEW }, user)
-            .subscribe(() => { }, error => {
-                this.logger.error(error, '');
-            });
+        this.userEmailQueue.add(USER_EMAIL_PASSWORD_NEW, { user });
     }
 
     @Post('refresh')
@@ -181,9 +171,7 @@ export class AuthController {
                 provider: profile.provider,
                 is_verified: true
             });
-            this.client.send({ cmd: USER_CMD_REGISTER_VERIFY }, user).subscribe(() => { }, error => {
-                this.logger.error(error, '');
-            });
+            this.userEmailQueue.add(USER_EMAIL_REGISTER_VERIFY, { user });
         }
         return createAuthToken(user);
     }

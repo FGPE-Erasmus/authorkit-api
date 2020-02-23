@@ -1,4 +1,4 @@
-export const TEST_GENERATOR_TOKEN = 'TestGeneratorRepositoryToken';
-export const TEST_GENERATOR_CMD_CREATE = 'onTestGeneratorCreateCmd';
-export const TEST_GENERATOR_CMD_UPDATE = 'onTestGeneratorUpdateCmd';
-export const TEST_GENERATOR_CMD_DELETE = 'onTestGeneratorDeleteCmd';
+export const TEST_GENERATOR_SYNC_QUEUE = 'TEST_GENERATOR_SYNC_QUEUE';
+export const TEST_GENERATOR_SYNC_CREATE = 'TEST_GENERATOR_SYNC_CREATE';
+export const TEST_GENERATOR_SYNC_UPDATE = 'TEST_GENERATOR_SYNC_UPDATE';
+export const TEST_GENERATOR_SYNC_DELETE = 'TEST_GENERATOR_SYNC_DELETE';

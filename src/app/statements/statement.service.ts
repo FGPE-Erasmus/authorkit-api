@@ -2,6 +2,8 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { AppLogger } from '../app.logger';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
@@ -9,8 +11,14 @@ import { GithubApiService } from '../github-api/github-api.service';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { UserEntity } from '../user/entity';
+
+import {
+    STATEMENT_SYNC_QUEUE,
+    STATEMENT_SYNC_CREATE,
+    STATEMENT_SYNC_UPDATE,
+    STATEMENT_SYNC_DELETE
+} from './statement.constants';
 import { StatementEntity } from './entity/statement.entity';
-import { StatementEmitter } from './statement.emitter';
 
 
 @Injectable()
@@ -22,7 +30,7 @@ export class StatementService {
         @InjectRepository(StatementEntity)
         protected readonly repository: Repository<StatementEntity>,
 
-        protected readonly emitter: StatementEmitter,
+        @InjectQueue(STATEMENT_SYNC_QUEUE) private readonly statementSyncQueue: Queue,
 
         protected readonly githubApiService: GithubApiService,
         protected readonly exerciseService: ExerciseService
@@ -58,7 +66,7 @@ export class StatementService {
         dto.pathname = file.originalname;
         try {
             const entity = await this.repository.save(plainToClass(StatementEntity, dto));
-            this.emitter.sendCreate(user, entity, file);
+            this.statementSyncQueue.add(STATEMENT_SYNC_CREATE, { user, entity, file });
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to create statement`, e);
@@ -74,7 +82,7 @@ export class StatementService {
             const entity = await this.repository.save(
                 plainToClass(StatementEntity, { ...statement, ...dto })
             );
-            this.emitter.sendUpdate(user, entity, file);
+            this.statementSyncQueue.add(STATEMENT_SYNC_UPDATE, { user, entity, file });
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to update statement`, e);
@@ -88,7 +96,7 @@ export class StatementService {
         } catch (e) {
             throw new InternalServerErrorException(`Failed to delete statement`, e);
         }
-        this.emitter.sendDelete(user, entity);
+        this.statementSyncQueue.add(STATEMENT_SYNC_DELETE, { user, entity });
         return entity;
     }
 

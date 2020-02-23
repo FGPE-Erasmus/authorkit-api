@@ -1,3 +1,4 @@
-export const RULE_CMD_CREATE = 'onRuleCreateCmd';
-export const RULE_CMD_UPDATE = 'onRuleUpdateCmd';
-export const RULE_CMD_DELETE = 'onRuleDeleteCmd';
+export const RULE_SYNC_QUEUE = 'RULE_SYNC_QUEUE';
+export const RULE_SYNC_CREATE = 'RULE_SYNC_CREATE';
+export const RULE_SYNC_UPDATE = 'RULE_SYNC_UPDATE';
+export const RULE_SYNC_DELETE = 'RULE_SYNC_DELETE';

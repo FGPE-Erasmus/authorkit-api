@@ -1,4 +1,4 @@
-export const SOLUTION_TOKEN = 'SolutionRepositoryToken';
-export const SOLUTION_CMD_CREATE = 'onSolutionCreateCmd';
-export const SOLUTION_CMD_UPDATE = 'onSolutionUpdateCmd';
-export const SOLUTION_CMD_DELETE = 'onSolutionDeleteCmd';
+export const SOLUTION_SYNC_QUEUE = 'SOLUTION_SYNC_QUEUE';
+export const SOLUTION_SYNC_CREATE = 'SOLUTION_SYNC_CREATE';
+export const SOLUTION_SYNC_UPDATE = 'SOLUTION_SYNC_UPDATE';
+export const SOLUTION_SYNC_DELETE = 'SOLUTION_SYNC_DELETE';

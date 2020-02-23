@@ -2,6 +2,8 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { AppLogger } from '../app.logger';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
@@ -9,8 +11,14 @@ import { GithubApiService } from '../github-api/github-api.service';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { UserEntity } from '../user/entity';
+
+import {
+    TEST_GENERATOR_SYNC_QUEUE,
+    TEST_GENERATOR_SYNC_CREATE,
+    TEST_GENERATOR_SYNC_UPDATE,
+    TEST_GENERATOR_SYNC_DELETE
+} from './test-generator.constants';
 import { TestGeneratorEntity } from './entity/test-generator.entity';
-import { TestGeneratorEmitter } from './test-generator.emitter';
 
 
 @Injectable()
@@ -22,7 +30,7 @@ export class TestGeneratorService {
         @InjectRepository(TestGeneratorEntity)
         protected readonly repository: Repository<TestGeneratorEntity>,
 
-        protected readonly emitter: TestGeneratorEmitter,
+        @InjectQueue(TEST_GENERATOR_SYNC_QUEUE) private readonly testGeneratorSyncQueue: Queue,
 
         protected readonly githubApiService: GithubApiService,
         protected readonly exerciseService: ExerciseService
@@ -58,7 +66,9 @@ export class TestGeneratorService {
         dto.pathname = file.originalname;
         try {
             const entity = await this.repository.save(plainToClass(TestGeneratorEntity, dto));
-            this.emitter.sendCreate(user, entity, file);
+            this.testGeneratorSyncQueue.add(
+                TEST_GENERATOR_SYNC_CREATE, { user, entity, file }
+            );
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to create test generator`, e);
@@ -74,7 +84,9 @@ export class TestGeneratorService {
             const entity = await this.repository.save(
                 plainToClass(TestGeneratorEntity, { ...test_generator, ...dto })
             );
-            this.emitter.sendUpdate(user, entity, file);
+            this.testGeneratorSyncQueue.add(
+                TEST_GENERATOR_SYNC_UPDATE, { user, entity, file }
+            );
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to update test generator`, e);
@@ -88,7 +100,9 @@ export class TestGeneratorService {
         } catch (e) {
             throw new InternalServerErrorException(`Failed to delete test generator`, e);
         }
-        this.emitter.sendDelete(user, entity);
+        this.testGeneratorSyncQueue.add(
+            TEST_GENERATOR_SYNC_DELETE, { user, entity }
+        );
         return entity;
     }
 

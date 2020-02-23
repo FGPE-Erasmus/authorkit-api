@@ -1,4 +1,4 @@
-export const STATEMENT_TOKEN = 'StatementRepositoryToken';
-export const STATEMENT_CMD_CREATE = 'onStatementCreateCmd';
-export const STATEMENT_CMD_UPDATE = 'onStatementUpdateCmd';
-export const STATEMENT_CMD_DELETE = 'onStatementDeleteCmd';
+export const STATEMENT_SYNC_QUEUE = 'STATEMENT_SYNC_QUEUE';
+export const STATEMENT_SYNC_CREATE = 'STATEMENT_SYNC_CREATE';
+export const STATEMENT_SYNC_UPDATE = 'STATEMENT_SYNC_UPDATE';
+export const STATEMENT_SYNC_DELETE = 'STATEMENT_SYNC_DELETE';

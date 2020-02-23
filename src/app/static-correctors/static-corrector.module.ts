@@ -1,25 +1,43 @@
 import { HttpModule, Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 
+import { config } from '../../config';
 import { UserModule } from '../user/user.module';
 import { GithubApiModule } from '../github-api/github-api.module';
 import { ExerciseModule } from '../exercises/exercise.module';
 
 import { StaticCorrectorEntity } from './entity/static-corrector.entity';
 import { StaticCorrectorController } from './static-corrector.controller';
-import { StaticCorrectorListener } from './static-corrector.listener';
 import { StaticCorrectorService } from './static-corrector.service';
-import { StaticCorrectorEmitter } from './static-corrector.emitter';
+import { StaticCorrectorSyncProcessor } from './static-corrector-sync.processor';
+import { STATIC_CORRECTOR_SYNC_QUEUE } from './static-corrector.constants';
 
 const PROVIDERS = [
     StaticCorrectorService,
-    StaticCorrectorEmitter
+    StaticCorrectorSyncProcessor
 ];
 
 const MODULES = [
     TypeOrmModule.forFeature([
         StaticCorrectorEntity
     ]),
+    BullModule.registerQueue({
+        name: STATIC_CORRECTOR_SYNC_QUEUE,
+        redis: {
+          host: config.queueing.host,
+          port: config.queueing.port
+        },
+        defaultJobOptions: {
+            attempts: 5,
+            backoff: {
+                type: 'exponential',
+                delay: 2000
+            },
+            lifo: true,
+            removeOnComplete: true
+        }
+    }),
     HttpModule,
     forwardRef(() => UserModule),
     GithubApiModule,
@@ -27,7 +45,7 @@ const MODULES = [
 ];
 
 @Module({
-    controllers: [StaticCorrectorController, StaticCorrectorListener],
+    controllers: [StaticCorrectorController],
     providers: [...PROVIDERS],
     imports: [...MODULES],
     exports: [StaticCorrectorService]

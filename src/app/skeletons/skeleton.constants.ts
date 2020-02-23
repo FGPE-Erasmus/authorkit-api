@@ -1,4 +1,4 @@
-export const SKELETON_TOKEN = 'SkeletonRepositoryToken';
-export const SKELETON_CMD_CREATE = 'onSkeletonCreateCmd';
-export const SKELETON_CMD_UPDATE = 'onSkeletonUpdateCmd';
-export const SKELETON_CMD_DELETE = 'onSkeletonDeleteCmd';
+export const SKELETON_SYNC_QUEUE = 'SKELETON_SYNC_QUEUE';
+export const SKELETON_SYNC_CREATE = 'SKELETON_SYNC_CREATE';
+export const SKELETON_SYNC_UPDATE = 'SKELETON_SYNC_UPDATE';
+export const SKELETON_SYNC_DELETE = 'SKELETON_SYNC_DELETE';

@@ -1,15 +1,20 @@
-import { Controller, UseGuards, Post, HttpCode, HttpStatus, Param, Body, UseInterceptors, Req, ForbiddenException } from '@nestjs/common';
-import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody, CrudAuth } from '@nestjsx/crud';
+import { Controller, UseGuards, Req, ForbiddenException, InternalServerErrorException, Res, HttpCode, Get, Header, HttpStatus } from '@nestjs/common';
+import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiUseTags, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
-import { AppLogger } from '../app.logger';
 import { User } from '../_helpers/decorators/user.decorator';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { ProjectEntity } from './entity/project.entity';
 import { ProjectService } from './project.service';
-import { ProjectCommand } from './project.command';
-import { ProjectEmitter } from './project.emitter';
+import {
+    PROJECT_SYNC_QUEUE,
+    PROJECT_SYNC_CREATE,
+    PROJECT_SYNC_UPDATE,
+    PROJECT_SYNC_DELETE
+} from './project.constants';
 
 @ApiUseTags('projects')
 @Controller('projects')
@@ -59,24 +64,37 @@ import { ProjectEmitter } from './project.emitter';
 })
 export class ProjectController implements CrudController<ProjectEntity> {
 
-    private logger = new AppLogger(ProjectController.name);
-
     constructor(
         readonly service: ProjectService,
-        readonly emitter: ProjectEmitter,
-        readonly command: ProjectCommand
+        @InjectQueue(PROJECT_SYNC_QUEUE) private readonly projectSyncQueue: Queue
     ) { }
 
     get base(): CrudController<ProjectEntity> {
         return this;
     }
 
-    @Post('import')
-    @HttpCode(HttpStatus.NO_CONTENT)
-    @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'NO CONTENT' })
-    public async import(): Promise<void> {
-        this.logger.silly(`[importProjects] execute `);
-        return this.command.create(20);
+    @Get(':id/export')
+    @HttpCode(HttpStatus.OK)
+    @Header('Content-Type', 'application/octet-stream')
+    async export(
+        @User() user: any,
+        @Req() req,
+        @Res() res
+    ) {
+        const accessLevel = await this.service.getAccessLevel(req.params.id, user.id);
+        if (accessLevel < AccessLevel.VIEWER) {
+            throw new ForbiddenException('You do not have sufficient privileges');
+        }
+        res.set(
+            'Content-Disposition',
+            `attachment; filename=${req.params.id}.${req.query.format || 'zip'}`
+        );
+        try {
+            await this.service.export(user, req.params.id, req.query.format || 'zip', res);
+            res.end();
+        } catch (err) {
+            throw new InternalServerErrorException('Archive creation failed');
+        }
     }
 
     @Override()
@@ -113,7 +131,7 @@ export class ProjectController implements CrudController<ProjectEntity> {
             dto.owner_id = user.id;
         }
         const project = await this.base.createOneBase(parsedReq, dto);
-        this.emitter.sendCreate(project);
+        this.projectSyncQueue.add(PROJECT_SYNC_CREATE, { project });
         return project;
     }
 
@@ -130,27 +148,7 @@ export class ProjectController implements CrudController<ProjectEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const project = await this.base.updateOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(project);
-        return project;
-    }
-
-    @Override()
-    async replaceOne(
-        @User() user: any,
-        @Req() req,
-        @ParsedRequest() parsedReq: CrudRequest,
-        @ParsedBody() dto: ProjectEntity
-    ) {
-        const accessLevel = await this.service.getAccessLevel(
-            req.params.id, user.id);
-        if (accessLevel < AccessLevel.CONTRIBUTOR) {
-            throw new ForbiddenException(`You do not have sufficient privileges`);
-        }
-        if (!dto.owner_id) {
-            dto.owner_id = user.id;
-        }
-        const project = await this.base.replaceOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(project);
+        this.projectSyncQueue.add(PROJECT_SYNC_UPDATE, { project });
         return project;
     }
 
@@ -168,7 +166,7 @@ export class ProjectController implements CrudController<ProjectEntity> {
         }
         const project = await this.base.deleteOneBase(parsedReq);
         if (project) {
-            this.emitter.sendDelete(project);
+            this.projectSyncQueue.add(PROJECT_SYNC_DELETE, { project });
         }
         return project;
     }

@@ -4,12 +4,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { TypeOrmCrudService } from '@nestjsx/crud-typeorm';
 import { CrudRequest } from '@nestjsx/crud';
 
-import { getParamValueFromCrudRequest } from '../_helpers';
+import { create, Archiver } from 'archiver';
+
 import { getAccessLevel } from '../_helpers/security/check-access-level';
 import { AppLogger } from '../app.logger';
 import { PermissionService } from '../permissions/permission.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { GithubApiService } from '../github-api/github-api.service';
+import { UserEntity } from '../user/entity/user.entity';
+import { ExerciseService } from '../exercises/exercise.service';
+import { GamificationLayerService } from '../gamification-layers/gamification-layer.service';
+
 import { ProjectEntity } from './entity/project.entity';
 
 @Injectable()
@@ -20,7 +25,9 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
     constructor(
         @InjectRepository(ProjectEntity) protected readonly repository: Repository<ProjectEntity>,
         protected readonly githubApiService: GithubApiService,
-        protected readonly permissionService: PermissionService
+        protected readonly permissionService: PermissionService,
+        protected readonly exerciseService: ExerciseService,
+        protected readonly gamificationLayerService: GamificationLayerService
     ) {
         super(repository);
     }
@@ -38,37 +45,50 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
         try {
             await this.permissionService.addOwnerPermission(project.id, project.owner_id);
         } catch (e) {
-            await this.repository.remove(project);
             throw e;
         }
         return project;
     }
 
     public async updateOne(req: CrudRequest, dto: ProjectEntity): Promise<ProjectEntity> {
-        const id = getParamValueFromCrudRequest(req, 'id');
-        if (!id) {
-            throw new BadRequestException('Project id is required.');
-        }
-        const project = await super.updateOne(req, dto);
-        return project;
-    }
-
-    public async replaceOne(req: CrudRequest, dto: ProjectEntity): Promise<ProjectEntity> {
-        const id = getParamValueFromCrudRequest(req, 'id');
-        if (!id) {
-            throw new BadRequestException('Project id is required.');
-        }
-        const project = await super.replaceOne(req, dto);
-        await this.permissionService.updateOwnerPermission(project.id, project.owner_id);
-        return project;
+        return await super.updateOne(req, dto);
     }
 
     public async deleteOne(req: CrudRequest): Promise<ProjectEntity | void> {
-        const project = await super.deleteOne(req);
-        if (project instanceof ProjectEntity) {
-            await this.githubApiService.deleteProjectRepository(project);
+        return await super.deleteOne(req);
+    }
+
+    public async export(
+        user: UserEntity, id: string, format: string = 'zip', res: any
+    ): Promise<void> {
+
+        const project: ProjectEntity = await this.findOne(id, { loadRelationIds: true });
+
+        const archive: Archiver = create(format);
+
+        archive.pipe(res);
+
+        archive.on('error', function(err) {
+            throw err;
+        });
+
+        const asyncArchiveWriters = [];
+
+        for (const exercise_id of project['__exercises__']) {
+            await this.exerciseService.collectAllToExport(
+                user, exercise_id, archive, asyncArchiveWriters, `exercises/${exercise_id}/`
+            );
         }
-        return project;
+
+        for (const gamification_layer_id of project['__gamification_layers__']) {
+            await this.gamificationLayerService.collectAllToExport(
+                user, gamification_layer_id, archive, asyncArchiveWriters, `gamification-layers/${gamification_layer_id}/`
+            );
+        }
+
+        await Promise.all(asyncArchiveWriters);
+
+        await archive.finalize();
     }
 
     public async getAccessLevel(project_id: string, user_id: string): Promise<AccessLevel> {

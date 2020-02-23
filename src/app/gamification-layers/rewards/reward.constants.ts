@@ -1,3 +1,4 @@
-export const REWARD_CMD_CREATE = 'onRewardCreateCmd';
-export const REWARD_CMD_UPDATE = 'onRewardUpdateCmd';
-export const REWARD_CMD_DELETE = 'onRewardDeleteCmd';
+export const REWARD_SYNC_QUEUE = 'REWARD_SYNC_QUEUE';
+export const REWARD_SYNC_CREATE = 'REWARD_SYNC_CREATE';
+export const REWARD_SYNC_UPDATE = 'REWARD_SYNC_UPDATE';
+export const REWARD_SYNC_DELETE = 'REWARD_SYNC_DELETE';

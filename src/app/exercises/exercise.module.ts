@@ -1,59 +1,46 @@
 import { HttpModule, Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 
-import { AccessControlModule } from '../access-control/access-control.module';
-import { accessRules } from '../app.access-rules';
+import { config } from '../../config';
 import { UserModule } from '../user/user.module';
 import { ProjectModule } from '../project/project.module';
 import { GithubApiModule } from '../github-api/github-api.module';
 
-import { ExerciseCommand } from './exercise.command';
 import { ExercisePipe } from './pipe/exercise.pipe';
 import { ExerciseService } from './exercise.service';
 import { ExerciseController } from './exercise.controller';
-import { ExerciseListener } from './exercise.listener';
-import { ExerciseEmitter } from './exercise.emitter';
-import { ExerciseContextMiddleware } from './exercise-context.middleware';
-import {
-    ExerciseEntity,
-    ExerciseDynamicCorrectorEntity,
-    ExerciseEmbeddableEntity,
-    ExerciseFeedbackGeneratorEntity,
-    ExerciseInstructionEntity,
-    ExerciseLibraryEntity,
-    ExerciseSkeletonEntity,
-    ExerciseSolutionEntity,
-    ExerciseStatementEntity,
-    ExerciseStaticCorrectorEntity,
-    ExerciseTemplateEntity,
-    ExerciseTestGeneratorEntity
-} from './entity';
+import { ExerciseSyncProcessor } from './exercise-sync.processor';
+import { ExerciseEntity } from './entity/exercise.entity';
+import { EXERCISE_SYNC_QUEUE } from './exercise.constants';
 
 
 const PROVIDERS = [
-    ExerciseCommand,
     ExercisePipe,
-    ExerciseContextMiddleware,
     ExerciseService,
-    ExerciseEmitter
+    ExerciseSyncProcessor
 ];
 
 const MODULES = [
     TypeOrmModule.forFeature([
-        ExerciseEntity,
-        ExerciseDynamicCorrectorEntity,
-        ExerciseEmbeddableEntity,
-        ExerciseFeedbackGeneratorEntity,
-        ExerciseInstructionEntity,
-        ExerciseLibraryEntity,
-        ExerciseSkeletonEntity,
-        ExerciseSolutionEntity,
-        ExerciseStatementEntity,
-        ExerciseStaticCorrectorEntity,
-        ExerciseTemplateEntity,
-        ExerciseTestGeneratorEntity
+        ExerciseEntity
     ]),
-    AccessControlModule.forRoles(accessRules),
+    BullModule.registerQueue({
+        name: EXERCISE_SYNC_QUEUE,
+        redis: {
+          host: config.queueing.host,
+          port: config.queueing.port
+        },
+        defaultJobOptions: {
+            attempts: 5,
+            backoff: {
+                type: 'exponential',
+                delay: 2000
+            },
+            lifo: true,
+            removeOnComplete: true
+        }
+    }),
     HttpModule,
     forwardRef(() => UserModule),
     forwardRef(() => ProjectModule),
@@ -61,7 +48,7 @@ const MODULES = [
 ];
 
 @Module({
-    controllers: [ExerciseController, ExerciseListener],
+    controllers: [ExerciseController],
     providers: [...PROVIDERS],
     imports: [...MODULES],
     exports: [ExerciseService]

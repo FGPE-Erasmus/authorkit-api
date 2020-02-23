@@ -5,7 +5,9 @@ import { CrudRequest } from '@nestjsx/crud';
 import { TypeOrmCrudService } from '@nestjsx/crud-typeorm';
 
 import { getParamValueFromCrudRequest } from '../_helpers';
+import { getAccessLevel } from '../_helpers/security/check-access-level';
 import { GithubApiService } from '../github-api/github-api.service';
+import { AccessLevel } from '../permissions/entity/access-level.enum';
 
 import { TestSetEntity } from './entity/testset.entity';
 
@@ -22,48 +24,26 @@ export class TestSetService extends TypeOrmCrudService<TestSetEntity> {
     }
 
     public async createOne(req: CrudRequest, dto: DeepPartial<TestSetEntity>): Promise<TestSetEntity> {
-        const exercise_id = getParamValueFromCrudRequest(req, 'exercise_id');
-        if (!exercise_id) {
-            throw new BadRequestException('Exercise id is required.');
-        }
-        dto.exercise_id = exercise_id;
         return super.createOne(req, dto);
     }
 
     public async updateOne(req: CrudRequest, dto: DeepPartial<TestSetEntity>): Promise<TestSetEntity> {
-        const exercise_id = getParamValueFromCrudRequest(req, 'exercise_id');
-        if (!exercise_id) {
-            throw new BadRequestException('Exercise id is required.');
-        }
-        dto.exercise_id = exercise_id;
         return super.updateOne(req, dto);
     }
 
     public async deleteOne(req: CrudRequest): Promise<void | TestSetEntity> {
-        const id = getParamValueFromCrudRequest(req, 'id');
-        if (!id) {
-            throw new BadRequestException('Exercise id is required.');
-        }
-        // const testset = await this.repository.findOneOrFail(id);
-        // await this.deleteFromGithub(testset);
         return await super.deleteOne(req);
     }
 
-   /*  public async deleteFromGithub(testset: ExerciseTestSetEntity) {
-        const exercise = await this.exerciseRepository.findOneOrFail(testset.exercise_id);
-        try {
-            if (testset.tests) {
-                await asyncForEach(testset.tests, async (test: ExerciseTestEntity) => {
-                    if (test.input) {
-                        await this.githubApiService.deleteExerciseFile(exercise, test.input);
-                    }
-                    if (test.output) {
-                        await this.githubApiService.deleteExerciseFile(exercise, test.output);
-                    }
-                });
-            }
-        } catch (e) {
-            throw new InternalServerErrorException(`Failed to delete testset`, e);
-        }
-    } */
+    public async getAccessLevel(id: string, user_id: string): Promise<AccessLevel> {
+        const access_level = await getAccessLevel(
+            [
+                { src_table: 'permission', dst_table: 'project', prop: 'project_id' },
+                { src_table: 'project', dst_table: 'exercise', prop: 'exercises' },
+                { src_table: 'exercise', dst_table: 'testset', prop: 'test_sets' }
+            ],
+            `testset.id = '${id}' AND permission.user_id = '${user_id}'`
+        );
+        return access_level;
+    }
 }

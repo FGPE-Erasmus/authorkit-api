@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { classToPlain } from 'class-transformer';
 import NodeCache = require('node-cache');
 
 import { config } from '../../config';
@@ -7,7 +6,6 @@ import { AppLogger } from '../app.logger';
 import { UserEntity } from '../user/entity/user.entity';
 import { UserService } from '../user/user.service';
 import { ProjectEntity } from '../project/entity/project.entity';
-import { ExerciseEntity } from '../exercises/entity/exercise.entity';
 
 import { GithubClient } from './github-api.client';
 import { FileCommitResponseDto, FileContentsDto, RepositoryDto } from './dto';
@@ -20,8 +18,8 @@ export class GithubApiService {
     private client_cache: NodeCache = new NodeCache({ maxKeys: 100, stdTTL: 0 });
 
     constructor(
-        readonly userService: UserService/*,
-        @InjectRepository(ProjectEntity) protected readonly projectRepository: Repository<ProjectEntity> */) {
+        readonly userService: UserService
+    ) {
     }
 
     public async createProjectRepository(project: ProjectEntity): Promise<RepositoryDto> {
@@ -85,7 +83,7 @@ export class GithubApiService {
         }
     }
 
-    public async createOrUpdateExerciseTree(exercise: ExerciseEntity): Promise<FileCommitResponseDto> {
+    /* public async createOrUpdateExerciseTree(exercise: ExerciseEntity): Promise<FileCommitResponseDto> {
         try {
             this.logger.debug(`[createOrUpdateExerciseTree] Create or update tree ${exercise.id} in Github repository \
                 ${exercise.project_id}`);
@@ -293,7 +291,7 @@ export class GithubApiService {
             );
             throw err;
         }
-    }
+    } */
 
     public async createFile(user: UserEntity, repo: string, path: string, content: string): Promise<FileCommitResponseDto> {
         try {

@@ -1,4 +1,4 @@
-export const INSTRUCTION_TOKEN = 'InstructionRepositoryToken';
-export const INSTRUCTION_CMD_CREATE = 'onInstructionCreateCmd';
-export const INSTRUCTION_CMD_UPDATE = 'onInstructionUpdateCmd';
-export const INSTRUCTION_CMD_DELETE = 'onInstructionDeleteCmd';
+export const INSTRUCTION_SYNC_QUEUE = 'INSTRUCTION_SYNC_QUEUE';
+export const INSTRUCTION_SYNC_CREATE = 'INSTRUCTION_SYNC_CREATE';
+export const INSTRUCTION_SYNC_UPDATE = 'INSTRUCTION_SYNC_UPDATE';
+export const INSTRUCTION_SYNC_DELETE = 'INSTRUCTION_SYNC_DELETE';

@@ -1,10 +1,11 @@
-export const TEST_TOKEN = 'TestRepositoryToken';
-export const TEST_CMD_CREATE = 'onTestCreateCmd';
-export const TEST_CMD_UPDATE = 'onTestUpdateCmd';
-export const TEST_CMD_DELETE = 'onTestDeleteCmd';
+export const TEST_SYNC_QUEUE = 'TEST_SYNC_QUEUE';
 
-export const TEST_INPUT_CMD_CREATE = 'onTestInputCreateCmd';
-export const TEST_INPUT_CMD_UPDATE = 'onTestInputUpdateCmd';
+export const TEST_SYNC_CREATE = 'TEST_SYNC_CREATE';
+export const TEST_SYNC_UPDATE = 'TEST_SYNC_UPDATE';
+export const TEST_SYNC_DELETE = 'TEST_SYNC_DELETE';
 
-export const TEST_OUTPUT_CMD_CREATE = 'onTestOutputCreateCmd';
-export const TEST_OUTPUT_CMD_UPDATE = 'onTestOutputUpdateCmd';
+export const TEST_INPUT_SYNC_CREATE = 'TEST_INPUT_SYNC_CREATE';
+export const TEST_INPUT_SYNC_UPDATE = 'TEST_INPUT_SYNC_UPDATE';
+
+export const TEST_OUTPUT_SYNC_CREATE = 'TEST_OUTPUT_SYNC_CREATE';
+export const TEST_OUTPUT_SYNC_UPDATE = 'TEST_OUTPUT_SYNC_UPDATE';

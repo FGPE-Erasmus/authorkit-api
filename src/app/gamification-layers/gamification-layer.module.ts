@@ -1,6 +1,8 @@
 import { HttpModule, Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 
+import { config } from '../../config';
 import { PermissionModule } from '../permissions/permission.module';
 import { UserModule } from '../user/user.module';
 import { ProjectModule } from '../project/project.module';
@@ -9,25 +11,41 @@ import { GithubApiModule } from '../github-api/github-api.module';
 import { GamificationLayerService } from './gamification-layer.service';
 import { GamificationLayerController } from './gamification-layer.controller';
 import { GamificationLayerEntity } from './entity/gamification-layer.entity';
-import { GamificationLayerEmitter } from './gamification-layer.emitter';
-import { GamificationLayerListener } from './gamification-layer.listener';
+import { GamificationLayerSyncProcessor } from './gamification-layer-sync.processor';
+import { GAMIFICATION_LAYER_SYNC_QUEUE } from './gamification-layer.constants';
 
 const PROVIDERS = [
     GamificationLayerService,
-    GamificationLayerEmitter
+    GamificationLayerSyncProcessor
 ];
 
 const MODULES = [
     TypeOrmModule.forFeature([GamificationLayerEntity]),
+    BullModule.registerQueue({
+        name: GAMIFICATION_LAYER_SYNC_QUEUE,
+        redis: {
+          host: config.queueing.host,
+          port: config.queueing.port
+        },
+        defaultJobOptions: {
+            attempts: 5,
+            backoff: {
+                type: 'exponential',
+                delay: 2000
+            },
+            lifo: true,
+            removeOnComplete: true
+        }
+    }),
     HttpModule,
     PermissionModule,
     forwardRef(() => UserModule),
-    ProjectModule,
+    forwardRef(() => ProjectModule),
     GithubApiModule
 ];
 
 @Module({
-    controllers: [GamificationLayerController, GamificationLayerListener],
+    controllers: [GamificationLayerController],
     providers: [...PROVIDERS],
     imports: [...MODULES],
     exports: [GamificationLayerService]

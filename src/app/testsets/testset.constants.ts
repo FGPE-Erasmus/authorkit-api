@@ -1,4 +1,4 @@
-export const TESTSET_TOKEN = 'TestSetRepositoryToken';
-export const TESTSET_CMD_CREATE = 'onTestSetCreateCmd';
-export const TESTSET_CMD_UPDATE = 'onTestSetUpdateCmd';
-export const TESTSET_CMD_DELETE = 'onTestSetDeleteCmd';
+export const TESTSET_SYNC_QUEUE = 'TESTSET_SYNC_QUEUE';
+export const TESTSET_SYNC_CREATE = 'TESTSET_SYNC_CREATE';
+export const TESTSET_SYNC_UPDATE = 'TESTSET_SYNC_UPDATE';
+export const TESTSET_SYNC_DELETE = 'TESTSET_SYNC_DELETE';

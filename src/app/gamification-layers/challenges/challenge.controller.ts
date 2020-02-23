@@ -1,16 +1,30 @@
-import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor, Req, ForbiddenException, BadRequestException, Inject } from '@nestjs/common';
+import {
+    Controller,
+    UseGuards,
+    UseInterceptors,
+    ClassSerializerInterceptor,
+    Req, ForbiddenException,
+    BadRequestException
+} from '@nestjs/common';
 import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CrudController, Crud, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { AppLogger } from '../../app.logger';
 import { User } from '../../_helpers/decorators/user.decorator';
 import { AccessLevel } from '../../permissions/entity/access-level.enum';
 import { GamificationLayerService } from '../gamification-layer.service';
 
+import {
+    CHALLENGE_SYNC_QUEUE,
+    CHALLENGE_SYNC_CREATE,
+    CHALLENGE_SYNC_UPDATE,
+    CHALLENGE_SYNC_DELETE
+} from './challenge.constants';
 import { ChallengeService } from './challenge.service';
 import { ChallengeEntity } from './entity/challenge.entity';
-import { ChallengeEmitter } from './challenge.emitter';
 
 @Controller('challenges')
 @ApiUseTags('challenges')
@@ -61,7 +75,7 @@ export class ChallengeController implements CrudController<ChallengeEntity> {
 
     constructor(
         readonly service: ChallengeService,
-        readonly emitter: ChallengeEmitter,
+        @InjectQueue(CHALLENGE_SYNC_QUEUE) private readonly challengeSyncQueue: Queue,
         readonly glservice: GamificationLayerService
     ) { }
 
@@ -114,7 +128,13 @@ export class ChallengeController implements CrudController<ChallengeEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const challenge = await this.base.createOneBase(parsedReq, dto);
-        this.emitter.sendCreate(user, challenge);
+        this.challengeSyncQueue.add(CHALLENGE_SYNC_CREATE, { user, challenge });
+        if (challenge.parent_challenge_id) { // update parent on Github
+            this.challengeSyncQueue.add(CHALLENGE_SYNC_UPDATE, {
+                user,
+                challenge: await this.service.findOne(challenge.parent_challenge_id)
+            });
+        }
         return challenge;
     }
 
@@ -131,28 +151,9 @@ export class ChallengeController implements CrudController<ChallengeEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const challenge = await this.base.updateOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(user, challenge);
+        this.challengeSyncQueue.add(CHALLENGE_SYNC_UPDATE, { user, challenge });
         return challenge;
     }
-
-    /* @Override()
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
-    async replaceOne(
-        @User() user: any,
-        @Req() req,
-        @ParsedRequest() parsedReq: CrudRequest,
-        @ParsedBody() dto: ChallengeEntity
-    ) {
-        const accessLevel = await this.service.getAccessLevel(
-            req.params.id, user.id);
-        if (accessLevel < AccessLevel.CONTRIBUTOR) {
-            throw new ForbiddenException(`You do not have sufficient privileges`);
-        }
-        const challenge = await this.base.replaceOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(challenge);
-        return challenge;
-    } */
 
     @Override()
     @ApiBearerAuth()
@@ -170,7 +171,7 @@ export class ChallengeController implements CrudController<ChallengeEntity> {
         }
         const challenge = await this.base.deleteOneBase(parsedReq);
         if (challenge) {
-            this.emitter.sendDelete(user, challenge);
+            this.challengeSyncQueue.add(CHALLENGE_SYNC_DELETE, { user, challenge });
         }
         return challenge;
     }

@@ -2,6 +2,8 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { AppLogger } from '../app.logger';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
@@ -9,8 +11,14 @@ import { GithubApiService } from '../github-api/github-api.service';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { UserEntity } from '../user/entity';
+
+import {
+    TEMPLATE_SYNC_QUEUE,
+    TEMPLATE_SYNC_CREATE,
+    TEMPLATE_SYNC_UPDATE,
+    TEMPLATE_SYNC_DELETE
+} from './template.constants';
 import { TemplateEntity } from './entity/template.entity';
-import { TemplateEmitter } from './template.emitter';
 
 
 @Injectable()
@@ -22,7 +30,7 @@ export class TemplateService {
         @InjectRepository(TemplateEntity)
         protected readonly repository: Repository<TemplateEntity>,
 
-        protected readonly emitter: TemplateEmitter,
+        @InjectQueue(TEMPLATE_SYNC_QUEUE) private readonly templateSyncQueue: Queue,
 
         protected readonly githubApiService: GithubApiService,
         protected readonly exerciseService: ExerciseService
@@ -58,7 +66,7 @@ export class TemplateService {
         dto.pathname = file.originalname;
         try {
             const entity = await this.repository.save(plainToClass(TemplateEntity, dto));
-            this.emitter.sendCreate(user, entity, file);
+            this.templateSyncQueue.add(TEMPLATE_SYNC_CREATE, { user, entity, file });
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to create template`, e);
@@ -74,7 +82,7 @@ export class TemplateService {
             const entity = await this.repository.save(
                 plainToClass(TemplateEntity, { ...template, ...dto })
             );
-            this.emitter.sendUpdate(user, entity, file);
+            this.templateSyncQueue.add(TEMPLATE_SYNC_UPDATE, { user, entity, file });
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to update template`, e);
@@ -88,7 +96,7 @@ export class TemplateService {
         } catch (e) {
             throw new InternalServerErrorException(`Failed to delete template`, e);
         }
-        this.emitter.sendDelete(user, entity);
+        this.templateSyncQueue.add(TEMPLATE_SYNC_DELETE, { user, entity });
         return entity;
     }
 

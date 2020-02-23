@@ -1,4 +1,6 @@
 export const EXERCISE_TOKEN = 'ExerciseRepositoryToken';
-export const EXERCISE_CMD_CREATE = 'onExerciseCreateCmd';
-export const EXERCISE_CMD_UPDATE = 'onExerciseUpdateCmd';
-export const EXERCISE_CMD_DELETE = 'onExerciseDeleteCmd';
+
+export const EXERCISE_SYNC_QUEUE = 'EXERCISE_SYNC_QUEUE';
+export const EXERCISE_SYNC_CREATE = 'EXERCISE_SYNC_CREATE';
+export const EXERCISE_SYNC_UPDATE = 'EXERCISE_SYNC_UPDATE';
+export const EXERCISE_SYNC_DELETE = 'EXERCISE_SYNC_DELETE';

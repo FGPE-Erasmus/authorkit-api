@@ -1,7 +1,9 @@
-import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor, Req, ForbiddenException, BadRequestException, Inject } from '@nestjs/common';
+import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor, Req, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CrudController, Crud, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { AppLogger } from '../../app.logger';
 import { User } from '../../_helpers/decorators/user.decorator';
@@ -9,9 +11,14 @@ import { AccessLevel } from '../../permissions/entity/access-level.enum';
 import { GamificationLayerService } from '../gamification-layer.service';
 import { ChallengeService } from '../challenges/challenge.service';
 
+import {
+    REWARD_SYNC_QUEUE,
+    REWARD_SYNC_CREATE,
+    REWARD_SYNC_UPDATE,
+    REWARD_SYNC_DELETE
+} from './reward.constants';
 import { RewardService } from './reward.service';
 import { RewardEntity } from './entity/reward.entity';
-import { RewardEmitter } from './reward.emitter';
 
 @Controller('rewards')
 @ApiUseTags('rewards')
@@ -68,7 +75,7 @@ export class RewardController implements CrudController<RewardEntity> {
 
     constructor(
         readonly service: RewardService,
-        readonly emitter: RewardEmitter,
+        @InjectQueue(REWARD_SYNC_QUEUE) private readonly rewardSyncQueue: Queue,
         readonly glservice: GamificationLayerService,
         readonly challengeservice: ChallengeService
     ) { }
@@ -128,7 +135,7 @@ export class RewardController implements CrudController<RewardEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const reward = await this.base.createOneBase(parsedReq, dto);
-        this.emitter.sendCreate(user, reward);
+        this.rewardSyncQueue.add(REWARD_SYNC_CREATE, { user, reward });
         return reward;
     }
 
@@ -145,26 +152,9 @@ export class RewardController implements CrudController<RewardEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const reward = await this.base.updateOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(user, reward);
+        this.rewardSyncQueue.add(REWARD_SYNC_UPDATE, { user, reward });
         return reward;
     }
-
-    /* @Override()
-    async replaceOne(
-        @User() user: any,
-        @Req() req,
-        @ParsedRequest() parsedReq: CrudRequest,
-        @ParsedBody() dto: RewardEntity
-    ) {
-        const accessLevel = await this.service.getAccessLevel(
-            req.params.id, user.id);
-        if (accessLevel < AccessLevel.CONTRIBUTOR) {
-            throw new ForbiddenException(`You do not have sufficient privileges`);
-        }
-        const reward = await this.base.replaceOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(user, reward);
-        return reward;
-    } */
 
     @Override()
     async deleteOne(
@@ -180,7 +170,7 @@ export class RewardController implements CrudController<RewardEntity> {
         }
         const reward = await this.base.deleteOneBase(parsedReq);
         if (reward instanceof RewardEntity) {
-            this.emitter.sendDelete(user, reward);
+            this.rewardSyncQueue.add(REWARD_SYNC_DELETE, { user, reward });
         }
         return reward;
     }

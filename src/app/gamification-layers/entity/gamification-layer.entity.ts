@@ -11,7 +11,8 @@ import { ChallengeEntity } from '../challenges/entity/challenge.entity';
 import { RuleEntity } from '../rules/entity/rule.entity';
 import { RewardEntity } from '../rewards/entity/reward.entity';
 import { LeaderboardEntity } from '../leaderboards/entity/leaderboard.entity';
-import { FeedbackGeneratorEntity } from './feedback-generator.entity';
+
+import { FeedbackGeneratorEntity } from '../../feedback-generators/entity/feedback-generator.entity';
 import { GamificationLayerStatus } from './gamification-layer-status.enum';
 
 const { CREATE, UPDATE } = CrudValidationGroups;

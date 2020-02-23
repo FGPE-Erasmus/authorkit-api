@@ -1,25 +1,43 @@
 import { HttpModule, Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 
+import { config } from '../../config';
 import { UserModule } from '../user/user.module';
 import { GithubApiModule } from '../github-api/github-api.module';
 import { ExerciseModule } from '../exercises/exercise.module';
 
 import { StatementEntity } from './entity/statement.entity';
 import { StatementController } from './statement.controller';
-import { StatementListener } from './statement.listener';
+import { StatementSyncProcessor } from './statement-sync.processor';
 import { StatementService } from './statement.service';
-import { StatementEmitter } from './statement.emitter';
+import { STATEMENT_SYNC_QUEUE } from './statement.constants';
 
 const PROVIDERS = [
     StatementService,
-    StatementEmitter
+    StatementSyncProcessor
 ];
 
 const MODULES = [
     TypeOrmModule.forFeature([
         StatementEntity
     ]),
+    BullModule.registerQueue({
+        name: STATEMENT_SYNC_QUEUE,
+        redis: {
+          host: config.queueing.host,
+          port: config.queueing.port
+        },
+        defaultJobOptions: {
+            attempts: 5,
+            backoff: {
+                type: 'exponential',
+                delay: 2000
+            },
+            lifo: true,
+            removeOnComplete: true
+        }
+    }),
     HttpModule,
     forwardRef(() => UserModule),
     GithubApiModule,
@@ -27,7 +45,7 @@ const MODULES = [
 ];
 
 @Module({
-    controllers: [StatementController, StatementListener],
+    controllers: [StatementController],
     providers: [...PROVIDERS],
     imports: [...MODULES],
     exports: [StatementService]

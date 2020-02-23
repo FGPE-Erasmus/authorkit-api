@@ -15,13 +15,20 @@ import {
 import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile, ApiImplicitBody } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { User } from '../_helpers/decorators/user.decorator';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { ExerciseService } from '../exercises/exercise.service';
 
+import {
+    TEST_SYNC_QUEUE,
+    TEST_SYNC_CREATE,
+    TEST_SYNC_UPDATE,
+    TEST_SYNC_DELETE
+} from './test.constants';
 import { TestEntity } from './entity/test.entity';
-import { TestEmitter } from './test.emitter';
 import { TestService } from './test.service';
 
 @Controller('tests')
@@ -32,8 +39,8 @@ import { TestService } from './test.service';
 export class TestController {
 
     constructor(
-        readonly emitter: TestEmitter,
         protected readonly service: TestService,
+        @InjectQueue(TEST_SYNC_QUEUE) private readonly testSyncQueue: Queue,
         readonly exerciseService: ExerciseService
     ) {}
 
@@ -81,7 +88,9 @@ export class TestController {
                 `You do not have sufficient privileges`);
         }
         const test = await this.service.createTest(dto, files.input[0], files.output[0]);
-        this.emitter.sendCreate(user, test, files.input[0], files.output[0]);
+        this.testSyncQueue.add(TEST_SYNC_CREATE, {
+            user, test, input: files.input[0], output: files.output[0]
+        });
         return test;
     }
 
@@ -106,7 +115,9 @@ export class TestController {
                 `You do not have sufficient privileges`);
         }
         const test = await this.service.updateTest(id, dto, files.input[0], files.output[0]);
-        this.emitter.sendUpdate(user, test, files.input[0], files.output[0]);
+        this.testSyncQueue.add(TEST_SYNC_UPDATE, {
+            user, test, input: files.input[0], output: files.output[0]
+        });
         return test;
     }
 
@@ -121,7 +132,7 @@ export class TestController {
                 `You do not have sufficient privileges`);
         }
         const test = await this.service.deleteTest(id);
-        this.emitter.sendDelete(user, test);
+        this.testSyncQueue.add(TEST_SYNC_DELETE, { user, test });
         return test;
     }
 }

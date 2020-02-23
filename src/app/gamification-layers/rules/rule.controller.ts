@@ -1,7 +1,9 @@
-import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor, Req, ForbiddenException, BadRequestException, Inject } from '@nestjs/common';
+import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor, Req, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CrudController, Crud, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { AppLogger } from '../../app.logger';
 import { User } from '../../_helpers/decorators/user.decorator';
@@ -11,7 +13,12 @@ import { ChallengeService } from '../challenges/challenge.service';
 
 import { RuleService } from './rule.service';
 import { RuleEntity } from './entity/rule.entity';
-import { RuleEmitter } from './rule.emitter';
+import {
+    RULE_SYNC_QUEUE,
+    RULE_SYNC_CREATE,
+    RULE_SYNC_UPDATE,
+    RULE_SYNC_DELETE
+} from './rule.constants';
 
 @Controller('rules')
 @ApiUseTags('rules')
@@ -52,7 +59,7 @@ export class RuleController implements CrudController<RuleEntity> {
 
     constructor(
         readonly service: RuleService,
-        readonly emitter: RuleEmitter,
+        @InjectQueue(RULE_SYNC_QUEUE) private readonly ruleSyncQueue: Queue,
         readonly glservice: GamificationLayerService,
         readonly challengeservice: ChallengeService
     ) { }
@@ -118,7 +125,7 @@ export class RuleController implements CrudController<RuleEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const rule = await this.base.createOneBase(parsedReq, dto);
-        this.emitter.sendCreate(user, rule);
+        this.ruleSyncQueue.add(RULE_SYNC_CREATE, { user, rule });
         return rule;
     }
 
@@ -135,26 +142,9 @@ export class RuleController implements CrudController<RuleEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const rule = await this.base.updateOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(user, rule);
+        this.ruleSyncQueue.add(RULE_SYNC_UPDATE, { user, rule });
         return rule;
     }
-
-    /* @Override()
-    async replaceOne(
-        @User() user: any,
-        @Req() req,
-        @ParsedRequest() parsedReq: CrudRequest,
-        @ParsedBody() dto: RuleEntity
-    ) {
-        const accessLevel = await this.service.getAccessLevel(
-            req.params.id, user.id);
-        if (accessLevel < AccessLevel.CONTRIBUTOR) {
-            throw new ForbiddenException(`You do not have sufficient privileges`);
-        }
-        const rule = await this.base.replaceOneBase(parsedReq, dto);
-        this.emitter.sendUpdate(rule);
-        return rule;
-    } */
 
     @Override()
     async deleteOne(
@@ -170,7 +160,7 @@ export class RuleController implements CrudController<RuleEntity> {
         }
         const rule = await this.base.deleteOneBase(parsedReq);
         if (rule) {
-            this.emitter.sendDelete(user, rule);
+            this.ruleSyncQueue.add(RULE_SYNC_DELETE, { user, rule });
         }
         return rule;
     }

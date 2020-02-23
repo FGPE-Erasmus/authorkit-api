@@ -2,6 +2,8 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { AppLogger } from '../app.logger';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
@@ -9,8 +11,14 @@ import { GithubApiService } from '../github-api/github-api.service';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { UserEntity } from '../user/entity';
+
+import {
+    LIBRARY_SYNC_QUEUE,
+    LIBRARY_SYNC_CREATE,
+    LIBRARY_SYNC_UPDATE,
+    LIBRARY_SYNC_DELETE
+} from './library.constants';
 import { LibraryEntity } from './entity/library.entity';
-import { LibraryEmitter } from './library.emitter';
 
 
 @Injectable()
@@ -22,7 +30,7 @@ export class Librarieservice {
         @InjectRepository(LibraryEntity)
         protected readonly repository: Repository<LibraryEntity>,
 
-        protected readonly emitter: LibraryEmitter,
+        @InjectQueue(LIBRARY_SYNC_QUEUE) private readonly librarySyncQueue: Queue,
 
         protected readonly githubApiService: GithubApiService,
         protected readonly exerciseService: ExerciseService
@@ -58,7 +66,7 @@ export class Librarieservice {
         dto.pathname = file.originalname;
         try {
             const entity = await this.repository.save(plainToClass(LibraryEntity, dto));
-            this.emitter.sendCreate(user, entity, file);
+            this.librarySyncQueue.add(LIBRARY_SYNC_CREATE, { user, entity, file });
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to create library`, e);
@@ -74,7 +82,7 @@ export class Librarieservice {
             const entity = await this.repository.save(
                 plainToClass(LibraryEntity, { ...library, ...dto })
             );
-            this.emitter.sendUpdate(user, entity, file);
+            this.librarySyncQueue.add(LIBRARY_SYNC_UPDATE, { user, entity, file });
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to update library`, e);
@@ -88,7 +96,7 @@ export class Librarieservice {
         } catch (e) {
             throw new InternalServerErrorException(`Failed to delete library`, e);
         }
-        this.emitter.sendDelete(user, entity);
+        this.librarySyncQueue.add(LIBRARY_SYNC_DELETE, { user, entity });
         return entity;
     }
 
