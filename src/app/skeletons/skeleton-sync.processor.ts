@@ -5,7 +5,6 @@ import { Job } from 'bull';
 
 import { AppLogger } from '../app.logger';
 import { GithubApiService } from '../github-api/github-api.service';
-import { UserEntity } from '../user/entity/user.entity';
 import { UserService } from '../user/user.service';
 import { ExerciseService } from '../exercises/exercise.service';
 
@@ -13,7 +12,9 @@ import {
     SKELETON_SYNC_QUEUE,
     SKELETON_SYNC_CREATE,
     SKELETON_SYNC_UPDATE,
-    SKELETON_SYNC_DELETE
+    SKELETON_SYNC_DELETE,
+    SKELETON_SYNC_CREATE_FILE,
+    SKELETON_SYNC_UPDATE_FILE
 } from './skeleton.constants';
 import { SkeletonEntity } from './entity/skeleton.entity';
 
@@ -34,7 +35,7 @@ export class SkeletonSyncProcessor {
     public async onSkeletonCreate(job: Job) {
         this.logger.debug(`[onSkeletonCreate] Create skeleton in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -51,6 +52,17 @@ export class SkeletonSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onSkeletonCreate] Skeleton created in Github repository');
+    }
+
+    @Process(SKELETON_SYNC_CREATE_FILE)
+    public async onSkeletonCreateFile(job: Job) {
+        this.logger.debug(`[onSkeletonCreateFile] Create skeleton file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.createFile(
             user,
@@ -60,14 +72,14 @@ export class SkeletonSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onSkeletonCreate] Skeleton created in Github repository');
+        this.logger.debug('[onSkeletonCreateFile] Skeleton file created in Github repository');
     }
 
     @Process(SKELETON_SYNC_UPDATE)
     public async onSkeletonUpdate(job: Job) {
         this.logger.debug(`[onSkeletonUpdate] Update skeleton in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -85,6 +97,17 @@ export class SkeletonSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onSkeletonUpdate] Skeleton updated in Github repository');
+    }
+
+    @Process(SKELETON_SYNC_UPDATE_FILE)
+    public async onSkeletonUpdateFile(job: Job) {
+        this.logger.debug(`[onSkeletonUpdateFile] Update skeleton file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.updateFile(
             user,
@@ -95,7 +118,7 @@ export class SkeletonSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onSkeletonUpdate] Skeleton updated in Github repository');
+        this.logger.debug('[onSkeletonUpdateFile] Skeleton file updated in Github repository');
     }
 
     @Process(SKELETON_SYNC_DELETE)

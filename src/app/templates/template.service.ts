@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Inject, forwardRef, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
@@ -8,6 +8,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { AppLogger } from '../app.logger';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
 import { GithubApiService } from '../github-api/github-api.service';
+import { ExerciseEntity } from '../exercises/entity/exercise.entity';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { UserEntity } from '../user/entity';
@@ -16,7 +17,9 @@ import {
     TEMPLATE_SYNC_QUEUE,
     TEMPLATE_SYNC_CREATE,
     TEMPLATE_SYNC_UPDATE,
-    TEMPLATE_SYNC_DELETE
+    TEMPLATE_SYNC_DELETE,
+    TEMPLATE_SYNC_CREATE_FILE,
+    TEMPLATE_SYNC_UPDATE_FILE
 } from './template.constants';
 import { TemplateEntity } from './entity/template.entity';
 
@@ -33,6 +36,8 @@ export class TemplateService {
         @InjectQueue(TEMPLATE_SYNC_QUEUE) private readonly templateSyncQueue: Queue,
 
         protected readonly githubApiService: GithubApiService,
+
+        @Inject(forwardRef(() => ExerciseService))
         protected readonly exerciseService: ExerciseService
     ) {
     }
@@ -66,7 +71,12 @@ export class TemplateService {
         dto.pathname = file.originalname;
         try {
             const entity = await this.repository.save(plainToClass(TemplateEntity, dto));
-            this.templateSyncQueue.add(TEMPLATE_SYNC_CREATE, { user, entity, file });
+            this.templateSyncQueue.add(TEMPLATE_SYNC_CREATE, { user, entity });
+            this.templateSyncQueue.add(
+                TEMPLATE_SYNC_CREATE_FILE,
+                { user, entity, file },
+                { delay: 1000 }
+            );
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to create template`, e);
@@ -82,7 +92,12 @@ export class TemplateService {
             const entity = await this.repository.save(
                 plainToClass(TemplateEntity, { ...template, ...dto })
             );
-            this.templateSyncQueue.add(TEMPLATE_SYNC_UPDATE, { user, entity, file });
+            this.templateSyncQueue.add(TEMPLATE_SYNC_UPDATE, { user, entity });
+            this.templateSyncQueue.add(
+                TEMPLATE_SYNC_UPDATE_FILE,
+                { user, entity, file },
+                { delay: 1000 }
+            );
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to update template`, e);
@@ -97,6 +112,49 @@ export class TemplateService {
             throw new InternalServerErrorException(`Failed to delete template`, e);
         }
         this.templateSyncQueue.add(TEMPLATE_SYNC_DELETE, { user, entity });
+        return entity;
+    }
+
+    public async importProcessEntries(
+        user: UserEntity, exercise: ExerciseEntity, entries: any
+    ): Promise<void> {
+
+        const root_metadata = entries['metadata.json'];
+        if (!root_metadata) {
+            throw new BadRequestException('Archive misses required metadata');
+        }
+
+        const entity = await this.importMetadataFile(user, exercise, root_metadata);
+
+        if (!entries[entity.pathname]) {
+            throw new BadRequestException('Archive misses referenced file');
+        }
+
+        this.templateSyncQueue.add(
+            TEMPLATE_SYNC_CREATE_FILE,
+            {
+                user, entity, file: { buffer: (await entries[entity.pathname].buffer()) }
+            },
+            { delay: 1000 }
+        );
+    }
+
+    public async importMetadataFile(
+        user: UserEntity, exercise: ExerciseEntity, metadataFile: any
+    ): Promise<TemplateEntity> {
+
+        const metadata = JSON.parse((await metadataFile.buffer()).toString());
+
+        const entity: TemplateEntity = await this.repository.save({
+            lang: metadata.lang,
+            pathname: metadata.pathname,
+            exercise_id: exercise.id
+        });
+
+        this.templateSyncQueue.add(
+            TEMPLATE_SYNC_CREATE, { user, entity }
+        );
+
         return entity;
     }
 

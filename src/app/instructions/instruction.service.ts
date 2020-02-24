@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Inject, forwardRef, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
@@ -8,6 +8,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { AppLogger } from '../app.logger';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
 import { GithubApiService } from '../github-api/github-api.service';
+import { ExerciseEntity } from '../exercises/entity';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { UserEntity } from '../user/entity';
@@ -16,7 +17,9 @@ import {
     INSTRUCTION_SYNC_QUEUE,
     INSTRUCTION_SYNC_CREATE,
     INSTRUCTION_SYNC_UPDATE,
-    INSTRUCTION_SYNC_DELETE
+    INSTRUCTION_SYNC_DELETE,
+    INSTRUCTION_SYNC_CREATE_FILE,
+    INSTRUCTION_SYNC_UPDATE_FILE
 } from './instruction.constants';
 
 
@@ -32,6 +35,8 @@ export class InstructionService {
         @InjectQueue(INSTRUCTION_SYNC_QUEUE) private readonly instructionSyncQueue: Queue,
 
         protected readonly githubApiService: GithubApiService,
+
+        @Inject(forwardRef(() => ExerciseService))
         protected readonly exerciseService: ExerciseService
     ) {
     }
@@ -65,7 +70,12 @@ export class InstructionService {
         dto.pathname = file.originalname;
         try {
             const entity = await this.repository.save(plainToClass(InstructionEntity, dto));
-            this.instructionSyncQueue.add(INSTRUCTION_SYNC_CREATE, { user, entity, file });
+            this.instructionSyncQueue.add(INSTRUCTION_SYNC_CREATE, { user, entity });
+            this.instructionSyncQueue.add(
+                INSTRUCTION_SYNC_CREATE_FILE,
+                { user, entity, file },
+                { delay: 1000 }
+            );
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to create instruction`, e);
@@ -81,7 +91,12 @@ export class InstructionService {
             const entity = await this.repository.save(
                 plainToClass(InstructionEntity, { ...instruction, ...dto })
             );
-            this.instructionSyncQueue.add(INSTRUCTION_SYNC_UPDATE, { user, entity, file });
+            this.instructionSyncQueue.add(INSTRUCTION_SYNC_UPDATE, { user, entity });
+            this.instructionSyncQueue.add(
+                INSTRUCTION_SYNC_UPDATE_FILE,
+                { user, entity, file },
+                { delay: 1000 }
+            );
             return entity;
         } catch (e) {
             throw new InternalServerErrorException(`Failed to update instruction`, e);
@@ -96,6 +111,50 @@ export class InstructionService {
             throw new InternalServerErrorException(`Failed to delete instruction`, e);
         }
         this.instructionSyncQueue.add(INSTRUCTION_SYNC_DELETE, { user, entity });
+        return entity;
+    }
+
+    public async importProcessEntries(
+        user: UserEntity, exercise: ExerciseEntity, entries: any
+    ): Promise<void> {
+
+        const root_metadata = entries['metadata.json'];
+        if (!root_metadata) {
+            throw new BadRequestException('Archive misses required metadata');
+        }
+
+        const entity = await this.importMetadataFile(user, exercise, root_metadata);
+
+        if (!entries[entity.pathname]) {
+            throw new BadRequestException('Archive misses referenced file');
+        }
+
+        this.instructionSyncQueue.add(
+            INSTRUCTION_SYNC_CREATE_FILE,
+            {
+                user, entity, file: { buffer: (await entries[entity.pathname].buffer()) }
+            },
+            { delay: 1000 }
+        );
+    }
+
+    public async importMetadataFile(
+        user: UserEntity, exercise: ExerciseEntity, metadataFile: any
+    ): Promise<InstructionEntity> {
+
+        const metadata = JSON.parse((await metadataFile.buffer()).toString());
+
+        const entity: InstructionEntity = await this.repository.save({
+            format: metadata.format,
+            nat_lang: metadata.nat_lang,
+            pathname: metadata.pathname,
+            exercise_id: exercise.id
+        });
+
+        this.instructionSyncQueue.add(
+            INSTRUCTION_SYNC_CREATE, { user, entity }
+        );
+
         return entity;
     }
 

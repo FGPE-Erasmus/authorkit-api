@@ -15,19 +15,11 @@ import {
 import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile, ApiImplicitBody } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { Queue } from 'bull';
-import { InjectQueue } from '@nestjs/bull';
 
 import { User } from '../_helpers/decorators/user.decorator';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { ExerciseService } from '../exercises/exercise.service';
 
-import {
-    TEST_SYNC_QUEUE,
-    TEST_SYNC_CREATE,
-    TEST_SYNC_UPDATE,
-    TEST_SYNC_DELETE
-} from './test.constants';
 import { TestEntity } from './entity/test.entity';
 import { TestService } from './test.service';
 
@@ -40,7 +32,6 @@ export class TestController {
 
     constructor(
         protected readonly service: TestService,
-        @InjectQueue(TEST_SYNC_QUEUE) private readonly testSyncQueue: Queue,
         readonly exerciseService: ExerciseService
     ) {}
 
@@ -87,11 +78,7 @@ export class TestController {
             throw new ForbiddenException(
                 `You do not have sufficient privileges`);
         }
-        const test = await this.service.createTest(dto, files.input[0], files.output[0]);
-        this.testSyncQueue.add(TEST_SYNC_CREATE, {
-            user, test, input: files.input[0], output: files.output[0]
-        });
-        return test;
+        return this.service.createTest(user, dto, files.input[0], files.output[0]);
     }
 
     @Patch('/:id')
@@ -114,11 +101,7 @@ export class TestController {
             throw new ForbiddenException(
                 `You do not have sufficient privileges`);
         }
-        const test = await this.service.updateTest(id, dto, files.input[0], files.output[0]);
-        this.testSyncQueue.add(TEST_SYNC_UPDATE, {
-            user, test, input: files.input[0], output: files.output[0]
-        });
-        return test;
+        return this.service.updateTest(user, id, dto, files.input[0], files.output[0]);
     }
 
     @Delete('/:id')
@@ -131,8 +114,6 @@ export class TestController {
             throw new ForbiddenException(
                 `You do not have sufficient privileges`);
         }
-        const test = await this.service.deleteTest(id);
-        this.testSyncQueue.add(TEST_SYNC_DELETE, { user, test });
-        return test;
+        return this.service.deleteTest(user, id);
     }
 }

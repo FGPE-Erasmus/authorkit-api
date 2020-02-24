@@ -12,7 +12,9 @@ import {
     TEMPLATE_SYNC_QUEUE,
     TEMPLATE_SYNC_CREATE,
     TEMPLATE_SYNC_UPDATE,
-    TEMPLATE_SYNC_DELETE
+    TEMPLATE_SYNC_DELETE,
+    TEMPLATE_SYNC_CREATE_FILE,
+    TEMPLATE_SYNC_UPDATE_FILE
 } from './template.constants';
 import { TemplateEntity } from './entity/template.entity';
 
@@ -33,7 +35,7 @@ export class TemplateSyncProcessor {
     public async onTemplateCreate(job: Job) {
         this.logger.debug(`[onTemplateCreate] Create template in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -50,6 +52,17 @@ export class TemplateSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onTemplateCreate] Template created in Github repository');
+    }
+
+    @Process(TEMPLATE_SYNC_CREATE_FILE)
+    public async onTemplateCreateFile(job: Job) {
+        this.logger.debug(`[onTemplateCreateFile] Create template in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.createFile(
             user,
@@ -59,14 +72,14 @@ export class TemplateSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onTemplateCreate] Template created in Github repository');
+        this.logger.debug('[onTemplateCreateFile] Template created in Github repository');
     }
 
     @Process(TEMPLATE_SYNC_UPDATE)
     public async onTemplateUpdate(job: Job) {
         this.logger.debug(`[onTemplateUpdate] Update template in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -84,6 +97,17 @@ export class TemplateSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onTemplateUpdate] Template updated in Github repository');
+    }
+
+    @Process(TEMPLATE_SYNC_UPDATE_FILE)
+    public async onTemplateUpdateFile(job: Job) {
+        this.logger.debug(`[onTemplateUpdateFile] Update template file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.updateFile(
             user,
@@ -94,7 +118,7 @@ export class TemplateSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onTemplateUpdate] Template updated in Github repository');
+        this.logger.debug('[onTemplateUpdateFile] Template file updated in Github repository');
     }
 
     @Process(TEMPLATE_SYNC_DELETE)

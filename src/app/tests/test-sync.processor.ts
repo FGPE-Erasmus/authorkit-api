@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { InjectQueue, Process, Processor } from '@nestjs/bull';
-import { Job, Queue } from 'bull';
+import { Process, Processor } from '@nestjs/bull';
+import { Job } from 'bull';
 
 import { AppLogger } from '../app.logger';
 import { GithubApiService } from '../github-api/github-api.service';
@@ -28,7 +28,6 @@ export class TestSyncProcessor {
     constructor(
         @InjectRepository(TestEntity)
         protected readonly repository: Repository<TestEntity>,
-        @InjectQueue(TEST_SYNC_QUEUE) private readonly testSyncQueue: Queue,
         protected readonly exerciseService: ExerciseService,
         protected readonly githubApiService: GithubApiService,
         protected readonly userService: UserService
@@ -38,7 +37,7 @@ export class TestSyncProcessor {
     public async onTestCreate(job: Job) {
         this.logger.debug(`[onTestCreate] Create test in Github repository`);
 
-        const { user, test, input, output } = job.data;
+        const { user, test } = job.data;
 
         const exercise = await this.exerciseService.findOne(test.exercise_id);
         let testset_path = '';
@@ -62,12 +61,6 @@ export class TestSyncProcessor {
         );
         await this.repository.update(test.id, { sha: res.content.sha });
 
-        // input
-        this.testSyncQueue.add(TEST_INPUT_SYNC_CREATE, { user, test, content: input }, { delay: 500 });
-
-        // output
-        this.testSyncQueue.add(TEST_OUTPUT_SYNC_CREATE, { user, test, content: output }, { delay: 1000 });
-
         this.logger.debug('[onTestCreate] Test created in Github repository');
     }
 
@@ -75,7 +68,7 @@ export class TestSyncProcessor {
     public async onTestUpdate(job: Job) {
         this.logger.debug(`[onTestUpdate] Update test in Github repository`);
 
-        const { user, test, input, output } = job.data;
+        const { user, test } = job.data;
 
         const exercise = await this.exerciseService.findOne(test.exercise_id);
         let testset_path = '';
@@ -99,12 +92,6 @@ export class TestSyncProcessor {
             })).toString('base64')
         );
         await this.repository.update(test.id, { sha: res.content.sha });
-
-        // input
-        this.testSyncQueue.add(TEST_INPUT_SYNC_UPDATE, { user, test, content: input }, { delay: 500 });
-
-        // output
-        this.testSyncQueue.add(TEST_OUTPUT_SYNC_UPDATE, { user, test, content: output }, { delay: 1000 });
 
         this.logger.debug('[onTestUpdate] Test updated in Github repository');
     }

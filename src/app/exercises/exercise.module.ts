@@ -6,6 +6,19 @@ import { config } from '../../config';
 import { UserModule } from '../user/user.module';
 import { ProjectModule } from '../project/project.module';
 import { GithubApiModule } from '../github-api/github-api.module';
+import { DynamicCorrectorModule } from '../dynamic-correctors/dynamic-corrector.module';
+import { EmbeddableModule } from '../embeddables/embeddable.module';
+import { FeedbackGeneratorModule } from '../feedback-generators/feedback-generator.module';
+import { InstructionModule } from '../instructions/instruction.module';
+import { LibraryModule } from '../libraries/library.module';
+import { SkeletonModule } from '../skeletons/skeleton.module';
+import { SolutionModule } from '../solutions/solution.module';
+import { StatementModule } from '../statements/statement.module';
+import { StaticCorrectorModule } from '../static-correctors/static-corrector.module';
+import { TemplateModule } from '../templates/template.module';
+import { TestGeneratorModule } from '../test-generators/test-generator.module';
+import { TestSetModule } from '../testsets/testset.module';
+import { TestModule } from '../tests/test.module';
 
 import { ExercisePipe } from './pipe/exercise.pipe';
 import { ExerciseService } from './exercise.service';
@@ -32,7 +45,7 @@ const MODULES = [
           port: config.queueing.port
         },
         defaultJobOptions: {
-            attempts: 5,
+            attempts: 10,
             backoff: {
                 type: 'exponential',
                 delay: 2000
@@ -44,7 +57,21 @@ const MODULES = [
     HttpModule,
     forwardRef(() => UserModule),
     forwardRef(() => ProjectModule),
-    GithubApiModule
+    GithubApiModule,
+
+    DynamicCorrectorModule,
+    EmbeddableModule,
+    FeedbackGeneratorModule,
+    InstructionModule,
+    LibraryModule,
+    SkeletonModule,
+    SolutionModule,
+    StatementModule,
+    StaticCorrectorModule,
+    TemplateModule,
+    TestGeneratorModule,
+    TestSetModule,
+    TestModule
 ];
 
 @Module({

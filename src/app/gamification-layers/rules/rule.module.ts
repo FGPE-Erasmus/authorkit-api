@@ -27,7 +27,7 @@ const MODULES = [
           port: config.queueing.port
         },
         defaultJobOptions: {
-            attempts: 5,
+            attempts: 10,
             backoff: {
                 type: 'exponential',
                 delay: 2000

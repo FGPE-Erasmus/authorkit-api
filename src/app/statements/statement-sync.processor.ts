@@ -12,7 +12,9 @@ import {
     STATEMENT_SYNC_QUEUE,
     STATEMENT_SYNC_CREATE,
     STATEMENT_SYNC_UPDATE,
-    STATEMENT_SYNC_DELETE
+    STATEMENT_SYNC_DELETE,
+    STATEMENT_SYNC_CREATE_FILE,
+    STATEMENT_SYNC_UPDATE_FILE
 } from './statement.constants';
 import { StatementEntity } from './entity/statement.entity';
 
@@ -33,7 +35,7 @@ export class StatementSyncProcessor {
     public async onStatementCreate(job: Job) {
         this.logger.debug(`[onStatementCreate] Create statement in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -51,6 +53,17 @@ export class StatementSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onStatementCreate] Statement created in Github repository');
+    }
+
+    @Process(STATEMENT_SYNC_CREATE_FILE)
+    public async onStatementCreateFile(job: Job) {
+        this.logger.debug(`[onStatementCreateFile] Create statement file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.createFile(
             user,
@@ -60,14 +73,14 @@ export class StatementSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onStatementCreate] Statement created in Github repository');
+        this.logger.debug('[onStatementCreateFile] Statement file created in Github repository');
     }
 
     @Process(STATEMENT_SYNC_UPDATE)
     public async onStatementUpdate(job: Job) {
         this.logger.debug(`[onStatementUpdate] Update statement in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -86,6 +99,17 @@ export class StatementSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onStatementUpdate] Statement updated in Github repository');
+    }
+
+    @Process(STATEMENT_SYNC_UPDATE_FILE)
+    public async onStatementUpdateFile(job: Job) {
+        this.logger.debug(`[onStatementUpdateFile] Update statement file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.updateFile(
             user,
@@ -96,7 +120,7 @@ export class StatementSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onStatementUpdate] Statement updated in Github repository');
+        this.logger.debug('[onStatementUpdateFile] Statement file updated in Github repository');
     }
 
     @Process(STATEMENT_SYNC_DELETE)

@@ -12,7 +12,9 @@ import {
     LIBRARY_SYNC_QUEUE,
     LIBRARY_SYNC_CREATE,
     LIBRARY_SYNC_UPDATE,
-    LIBRARY_SYNC_DELETE
+    LIBRARY_SYNC_DELETE,
+    LIBRARY_SYNC_CREATE_FILE,
+    LIBRARY_SYNC_UPDATE_FILE
 } from './library.constants';
 import { LibraryEntity } from './entity/library.entity';
 
@@ -33,7 +35,7 @@ export class LibrarySyncProcessor {
     public async onLibraryCreate(job: Job) {
         this.logger.debug(`[onLibraryCreate] Create library in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -50,6 +52,17 @@ export class LibrarySyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onLibraryCreate] Library created in Github repository');
+    }
+
+    @Process(LIBRARY_SYNC_CREATE_FILE)
+    public async onLibraryCreateFile(job: Job) {
+        this.logger.debug(`[onLibraryCreateFile] Create library file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.createFile(
             user,
@@ -59,14 +72,14 @@ export class LibrarySyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onLibraryCreate] Library created in Github repository');
+        this.logger.debug('[onLibraryCreateFile] Library file created in Github repository');
     }
 
     @Process(LIBRARY_SYNC_UPDATE)
     public async onLibraryUpdate(job: Job) {
         this.logger.debug(`[onLibraryUpdate] Update library in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -84,6 +97,17 @@ export class LibrarySyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onLibraryUpdate] Library updated in Github repository');
+    }
+
+    @Process(LIBRARY_SYNC_UPDATE_FILE)
+    public async onLibraryUpdateFile(job: Job) {
+        this.logger.debug(`[onLibraryUpdateFile] Update library file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.updateFile(
             user,
@@ -94,7 +118,7 @@ export class LibrarySyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onLibraryUpdate] Library updated in Github repository');
+        this.logger.debug('[onLibraryUpdateFile] Library file updated in Github repository');
     }
 
     @Process(LIBRARY_SYNC_DELETE)

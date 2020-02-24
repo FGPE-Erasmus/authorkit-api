@@ -12,7 +12,9 @@ import {
     TEST_GENERATOR_SYNC_QUEUE,
     TEST_GENERATOR_SYNC_CREATE,
     TEST_GENERATOR_SYNC_UPDATE,
-    TEST_GENERATOR_SYNC_DELETE
+    TEST_GENERATOR_SYNC_DELETE,
+    TEST_GENERATOR_SYNC_CREATE_FILE,
+    TEST_GENERATOR_SYNC_UPDATE_FILE
 } from './test-generator.constants';
 import { TestGeneratorEntity } from './entity/test-generator.entity';
 
@@ -33,7 +35,7 @@ export class TestGeneratorSyncProcessor {
     public async onTestGeneratorCreate(job: Job) {
         this.logger.debug(`[onTestGeneratorCreate] Create test generator in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -50,6 +52,17 @@ export class TestGeneratorSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onTestGeneratorCreate] Test generator created in Github repository');
+    }
+
+    @Process(TEST_GENERATOR_SYNC_CREATE_FILE)
+    public async onTestGeneratorCreateFile(job: Job) {
+        this.logger.debug(`[onTestGeneratorCreateFile] Create test generator file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.createFile(
             user,
@@ -59,14 +72,14 @@ export class TestGeneratorSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onTestGeneratorCreate] Test generator created in Github repository');
+        this.logger.debug('[onTestGeneratorCreateFile] Test generator file created in Github repository');
     }
 
     @Process(TEST_GENERATOR_SYNC_UPDATE)
     public async onTestGeneratorUpdate(job: Job) {
         this.logger.debug(`[onTestGeneratorUpdate] Update test generator in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -84,6 +97,17 @@ export class TestGeneratorSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onTestGeneratorUpdate] Test generator updated in Github repository');
+    }
+
+    @Process(TEST_GENERATOR_SYNC_UPDATE_FILE)
+    public async onTestGeneratorUpdateFile(job: Job) {
+        this.logger.debug(`[onTestGeneratorUpdateFile] Update test generator file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.updateFile(
             user,
@@ -94,7 +118,7 @@ export class TestGeneratorSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onTestGeneratorUpdate] Test generator updated in Github repository');
+        this.logger.debug('[onTestGeneratorUpdateFile] Test generator file updated in Github repository');
     }
 
     @Process(TEST_GENERATOR_SYNC_DELETE)

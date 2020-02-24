@@ -11,10 +11,10 @@ import { LIBRARY_SYNC_QUEUE } from './library.constants';
 import { LibraryEntity } from './entity/library.entity';
 import { LibraryController } from './library.controller';
 import { LibrarySyncProcessor } from './library-sync.processor';
-import { Librarieservice } from './library.service';
+import { LibraryService } from './library.service';
 
 const PROVIDERS = [
-    Librarieservice,
+    LibraryService,
     LibrarySyncProcessor
 ];
 
@@ -29,7 +29,7 @@ const MODULES = [
           port: config.queueing.port
         },
         defaultJobOptions: {
-            attempts: 5,
+            attempts: 10,
             backoff: {
                 type: 'exponential',
                 delay: 2000
@@ -41,13 +41,13 @@ const MODULES = [
     HttpModule,
     forwardRef(() => UserModule),
     GithubApiModule,
-    ExerciseModule
+    forwardRef(() => ExerciseModule)
 ];
 
 @Module({
     controllers: [LibraryController],
     providers: [...PROVIDERS],
     imports: [...MODULES],
-    exports: [Librarieservice]
+    exports: [LibraryService]
 })
 export class LibraryModule {}

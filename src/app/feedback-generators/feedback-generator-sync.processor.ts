@@ -12,7 +12,9 @@ import {
     FEEDBACK_GENERATOR_SYNC_QUEUE,
     FEEDBACK_GENERATOR_SYNC_CREATE,
     FEEDBACK_GENERATOR_SYNC_UPDATE,
-    FEEDBACK_GENERATOR_SYNC_DELETE
+    FEEDBACK_GENERATOR_SYNC_DELETE,
+    FEEDBACK_GENERATOR_SYNC_CREATE_FILE,
+    FEEDBACK_GENERATOR_SYNC_UPDATE_FILE
 } from './feedback-generator.constants';
 import { FeedbackGeneratorEntity } from './entity/feedback-generator.entity';
 
@@ -33,7 +35,7 @@ export class FeedbackGeneratorSyncProcessor {
     public async onFeedbackGeneratorCreate(job: Job) {
         this.logger.debug(`[onFeedbackGeneratorCreate] Create feedback generator in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -50,6 +52,17 @@ export class FeedbackGeneratorSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onFeedbackGeneratorCreate] Feedback generator created in Github repository');
+    }
+
+    @Process(FEEDBACK_GENERATOR_SYNC_CREATE_FILE)
+    public async onFeedbackGeneratorCreateFile(job: Job) {
+        this.logger.debug(`[onFeedbackGeneratorCreateFile] Create feedback generator in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.createFile(
             user,
@@ -59,14 +72,14 @@ export class FeedbackGeneratorSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onFeedbackGeneratorCreate] Feedback generator created in Github repository');
+        this.logger.debug('[onFeedbackGeneratorCreateFile] Feedback generator created in Github repository');
     }
 
     @Process(FEEDBACK_GENERATOR_SYNC_UPDATE)
     public async onFeedbackGeneratorUpdate(job: Job) {
         this.logger.debug(`[onFeedbackGeneratorUpdate] Update feedback generator in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -84,6 +97,17 @@ export class FeedbackGeneratorSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onFeedbackGeneratorUpdate] Feedback generator updated in Github repository');
+    }
+
+    @Process(FEEDBACK_GENERATOR_SYNC_UPDATE_FILE)
+    public async onFeedbackGeneratorUpdateFile(job: Job) {
+        this.logger.debug(`[onFeedbackGeneratorUpdateFile] Update feedback generator file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.updateFile(
             user,
@@ -94,7 +118,7 @@ export class FeedbackGeneratorSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onFeedbackGeneratorUpdate] Feedback generator updated in Github repository');
+        this.logger.debug('[onFeedbackGeneratorUpdateFile] Feedback generator file updated in Github repository');
     }
 
     @Process(FEEDBACK_GENERATOR_SYNC_DELETE)

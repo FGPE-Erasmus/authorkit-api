@@ -12,7 +12,9 @@ import {
     SOLUTION_SYNC_QUEUE,
     SOLUTION_SYNC_CREATE,
     SOLUTION_SYNC_UPDATE,
-    SOLUTION_SYNC_DELETE
+    SOLUTION_SYNC_DELETE,
+    SOLUTION_SYNC_CREATE_FILE,
+    SOLUTION_SYNC_UPDATE_FILE
 } from './solution.constants';
 import { SolutionEntity } from './entity/solution.entity';
 
@@ -33,7 +35,7 @@ export class SolutionSyncProcessor {
     public async onSolutionCreate(job: Job) {
         this.logger.debug(`[onSolutionCreate] Create solution in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -50,6 +52,17 @@ export class SolutionSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onSolutionCreate] Solution created in Github repository');
+    }
+
+    @Process(SOLUTION_SYNC_CREATE_FILE)
+    public async onSolutionCreateFile(job: Job) {
+        this.logger.debug(`[onSolutionCreateFile] Create solution file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.createFile(
             user,
@@ -59,14 +72,14 @@ export class SolutionSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onSolutionCreate] Solution created in Github repository');
+        this.logger.debug('[onSolutionCreateFile] Solution file created in Github repository');
     }
 
     @Process(SOLUTION_SYNC_UPDATE)
     public async onSolutionUpdate(job: Job) {
         this.logger.debug(`[onSolutionUpdate] Update solution in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -84,6 +97,17 @@ export class SolutionSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onSolutionUpdate] Solution updated in Github repository');
+    }
+
+    @Process(SOLUTION_SYNC_UPDATE_FILE)
+    public async onSolutionUpdateFile(job: Job) {
+        this.logger.debug(`[onSolutionUpdateFile] Update solution file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.updateFile(
             user,
@@ -94,7 +118,7 @@ export class SolutionSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onSolutionUpdate] Solution updated in Github repository');
+        this.logger.debug('[onSolutionUpdateFile] Solution file updated in Github repository');
     }
 
     @Process(SOLUTION_SYNC_DELETE)

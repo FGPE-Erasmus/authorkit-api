@@ -1,26 +1,63 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, forwardRef, Inject } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CrudRequest, GetManyDefaultResponse } from '@nestjsx/crud';
 import { TypeOrmCrudService } from '@nestjsx/crud-typeorm';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
+import { Open } from 'unzipper';
 import { create, Archiver } from 'archiver';
 
+import { AppLogger } from '../app.logger';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
+import { DeepPartial } from '../_helpers/database/deep-partial';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
 import { GithubApiService } from '../github-api/github-api.service';
 import { UserEntity } from '../user/entity/user.entity';
+import { DynamicCorrectorService } from '../dynamic-correctors/dynamic-corrector.service';
+import { EmbeddableService } from '../embeddables/embeddable.service';
+import { FeedbackGeneratorService } from '../feedback-generators/feedback-generator.service';
+import { InstructionService } from '../instructions/instruction.service';
+import { LibraryService } from '../libraries/library.service';
+import { SkeletonService } from '../skeletons/skeleton.service';
+import { SolutionService } from '../solutions/solution.service';
+import { StatementService } from '../statements/statement.service';
+import { StaticCorrectorService } from '../static-correctors/static-corrector.service';
+import { TemplateService } from '../templates/template.service';
+import { TestGeneratorService } from '../test-generators/test-generator.service';
+import { TestService } from '../tests/test.service';
+import { TestSetService } from '../testsets/testset.service';
+
 import { ExerciseEntity } from './entity/exercise.entity';
+import { EXERCISE_SYNC_QUEUE, EXERCISE_SYNC_CREATE } from './exercise.constants';
 
 @Injectable()
 export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
+    private logger = new AppLogger(ExerciseService.name);
 
     constructor(
         @InjectRepository(ExerciseEntity)
         protected readonly repository: Repository<ExerciseEntity>,
 
-        protected readonly githubApiService: GithubApiService
+        @InjectQueue(EXERCISE_SYNC_QUEUE) private readonly exerciseSyncQueue: Queue,
+
+        protected readonly githubApiService: GithubApiService,
+
+        protected readonly dynamicCorrectorService: DynamicCorrectorService,
+        protected readonly embeddableService: EmbeddableService,
+        protected readonly feedbackGeneratorService: FeedbackGeneratorService,
+        protected readonly instructionService: InstructionService,
+        protected readonly libraryService: LibraryService,
+        protected readonly skeletonService: SkeletonService,
+        protected readonly solutionService: SolutionService,
+        protected readonly statementService: StatementService,
+        protected readonly staticCorrectorService: StaticCorrectorService,
+        protected readonly templateService: TemplateService,
+        protected readonly testGeneratorService: TestGeneratorService,
+        protected readonly testService: TestService,
+        protected readonly testsetsService: TestSetService
     ) {
         super(repository);
     }
@@ -47,6 +84,192 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
     public async deleteOne(req: CrudRequest): Promise<ExerciseEntity | void> {
         return super.deleteOne(req);
+    }
+
+    public async import(
+        user: UserEntity, project_id: string, input: any
+    ): Promise<void> {
+
+        const directory = await Open.buffer(input.buffer);
+
+        return await this.importProcessEntries(
+            user,
+            project_id,
+            directory.files.reduce(
+                (obj, item) => Object.assign(obj, { [item.path]: item }), {}
+            )
+        );
+    }
+
+    public async importProcessEntries(
+        user: UserEntity, project_id: string, entries: any
+    ) {
+        const root_metadata = entries['metadata.json'];
+        if (!root_metadata) {
+            this.throwBadRequestException('Archive misses required metadata');
+        }
+
+        const exercise = await this.importMetadataFile(user, project_id, root_metadata);
+
+        this.exerciseSyncQueue.add(EXERCISE_SYNC_CREATE, { user, exercise });
+
+        const result = Object.keys(entries).reduce(function(acc, curr) {
+            const match = curr.match('^([a-zA-Z-]+)/([0-9a-zA-Z-]+)/(.*)$');
+            if (!match || !acc[match[1]]) {
+                return acc;
+            }
+            if (!acc[match[1]][match[2]]) {
+                acc[match[1]][match[2]] = {};
+            }
+            acc[match[1]][match[2]][match[3]] = entries[curr];
+            return acc;
+        }, {
+            'dynamic-correctors': [],
+            'embeddables': [],
+            'feedback-generators': [],
+            'instructions': [],
+            'libraries': [],
+            'skeletons': [],
+            'solutions': [],
+            'statements': [],
+            'static-correctors': [],
+            'templates': [],
+            'test-generators': [],
+            'tests': [],
+            'testsets': []
+        });
+
+        const asyncImporters = [];
+
+        Object.keys(result['dynamic-correctors']).forEach(related_entity_key => {
+            asyncImporters.push(
+                this.dynamicCorrectorService.importProcessEntries(
+                    user, exercise, result['dynamic-correctors'][related_entity_key]
+                )
+            );
+        });
+
+        Object.keys(result['embeddables']).forEach(related_entity_key => {
+            asyncImporters.push(
+                this.embeddableService.importProcessEntries(
+                    user, exercise, result['embeddables'][related_entity_key]
+                )
+            );
+        });
+
+        Object.keys(result['feedback-generators']).forEach(related_entity_key => {
+            asyncImporters.push(
+                this.feedbackGeneratorService.importProcessEntries(
+                    user, exercise, result['feedback-generators'][related_entity_key]
+                )
+            );
+        });
+
+        Object.keys(result['instructions']).forEach(related_entity_key => {
+            asyncImporters.push(
+                this.instructionService.importProcessEntries(
+                    user, exercise, result['instructions'][related_entity_key]
+                )
+            );
+        });
+
+        Object.keys(result['libraries']).forEach(related_entity_key => {
+            asyncImporters.push(
+                this.libraryService.importProcessEntries(
+                    user, exercise, result['libraries'][related_entity_key]
+                )
+            );
+        });
+
+        Object.keys(result['skeletons']).forEach(related_entity_key => {
+            asyncImporters.push(
+                this.skeletonService.importProcessEntries(
+                    user, exercise, result['skeletons'][related_entity_key]
+                )
+            );
+        });
+
+        Object.keys(result['solutions']).forEach(related_entity_key => {
+            asyncImporters.push(
+                this.solutionService.importProcessEntries(
+                    user, exercise, result['solutions'][related_entity_key]
+                )
+            );
+        });
+
+        Object.keys(result['statements']).forEach(related_entity_key => {
+            asyncImporters.push(
+                this.statementService.importProcessEntries(
+                    user, exercise, result['statements'][related_entity_key]
+                )
+            );
+        });
+
+        Object.keys(result['static-correctors']).forEach(related_entity_key => {
+            asyncImporters.push(
+                this.staticCorrectorService.importProcessEntries(
+                    user, exercise, result['static-correctors'][related_entity_key]
+                )
+            );
+        });
+
+        Object.keys(result['templates']).forEach(related_entity_key => {
+            asyncImporters.push(
+                this.templateService.importProcessEntries(
+                    user, exercise, result['templates'][related_entity_key]
+                )
+            );
+        });
+
+        Object.keys(result['test-generators']).forEach(related_entity_key => {
+            asyncImporters.push(
+                this.testGeneratorService.importProcessEntries(
+                    user, exercise, result['test-generators'][related_entity_key]
+                )
+            );
+        });
+
+        Object.keys(result['tests']).forEach(related_entity_key => {
+            console.log(related_entity_key);
+            asyncImporters.push(
+                this.testService.importProcessEntries(
+                    user, exercise, result['tests'][related_entity_key]
+                )
+            );
+        });
+
+        Object.keys(result['testsets']).forEach(related_entity_key => {
+            console.log(related_entity_key);
+            asyncImporters.push(
+                this.testsetsService.importProcessEntries(
+                    user, exercise, result['testsets'][related_entity_key]
+                )
+            );
+        });
+
+        await Promise.all(asyncImporters);
+    }
+
+    public async importMetadataFile(
+        user: UserEntity, project_id: string, metadataFile: any
+    ): Promise<ExerciseEntity> {
+
+        const metadata = JSON.parse((await metadataFile.buffer()).toString());
+
+        const exercise: DeepPartial<ExerciseEntity> = {
+            title: metadata.title,
+            module: metadata.module,
+            owner_id: user.id,
+            keywords: metadata.keywords,
+            type: metadata.type,
+            difficulty: metadata.difficulty,
+            event: metadata.event,
+            platform: metadata.platform,
+            status: metadata.status,
+            project_id
+        };
+
+        return await this.repository.save(exercise);
     }
 
     public async export(
@@ -286,12 +509,20 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         user: UserEntity, exercise: ExerciseEntity, archive: Archiver, path: string, archive_path: string
     ): Promise<void> {
 
-        const fileContents = await this.githubApiService.getFileContents(
-            user, exercise.project_id, path
-        );
-        archive.append(
-            Buffer.from(fileContents.content, 'base64'),
-            { name: archive_path }
-        );
+        try {
+            const contents = await this.githubApiService.getFileContents(
+                user, exercise.project_id, path
+            );
+            if (!contents || !contents.content) {
+                return;
+            }
+            archive.append(
+                Buffer.from(contents.content, 'base64'),
+                { name: archive_path }
+            );
+        } catch (error) {
+            // just log error
+            this.logger.log(error);
+        }
     }
 }

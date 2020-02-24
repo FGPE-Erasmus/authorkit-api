@@ -21,7 +21,7 @@ import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 
 import { LibraryEntity } from './entity/library.entity';
-import { Librarieservice } from './library.service';
+import { LibraryService } from './library.service';
 
 
 @Controller('libraries')
@@ -32,7 +32,7 @@ import { Librarieservice } from './library.service';
 export class LibraryController {
 
     constructor(
-        protected readonly service: Librarieservice,
+        protected readonly service: LibraryService,
         protected readonly exerciseService: ExerciseService
     ) {}
 

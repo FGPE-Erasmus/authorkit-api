@@ -84,6 +84,7 @@
     "tslib": "^1.11.0",
     "type-graphql": "^0.17.6",
     "typeorm": "^0.2.22",
+    "unzipper": "^0.10.9",
     "winston": "^2.4.4"
   },
   "devDependencies": {
@@ -102,6 +103,7 @@
     "@types/nodemailer": "^4.6.6",
     "@types/redis": "^2.8.16",
     "@types/socket.io": "^2.1.2",
+    "@types/unzipper": "^0.10.2",
     "jest": "^24.9.0",
     "nodemon": "^1.19.4",
     "pre-commit": "^1.2.2",

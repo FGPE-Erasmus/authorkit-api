@@ -1,4 +1,4 @@
-import { HttpModule, Module } from '@nestjs/common';
+import { HttpModule, Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
 
@@ -6,6 +6,7 @@ import { config } from '../../config';
 import { UserModule } from '../user/user.module';
 import { GithubApiModule } from '../github-api/github-api.module';
 import { ExerciseModule } from '../exercises/exercise.module';
+import { TestModule } from '../tests/test.module';
 
 import { TestSetEntity } from './entity/testset.entity';
 import { TestSetController } from './testset.controller';
@@ -29,7 +30,7 @@ const MODULES = [
           port: config.queueing.port
         },
         defaultJobOptions: {
-            attempts: 5,
+            attempts: 10,
             backoff: {
                 type: 'exponential',
                 delay: 2000
@@ -41,7 +42,8 @@ const MODULES = [
     HttpModule,
     UserModule,
     GithubApiModule,
-    ExerciseModule
+    forwardRef(() => ExerciseModule),
+    forwardRef(() => TestModule)
 ];
 
 @Module({

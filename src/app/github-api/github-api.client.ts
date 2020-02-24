@@ -2,7 +2,7 @@ import { from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { plainToClass } from 'class-transformer';
 
-const Octokit = require('@octokit/rest');
+const { Octokit } = require('@octokit/rest');
 
 import { config } from '../../config';
 import { AppLogger } from '../app.logger';

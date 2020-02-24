@@ -12,7 +12,9 @@ import {
     INSTRUCTION_SYNC_QUEUE,
     INSTRUCTION_SYNC_CREATE,
     INSTRUCTION_SYNC_UPDATE,
-    INSTRUCTION_SYNC_DELETE
+    INSTRUCTION_SYNC_DELETE,
+    INSTRUCTION_SYNC_CREATE_FILE,
+    INSTRUCTION_SYNC_UPDATE_FILE
 } from './instruction.constants';
 import { InstructionEntity } from './entity/instruction.entity';
 
@@ -33,7 +35,7 @@ export class InstructionSyncProcessor {
     public async onInstructionCreate(job: Job) {
         this.logger.debug(`[onInstructionCreate] Create instruction in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -51,6 +53,17 @@ export class InstructionSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onInstructionCreate] Instruction created in Github repository');
+    }
+
+    @Process(INSTRUCTION_SYNC_CREATE_FILE)
+    public async onInstructionCreateFile(job: Job) {
+        this.logger.debug(`[onInstructionCreateFile] Create instruction file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.createFile(
             user,
@@ -60,14 +73,14 @@ export class InstructionSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onInstructionCreate] Instruction created in Github repository');
+        this.logger.debug('[onInstructionCreateFile] Instruction file created in Github repository');
     }
 
     @Process(INSTRUCTION_SYNC_UPDATE)
     public async onInstructionUpdate(job: Job) {
         this.logger.debug(`[onInstructionUpdate] Update instruction in Github repository`);
 
-        const { user, entity, file } = job.data;
+        const { user, entity } = job.data;
 
         const exercise = await this.exerciseService.findOne(entity.exercise_id);
 
@@ -86,6 +99,17 @@ export class InstructionSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
+        this.logger.debug('[onInstructionUpdate] Instruction updated in Github repository');
+    }
+
+    @Process(INSTRUCTION_SYNC_UPDATE_FILE)
+    public async onInstructionUpdateFile(job: Job) {
+        this.logger.debug(`[onInstructionUpdateFile] Update instruction file in Github repository`);
+
+        const { user, entity, file } = job.data;
+
+        const exercise = await this.exerciseService.findOne(entity.exercise_id);
+
         // file
         const file_res = await this.githubApiService.updateFile(
             user,
@@ -96,7 +120,7 @@ export class InstructionSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onInstructionUpdate] Instruction updated in Github repository');
+        this.logger.debug('[onInstructionUpdateFile] Instruction file updated in Github repository');
     }
 
     @Process(INSTRUCTION_SYNC_DELETE)
