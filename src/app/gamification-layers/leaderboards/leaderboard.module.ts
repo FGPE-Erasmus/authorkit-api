@@ -1,4 +1,4 @@
-import { HttpModule, Module } from '@nestjs/common';
+import { HttpModule, Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
 
@@ -37,9 +37,10 @@ const MODULES = [
         }
     }),
     HttpModule,
-    GamificationLayerModule,
-    ChallengeModule,
-    GithubApiModule
+    GithubApiModule,
+
+    forwardRef(() => GamificationLayerModule),
+    forwardRef(() => ChallengeModule)
 ];
 
 @Module({

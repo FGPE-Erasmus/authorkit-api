@@ -230,7 +230,6 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         });
 
         Object.keys(result['tests']).forEach(related_entity_key => {
-            console.log(related_entity_key);
             asyncImporters.push(
                 this.testService.importProcessEntries(
                     user, exercise, result['tests'][related_entity_key]
@@ -239,7 +238,6 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         });
 
         Object.keys(result['testsets']).forEach(related_entity_key => {
-            console.log(related_entity_key);
             asyncImporters.push(
                 this.testsetsService.importProcessEntries(
                     user, exercise, result['testsets'][related_entity_key]

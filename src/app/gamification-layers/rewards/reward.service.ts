@@ -1,16 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, forwardRef, Inject } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CrudRequest, GetManyDefaultResponse } from '@nestjsx/crud';
 import { TypeOrmCrudService } from '@nestjsx/crud-typeorm';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 import { AppLogger } from '../../app.logger';
 import { DeepPartial } from '../../_helpers/database/deep-partial';
 import { AccessLevel } from '../../permissions/entity/access-level.enum';
+import { UserEntity } from '../../user/entity/user.entity';
+import { GamificationLayerEntity } from '../entity/gamification-layer.entity';
+import { ChallengeEntity } from '../challenges/entity/challenge.entity';
 import { GamificationLayerService } from '../gamification-layer.service';
-import { ChallengeService } from '../challenges/challenge.service';
 
 import { RewardEntity } from './entity/reward.entity';
+import { REWARD_SYNC_QUEUE, REWARD_SYNC_CREATE } from './reward.constants';
 
 @Injectable()
 export class RewardService extends TypeOrmCrudService<RewardEntity> {
@@ -20,8 +25,9 @@ export class RewardService extends TypeOrmCrudService<RewardEntity> {
     constructor(
         @InjectRepository(RewardEntity)
         protected readonly repository: Repository<RewardEntity>,
-        protected readonly glService: GamificationLayerService,
-        protected readonly challengeService: ChallengeService
+        @InjectQueue(REWARD_SYNC_QUEUE) private readonly rewardSyncQueue: Queue,
+        @Inject(forwardRef(() => GamificationLayerService))
+        protected readonly glService: GamificationLayerService
     ) {
         super(repository);
     }
@@ -48,6 +54,70 @@ export class RewardService extends TypeOrmCrudService<RewardEntity> {
 
     public async deleteOne(req: CrudRequest): Promise<void | RewardEntity> {
         return super.deleteOne(req);
+    }
+
+    public async importProcessEntries(
+        user: UserEntity, gamification_layer: GamificationLayerEntity, entries: any,
+        parent_challenge?: ChallengeEntity,
+        exercises_map: any = {},
+        challenges_map: any = {}
+    ): Promise<void> {
+
+        const root_metadata = entries['metadata.json'];
+        if (!root_metadata) {
+            throw new BadRequestException('Archive misses required metadata');
+        }
+
+        await this.importMetadataFile(
+            user, gamification_layer, root_metadata,
+            parent_challenge, exercises_map, challenges_map
+        );
+    }
+
+    public async importMetadataFile(
+        user: UserEntity,
+        gamification_layer: GamificationLayerEntity,
+        metadataFile: any,
+        parent_challenge?: ChallengeEntity,
+        exercises_map: any = {},
+        challenges_map: any = {}
+    ): Promise<RewardEntity> {
+
+        const metadata = JSON.parse((await metadataFile.buffer()).toString());
+
+        const entity: RewardEntity = await this.repository.save({
+            name: metadata.name,
+            description: metadata.description,
+            kind: metadata.kind,
+            amount: metadata.amount,
+            congratulations: metadata.congratulations,
+            hints: metadata.hints,
+            criteria: metadata.criteria,
+            revealable_exercises: metadata.revealables
+                .filter(r => r.type === 'EXERCISE')
+                .map(r => exercises_map[r.id])
+                .filter(r => !!r),
+            unlockable_exercises: metadata.unlockables
+                .filter(r => r.type === 'EXERCISE')
+                .map(r => exercises_map[r.id])
+                .filter(r => !!r),
+            revealable_challenges: metadata.revealables
+                .filter(r => r.type === 'CHALLENGE')
+                .map(r => challenges_map[r.id])
+                .filter(r => !!r),
+            unlockable_challenges: metadata.unlockables
+                .filter(r => r.type === 'CHALLENGE')
+                .map(r => challenges_map[r.id])
+                .filter(r => !!r),
+            challenge_id: parent_challenge ? parent_challenge.id : undefined,
+            gl_id: gamification_layer.id
+        });
+
+        this.rewardSyncQueue.add(
+            REWARD_SYNC_CREATE, { user, reward: entity }
+        );
+
+        return entity;
     }
 
     public async getAccessLevel(reward_id: string, user_id: string): Promise<AccessLevel> {

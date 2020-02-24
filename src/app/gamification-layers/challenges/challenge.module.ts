@@ -5,6 +5,9 @@ import { BullModule } from '@nestjs/bull';
 import { config } from '../../../config';
 import { GithubApiModule } from '../../github-api/github-api.module';
 import { GamificationLayerModule } from '../gamification-layer.module';
+import { LeaderboardModule } from '../leaderboards/leaderboard.module';
+import { RewardModule } from '../rewards/reward.module';
+import { RuleModule } from '../rules/rule.module';
 
 import { CHALLENGE_SYNC_QUEUE } from './challenge.constants';
 import { ChallengeService } from './challenge.service';
@@ -36,8 +39,12 @@ const MODULES = [
         }
     }),
     HttpModule,
-    GamificationLayerModule,
-    GithubApiModule
+    GithubApiModule,
+
+    forwardRef(() => GamificationLayerModule),
+    forwardRef(() => LeaderboardModule),
+    forwardRef(() => RewardModule),
+    forwardRef(() => RuleModule)
 ];
 
 @Module({

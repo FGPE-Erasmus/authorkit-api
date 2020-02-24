@@ -31,53 +31,53 @@ export class GamificationLayerSyncProcessor {
     @Process(GAMIFICATION_LAYER_SYNC_CREATE)
     public async onGamificationLayerCreate(job: Job) {
         this.logger.debug(`[onGamificationLayerCreate] Create gamification layer in Github repository`);
-        const { user, gamificationLayer } = job.data;
+        const { user, gamification_layer } = job.data;
         const res = await this.githubApiService.createFile(
             user,
-            gamificationLayer.project_id,
-            `gamification-layers/${gamificationLayer.id}/metadata.json`,
+            gamification_layer.project_id,
+            `gamification-layers/${gamification_layer.id}/metadata.json`,
             Buffer.from(JSON.stringify({
-                id: gamificationLayer.id,
-                name: gamificationLayer.name,
-                description: gamificationLayer.description,
-                keywords: gamificationLayer.keywords,
-                status: gamificationLayer.status
+                id: gamification_layer.id,
+                name: gamification_layer.name,
+                description: gamification_layer.description,
+                keywords: gamification_layer.keywords,
+                status: gamification_layer.status
             })).toString('base64')
         );
-        await this.repository.update(gamificationLayer.id, { sha: res.content.sha });
+        await this.repository.update(gamification_layer.id, { sha: res.content.sha });
         this.logger.debug('[onGamificationLayerCreate] Gamification layer created in Github repository');
     }
 
     @Process(GAMIFICATION_LAYER_SYNC_UPDATE)
     public async onGamificationLayerUpdate(job: Job) {
         this.logger.debug(`[onGamificationLayerUpdate] Update gamification layer in Github repository`);
-        const { user, gamificationLayer } = job.data;
-        this.logger.debug(JSON.stringify(classToPlain(gamificationLayer)));
+        const { user, gamification_layer } = job.data;
+        this.logger.debug(JSON.stringify(classToPlain(gamification_layer)));
         const res = await this.githubApiService.updateFile(
             user,
-            gamificationLayer.project_id,
-            `gamification-layers/${gamificationLayer.id}/metadata.json`,
-            gamificationLayer.sha,
+            gamification_layer.project_id,
+            `gamification-layers/${gamification_layer.id}/metadata.json`,
+            gamification_layer.sha,
             Buffer.from(JSON.stringify({
-                id: gamificationLayer.id,
-                name: gamificationLayer.name,
-                description: gamificationLayer.description,
-                keywords: gamificationLayer.keywords,
-                status: gamificationLayer.status
+                id: gamification_layer.id,
+                name: gamification_layer.name,
+                description: gamification_layer.description,
+                keywords: gamification_layer.keywords,
+                status: gamification_layer.status
             })).toString('base64')
         );
-        await this.repository.update(gamificationLayer.id, { sha: res.content.sha });
+        await this.repository.update(gamification_layer.id, { sha: res.content.sha });
         this.logger.debug('[onGamificationLayerUpdate] Gamification layer updated in Github repository');
     }
 
     @Process(GAMIFICATION_LAYER_SYNC_DELETE)
     public async onGamificationLayerDelete(job: Job) {
         this.logger.debug(`[onGamificationLayerDelete] Delete gamification layer in Github repository`);
-        const { user, gamificationLayer } = job.data;
+        const { user, gamification_layer } = job.data;
         await this.githubApiService.deleteFolder(
             user,
-            gamificationLayer.project_id,
-            `gamification-layers/${gamificationLayer.id}`
+            gamification_layer.project_id,
+            `gamification-layers/${gamification_layer.id}`
         );
         this.logger.debug('[onGamificationLayerDelete] Gamification layer deleted in Github repository');
     }

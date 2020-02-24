@@ -13,6 +13,10 @@ import { GamificationLayerController } from './gamification-layer.controller';
 import { GamificationLayerEntity } from './entity/gamification-layer.entity';
 import { GamificationLayerSyncProcessor } from './gamification-layer-sync.processor';
 import { GAMIFICATION_LAYER_SYNC_QUEUE } from './gamification-layer.constants';
+import { LeaderboardModule } from './leaderboards/leaderboard.module';
+import { ChallengeModule } from './challenges/challenge.module';
+import { RewardModule } from './rewards/reward.module';
+import { RuleModule } from './rules/rule.module';
 
 const PROVIDERS = [
     GamificationLayerService,
@@ -41,7 +45,12 @@ const MODULES = [
     PermissionModule,
     forwardRef(() => UserModule),
     forwardRef(() => ProjectModule),
-    GithubApiModule
+    GithubApiModule,
+
+    forwardRef(() => ChallengeModule),
+    forwardRef(() => LeaderboardModule),
+    forwardRef(() => RewardModule),
+    forwardRef(() => RuleModule)
 ];
 
 @Module({

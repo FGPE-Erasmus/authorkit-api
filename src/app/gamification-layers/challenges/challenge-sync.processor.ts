@@ -73,7 +73,7 @@ export class ChallengeSyncProcessor {
                 locked: challenge.locked,
                 hidden: challenge.hidden,
                 difficulty: challenge.difficulty,
-                children: challenge.sub_challenge_ids
+                children: challenge.sub_challenge_ids || []
             })).toString('base64')
         );
         await this.repository.update(challenge.id, { sha: res.content.sha });
