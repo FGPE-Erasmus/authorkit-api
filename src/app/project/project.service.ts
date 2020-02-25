@@ -146,7 +146,7 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
 
         await this.permissionService.addOwnerPermission(project.id, user.id);
 
-        this.projectSyncQueue.add(PROJECT_SYNC_CREATE_REPO, { user, project })
+        this.projectSyncQueue.add(PROJECT_SYNC_CREATE_REPO, { user, project });
 
         return project;
     }
