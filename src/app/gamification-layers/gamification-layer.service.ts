@@ -134,8 +134,6 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             }
         }
 
-        console.log(challenge_map);
-
         const asyncImporters = [];
 
         // 2nd pass

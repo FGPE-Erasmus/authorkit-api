@@ -88,7 +88,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
     public async import(
         user: UserEntity, project_id: string, input: any
-    ): Promise<void> {
+    ): Promise<ExerciseEntity> {
 
         const directory = await Open.buffer(input.buffer);
 
@@ -103,7 +103,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
     public async importProcessEntries(
         user: UserEntity, project_id: string, entries: any
-    ) {
+    ): Promise<ExerciseEntity> {
         const root_metadata = entries['metadata.json'];
         if (!root_metadata) {
             this.throwBadRequestException('Archive misses required metadata');
@@ -246,6 +246,8 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         });
 
         await Promise.all(asyncImporters);
+
+        return exercise;
     }
 
     public async importMetadataFile(

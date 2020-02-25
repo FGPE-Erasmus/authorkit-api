@@ -4,7 +4,7 @@ import { Field } from 'type-graphql';
 import { IsString, IsOptional, Length, MaxLength, IsEnum, IsDefined, IsEmpty } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
-import { ExtendedEntity, Lazy } from '../../_helpers';
+import { Lazy, TrackedFileEntity } from '../../_helpers';
 import { UserEntity } from '../../user/entity/user.entity';
 import { PermissionEntity } from '../../permissions/entity/permission.entity';
 import { ExerciseEntity } from '../../exercises/entity/exercise.entity';
@@ -14,7 +14,7 @@ import { ProjectStatus } from './project-status.enum';
 const { CREATE, UPDATE } = CrudValidationGroups;
 
 @Entity('project')
-export class ProjectEntity extends ExtendedEntity {
+export class ProjectEntity extends TrackedFileEntity {
 
     @ApiModelProperty()
     @IsOptional({ groups: [UPDATE] })

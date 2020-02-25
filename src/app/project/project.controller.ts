@@ -1,7 +1,21 @@
-import { Controller, UseGuards, Req, ForbiddenException, InternalServerErrorException, Res, HttpCode, Get, Header, HttpStatus } from '@nestjs/common';
+import {
+    Controller,
+    UseGuards,
+    Req,
+    ForbiddenException,
+    InternalServerErrorException,
+    Res,
+    Get,
+    Header,
+    HttpStatus,
+    Post,
+    HttpCode,
+    UseInterceptors,
+    UploadedFile
+} from '@nestjs/common';
 import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile } from '@nestjs/swagger';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 
@@ -11,10 +25,11 @@ import { ProjectEntity } from './entity/project.entity';
 import { ProjectService } from './project.service';
 import {
     PROJECT_SYNC_QUEUE,
-    PROJECT_SYNC_CREATE,
-    PROJECT_SYNC_UPDATE,
-    PROJECT_SYNC_DELETE
+    PROJECT_SYNC_CREATE_REPO,
+    PROJECT_SYNC_UPDATE_REPO,
+    PROJECT_SYNC_DELETE_REPO
 } from './project.constants';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiUseTags('projects')
 @Controller('projects')
@@ -71,6 +86,19 @@ export class ProjectController implements CrudController<ProjectEntity> {
 
     get base(): CrudController<ProjectEntity> {
         return this;
+    }
+
+    @Post('import')
+    @HttpCode(HttpStatus.OK)
+    @UseInterceptors(FileInterceptor('file'))
+    @ApiConsumes('multipart/form-data')
+    @ApiImplicitFile({ name: 'file', required: true })
+    async import(
+        @User() user: any,
+        @Req() req,
+        @UploadedFile() file
+    ) {
+        return this.service.import(user, file);
     }
 
     @Get(':id/export')
@@ -131,7 +159,7 @@ export class ProjectController implements CrudController<ProjectEntity> {
             dto.owner_id = user.id;
         }
         const project = await this.base.createOneBase(parsedReq, dto);
-        this.projectSyncQueue.add(PROJECT_SYNC_CREATE, { project });
+        this.projectSyncQueue.add(PROJECT_SYNC_CREATE_REPO, { user, project });
         return project;
     }
 
@@ -148,7 +176,7 @@ export class ProjectController implements CrudController<ProjectEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const project = await this.base.updateOneBase(parsedReq, dto);
-        this.projectSyncQueue.add(PROJECT_SYNC_UPDATE, { project });
+        this.projectSyncQueue.add(PROJECT_SYNC_UPDATE_REPO, { user, project });
         return project;
     }
 
@@ -166,7 +194,7 @@ export class ProjectController implements CrudController<ProjectEntity> {
         }
         const project = await this.base.deleteOneBase(parsedReq);
         if (project) {
-            this.projectSyncQueue.add(PROJECT_SYNC_DELETE, { project });
+            this.projectSyncQueue.add(PROJECT_SYNC_DELETE_REPO, { user, project });
         }
         return project;
     }

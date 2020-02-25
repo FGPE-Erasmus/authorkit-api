@@ -155,7 +155,7 @@ export class ChallengeService extends TypeOrmCrudService<ChallengeEntity> {
         const entity: ChallengeEntity = await this.repository.save({
             name: metadata.name,
             description: metadata.description,
-            exercises: metadata.refs.map(e => exercises_map[e]).filter(r => !!r),
+            exercises: metadata.refs.map(e => exercises_map[e]).filter(r => !!r).map(e => ({ id: e })),
             mode: metadata.mode,
             mode_parameters: metadata.mode_parameters,
             locked: metadata.locked,
