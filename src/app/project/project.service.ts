@@ -115,8 +115,6 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
             }
         }
 
-        console.log(exercises_map);
-
         const asyncImporters = [];
 
         Object.keys(result['gamification-layers']).forEach(related_entity_key => {
