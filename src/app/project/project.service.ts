@@ -16,11 +16,14 @@ import { PermissionService } from '../permissions/permission.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { GithubApiService } from '../github-api/github-api.service';
 import { UserEntity } from '../user/entity/user.entity';
+import { ExerciseEntity } from '../exercises/entity/exercise.entity';
 import { ExerciseService } from '../exercises/exercise.service';
 import { GamificationLayerService } from '../gamification-layers/gamification-layer.service';
+import { PermissionEntity } from '../permissions/entity/permission.entity';
 
 import { ProjectEntity } from './entity/project.entity';
 import { PROJECT_SYNC_QUEUE, PROJECT_SYNC_CREATE_REPO } from './project.constants';
+import { GamificationLayerEntity } from '../gamification-layers/entity/gamification-layer.entity';
 
 @Injectable()
 export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
@@ -39,15 +42,7 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
         super(repository);
     }
 
-    public async findAllOfOwner(user_id: string): Promise<ProjectEntity[]> {
-        this.logger.debug(`[findAllOfOwner] Looking in projects for owner ${user_id}`);
-        const projects = await this.find({ where: {
-            owner_id: { eq: user_id }
-        } });
-        return projects;
-    }
-
-    public async createOne(req: CrudRequest, dto: ProjectEntity): Promise<ProjectEntity> {
+    public async createOne(req: CrudRequest, dto: DeepPartial<ProjectEntity>): Promise<ProjectEntity> {
         const project = await super.createOne(req, dto);
         try {
             await this.permissionService.addOwnerPermission(project.id, project.owner_id);
@@ -57,8 +52,41 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
         return project;
     }
 
-    public async updateOne(req: CrudRequest, dto: ProjectEntity): Promise<ProjectEntity> {
-        return await super.updateOne(req, dto);
+    public async updateOne(req: CrudRequest, dto: DeepPartial<ProjectEntity>): Promise<ProjectEntity> {
+        const { allowParamsOverride, returnShallow } = req.options.routes.updateOneBase;
+        const paramsFilters = this.getParamFilters(req.parsed);
+        const found = await this.getOneOrFail(req, returnShallow);
+        const toSave = !allowParamsOverride
+          ? { ...dto, ...paramsFilters, ...req.parsed.authPersist }
+          : { ...dto, ...req.parsed.authPersist };
+        const updated = await this.repo.update(found.id, toSave);
+
+        req.parsed.paramsFilter.forEach((filter) => {
+        filter.value = updated[filter.field];
+        });
+        return this.getOneOrFail(req);
+    }
+
+    public async getManyAndCountContributorsAndExercises(req: CrudRequest) {
+        const found = await super.getMany(req);
+        if (Array.isArray(found)) {
+            return await Promise.all(found.map(async p => ({
+                ...p,
+                countContributors: await this.countContributors(p.id),
+                countExercises: await this.countExercises(p.id),
+                countGamificationLayers: await this.countGamificationLayers(p.id)
+            })));
+        } else {
+            return {
+                ...found,
+                data: await Promise.all(found.data.map(async p => ({
+                    ...p,
+                    countContributors: await this.countContributors(p.id),
+                    countExercises: await this.countExercises(p.id),
+                    countGamificationLayers: await this.countGamificationLayers(p.id)
+                })))
+            };
+        }
     }
 
     public async deleteOne(req: CrudRequest): Promise<ProjectEntity | void> {
@@ -190,6 +218,15 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
         await archive.finalize();
     }
 
+    public async getProjectUsers(project_id: string) {
+        return await this.repository.createQueryBuilder('project')
+            .leftJoin(PermissionEntity, 'permission', 'project.id = permission.project_id')
+            .leftJoin(UserEntity, 'user', 'permission.user_id = user.id')
+            .select('project.id, user.id AS id, user.first_name AS first_name, user.last_name AS last_name, permission.access_level AS access_level')
+            .where(`project.id = '${project_id}'`)
+            .getRawMany();
+    }
+
     public async getAccessLevel(project_id: string, user_id: string): Promise<AccessLevel> {
         const access_level = await getAccessLevel(
             [
@@ -198,5 +235,35 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
             `project.id = '${project_id}' AND permission.user_id = '${user_id}'`
         );
         return access_level;
+    }
+
+    private async countContributors(project_id: string): Promise<number> {
+        return await this.repository.createQueryBuilder('project')
+            .leftJoin(PermissionEntity, 'permission', 'project.id = permission.project_id')
+            .select('permission.project_id')
+            .addSelect('COUNT(*) AS count')
+            .groupBy('permission.project_id')
+            .where(`permission.project_id = '${project_id}'`)
+            .getCount();
+    }
+
+    private async countExercises(project_id: string): Promise<number> {
+        return await this.repository.createQueryBuilder('project')
+            .leftJoin(ExerciseEntity, 'exercise', 'project.id = exercise.project_id')
+            .select('exercise.project_id')
+            .addSelect('COUNT(*) AS count')
+            .groupBy('exercise.project_id')
+            .where(`exercise.project_id = '${project_id}'`)
+            .getCount();
+    }
+
+    private async countGamificationLayers(project_id: string): Promise<number> {
+        return await this.repository.createQueryBuilder('project')
+            .leftJoin(GamificationLayerEntity, 'gl', 'project.id = gl.project_id')
+            .select('gl.project_id')
+            .addSelect('COUNT(*) AS count')
+            .groupBy('gl.project_id')
+            .where(`gl.project_id = '${project_id}'`)
+            .getCount();
     }
 }

@@ -22,29 +22,12 @@ export class PermissionService extends TypeOrmCrudService<PermissionEntity> {
         super(repository);
     }
 
-    public async findAccessibleProjects(user_id: string): Promise<PermissionEntity[]> {
+    public async findAllPermissionsOf(user_id: string): Promise<PermissionEntity[]> {
         return super.find({
-            relations: ['project_id'],
             where: {
-                user_id: user_id,
-                access_level: In([
-                    AccessLevel.ADMIN,
-                    AccessLevel.OWNER,
-                    AccessLevel.CONTRIBUTOR,
-                    AccessLevel.VIEWER
-                ])
+                user_id
             }
         });
-    }
-
-    public async findAllOfOwner(user_id: string): Promise<PermissionEntity[]> {
-        this.logger.debug(`[findAllOfOwner] Looking for permissions of owner ${user_id}`);
-        const permissions = await this.find({
-            where: {
-                owner_id: { eq: user_id }
-            }
-        });
-        return permissions;
     }
 
     public async findAccessLevel(user_id: string, project_id: string): Promise<AccessLevel | null> {
@@ -60,6 +43,15 @@ export class PermissionService extends TypeOrmCrudService<PermissionEntity> {
         return AccessLevel.NONE;
     }
 
+    public async findPermissionOf(user_id: string, project_id: string): Promise<PermissionEntity | null> {
+        this.logger.debug(`[findPermissionOf] Looking for permission of user \
+            ${user_id} in project ${project_id}`);
+        return await this.repository.findOne({
+            user_id,
+            project_id
+        });
+    }
+
     public async addOwnerPermission(project_id: string, user_id: string): Promise<PermissionEntity> {
         const permission = this.repository.create({
             user_id,
@@ -67,35 +59,6 @@ export class PermissionService extends TypeOrmCrudService<PermissionEntity> {
             access_level: AccessLevel.OWNER
         });
         return this.repository.save(permission);
-    }
-
-    public async updateOwnerPermission(project_id: string, user_id: string): Promise<PermissionEntity> {
-        // find current owner permission
-        const permission = await this.repository.findOne({
-            where: {
-                project_id,
-                access_level: AccessLevel.OWNER
-            }
-        });
-        return permission;
-        /* if (permission.user_id === user_id) {
-            return permission;
-        }
-
-        // revoke current user permission
-        try {
-            await this.revoke(project_id, user_id);
-        } catch (error) {
-            // ignore error
-        }
-
-        // update owner permission
-        if (permission) {
-            permission.user_id = user_id;
-            return this.repository.save(permission);
-        } else {
-            return this.addOwnerPermission(project_id, user_id);
-        } */
     }
 
     public async share(project_id: string, user_id: string, access_level: AccessLevel): Promise<PermissionEntity> {

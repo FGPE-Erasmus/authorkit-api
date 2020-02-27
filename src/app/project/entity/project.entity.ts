@@ -90,9 +90,7 @@ export class ProjectEntity extends TrackedFileEntity {
     @Field()
     public repo_name: string; */
 
-    @OneToMany(() => PermissionEntity, permission => permission.project_id, {
-        cascade: false
-    })
+    @OneToMany(() => PermissionEntity, permission => permission.project_id)
     @Field(() => [PermissionEntity])
     public permissions: PermissionEntity[];
 
@@ -103,7 +101,10 @@ export class ProjectEntity extends TrackedFileEntity {
     @Field(() => [ExerciseEntity])
     public exercises: Lazy<ExerciseEntity[]>;
 
-    @OneToMany(() => GamificationLayerEntity, gl => gl.project_id, { lazy: true })
+    @OneToMany(() => GamificationLayerEntity, gl => gl.project_id, {
+        lazy: true,
+        cascade: false
+    })
     @Field(() => [GamificationLayerEntity])
     public gamification_layers: Lazy<GamificationLayerEntity[]>;
 

@@ -13,13 +13,15 @@ import {
     UseInterceptors,
     UploadedFile
 } from '@nestjs/common';
-import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
+import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody, CrudAuth } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile } from '@nestjs/swagger';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 
 import { User } from '../_helpers/decorators/user.decorator';
+import { DeepPartial } from '../_helpers/database/deep-partial';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { ProjectEntity } from './entity/project.entity';
 import { ProjectService } from './project.service';
@@ -29,7 +31,8 @@ import {
     PROJECT_SYNC_UPDATE_REPO,
     PROJECT_SYNC_DELETE_REPO
 } from './project.constants';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { filterReadDto, filterReadMany, filterUpdateDto } from './security/project.security';
+import { UpdateProjectDto } from './dto/update-project.dto';
 
 @ApiUseTags('projects')
 @Controller('projects')
@@ -38,6 +41,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @Crud({
     model: {
         type: ProjectEntity
+    },
+    dto: {
+        update: UpdateProjectDto
     },
     routes: {
         getManyBase: {
@@ -54,7 +60,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
         },
         updateOneBase: {
             interceptors: [],
-            decorators: []
+            decorators: [],
+            allowParamsOverride: false
         },
         replaceOneBase: {
             interceptors: [],
@@ -69,6 +76,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
     query: {
         join: {
             permissions: {
+                eager: true
             },
             exercises: {
             },
@@ -77,14 +85,22 @@ import { FileInterceptor } from '@nestjs/platform-express';
         }
     }
 })
-export class ProjectController implements CrudController<ProjectEntity> {
+@CrudAuth({
+    filter: req => ({
+        '$and': [
+            { 'permissions.user_id': req.user.id },
+            { 'permissions.access_level': { '$gte': AccessLevel.VIEWER } }
+        ]
+    })
+})
+export class ProjectController implements CrudController<DeepPartial<ProjectEntity>> {
 
     constructor(
         readonly service: ProjectService,
         @InjectQueue(PROJECT_SYNC_QUEUE) private readonly projectSyncQueue: Queue
     ) { }
 
-    get base(): CrudController<ProjectEntity> {
+    get base(): CrudController<DeepPartial<ProjectEntity>> {
         return this;
     }
 
@@ -135,7 +151,7 @@ export class ProjectController implements CrudController<ProjectEntity> {
         if (accessLevel < AccessLevel.VIEWER) {
             throw new ForbiddenException('You do not have sufficient privileges');
         }
-        return this.base.getOneBase(parsedReq);
+        return filterReadDto(await this.base.getOneBase(parsedReq), accessLevel);
     }
 
     @Override()
@@ -143,10 +159,22 @@ export class ProjectController implements CrudController<ProjectEntity> {
         @User() user: any,
         @ParsedRequest() parsedReq: CrudRequest
     ) {
-        parsedReq.parsed.join.push({ field: 'permissions' });
-        parsedReq.parsed.filter.push({ field: 'permissions.access_level', operator: 'gte', value: AccessLevel.VIEWER });
-        parsedReq.parsed.filter.push({ field: 'permissions.user_id', operator: 'eq', value: user.id });
-        return this.base.getManyBase(parsedReq);
+        const projects = await this.service.getManyAndCountContributorsAndExercises(parsedReq);
+        return filterReadMany(projects, user);
+    }
+
+    @Get(':id/users')
+    @HttpCode(HttpStatus.OK)
+    @Header('Content-Type', 'application/json')
+    async getProjectUsers(
+        @User() user: any,
+        @Req() req
+    ) {
+        const accessLevel = await this.service.getAccessLevel(req.params.id, user.id);
+        if (accessLevel < AccessLevel.ADMIN) {
+            throw new ForbiddenException('You do not have sufficient privileges');
+        }
+        return this.service.getProjectUsers(req.params.id);
     }
 
     @Override()
@@ -155,9 +183,7 @@ export class ProjectController implements CrudController<ProjectEntity> {
         @ParsedRequest() parsedReq: CrudRequest,
         @ParsedBody() dto: ProjectEntity
     ) {
-        if (!dto.owner_id) {
-            dto.owner_id = user.id;
-        }
+        dto.owner_id = user.id;
         const project = await this.base.createOneBase(parsedReq, dto);
         this.projectSyncQueue.add(PROJECT_SYNC_CREATE_REPO, { user, project });
         return project;
@@ -168,14 +194,14 @@ export class ProjectController implements CrudController<ProjectEntity> {
         @User() user: any,
         @Req() req,
         @ParsedRequest() parsedReq: CrudRequest,
-        @ParsedBody() dto: ProjectEntity
+        @ParsedBody() dto: UpdateProjectDto
     ) {
         const accessLevel = await this.service.getAccessLevel(
             req.params.id, user.id);
         if (accessLevel < AccessLevel.CONTRIBUTOR) {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
-        const project = await this.base.updateOneBase(parsedReq, dto);
+        const project = await this.base.updateOneBase(parsedReq, filterUpdateDto(dto, accessLevel));
         this.projectSyncQueue.add(PROJECT_SYNC_UPDATE_REPO, { user, project });
         return project;
     }
@@ -188,7 +214,7 @@ export class ProjectController implements CrudController<ProjectEntity> {
     ) {
         const accessLevel = await this.service.getAccessLevel(
             req.params.id, user.id);
-        if (accessLevel < AccessLevel.CONTRIBUTOR) {
+        if (accessLevel < AccessLevel.OWNER) {
             throw new ForbiddenException(
                 `You do not have sufficient privileges`);
         }

@@ -14,7 +14,9 @@ export class PermissionEntity extends ExtendedEntity {
 
     @ApiModelProperty()
     @PrimaryColumn('uuid')
-    @ManyToOne(() => ProjectEntity, project => project.permissions, { onDelete: 'CASCADE' })
+    @ManyToOne(() => ProjectEntity, project => project.permissions, {
+        onDelete: 'CASCADE'
+    })
     @JoinColumn({ name: 'project_id', referencedColumnName: 'id' })
     @Field()
     public project_id: string;

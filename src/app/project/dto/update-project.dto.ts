@@ -1,13 +1,12 @@
 
 import { Field, ObjectType } from 'type-graphql';
 import { ApiModelProperty } from '@nestjs/swagger';
-import { IsString, Length, IsOptional, MaxLength, IsEnum, IsNotEmpty, Validate, IsBoolean } from 'class-validator';
+import { IsString, Length, IsOptional, MaxLength, IsEnum, IsBoolean } from 'class-validator';
 
 import { ProjectStatus } from '../entity';
-import { GithubReponameValidator } from '../../_helpers/validators';
 
 @ObjectType()
-export class CreateProjectDto {
+export class UpdateProjectDto {
 
     @ApiModelProperty()
     @Field()
@@ -17,7 +16,7 @@ export class CreateProjectDto {
     @IsString()
     @Length(2, 50)
     @Field()
-    readonly name: string;
+    readonly name?: string;
 
     @ApiModelProperty()
     @IsOptional()
@@ -27,10 +26,6 @@ export class CreateProjectDto {
     readonly description?: string;
 
     @ApiModelProperty()
-    @Field()
-    readonly owner_id?: string;
-
-    @ApiModelProperty()
     @IsBoolean()
     @Field()
     readonly is_public?: boolean;
@@ -38,5 +33,5 @@ export class CreateProjectDto {
     @ApiModelProperty()
     @IsEnum(ProjectStatus)
     @Field()
-    readonly status?: ProjectStatus = ProjectStatus.DRAFT;
+    readonly status?: ProjectStatus;
 }
