@@ -89,10 +89,12 @@ export class ExerciseEntity extends TrackedFileEntity {
     @IsDefined({ groups: [CREATE] })
     @IsEnum(ExerciseType, { always: true })
     @Column({
-        type: 'enum',
-        enum: ExerciseType
+        type: 'varchar',
+        length: 15,
+        enum: ExerciseType,
+        default: ExerciseType.BLANK_SHEET
     })
-    public type: ExerciseType;
+    public type: string;
 
     @ApiModelProperty()
     @IsOptional({ always: true })
@@ -112,20 +114,23 @@ export class ExerciseEntity extends TrackedFileEntity {
     @IsOptional({ always: true })
     @IsEnum(ExerciseDifficulty, { always: true })
     @Column({
-        type: 'enum',
-        enum: ExerciseDifficulty
+        type: 'varchar',
+        length: 10,
+        enum: ExerciseDifficulty,
+        default: ExerciseDifficulty.EASY
     })
-    public difficulty: ExerciseDifficulty;
+    public difficulty: string;
 
     @ApiModelProperty()
     @IsOptional({ always: true })
     @IsEnum(ExerciseStatus, { always: true })
     @Column({
-        type: 'enum',
+        type: 'varchar',
+        length: 15,
         enum: ExerciseStatus,
         default: ExerciseStatus.DRAFT
     })
-    public status: ExerciseStatus;
+    public status: string;
 
     @OneToMany(() => InstructionEntity, instruction => instruction.exercise_id, {
         cascade: true,

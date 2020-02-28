@@ -238,32 +238,29 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
     }
 
     private async countContributors(project_id: string): Promise<number> {
-        return await this.repository.createQueryBuilder('project')
+        return (await this.repository.createQueryBuilder('project')
             .leftJoin(PermissionEntity, 'permission', 'project.id = permission.project_id')
-            .select('permission.project_id')
-            .addSelect('COUNT(*) AS count')
-            .groupBy('permission.project_id')
+            .select('COUNT(*) AS count')
+            .groupBy('permission.user_id')
             .where(`permission.project_id = '${project_id}'`)
-            .getCount();
+            .getRawMany()).length;
     }
 
     private async countExercises(project_id: string): Promise<number> {
-        return await this.repository.createQueryBuilder('project')
+        return (await this.repository.createQueryBuilder('project')
             .leftJoin(ExerciseEntity, 'exercise', 'project.id = exercise.project_id')
-            .select('exercise.project_id')
-            .addSelect('COUNT(*) AS count')
-            .groupBy('exercise.project_id')
+            .select('COUNT(*) AS count')
+            .groupBy('exercise.id')
             .where(`exercise.project_id = '${project_id}'`)
-            .getCount();
+            .getRawMany()).length;
     }
 
     private async countGamificationLayers(project_id: string): Promise<number> {
-        return await this.repository.createQueryBuilder('project')
+        return (await this.repository.createQueryBuilder('project')
             .leftJoin(GamificationLayerEntity, 'gl', 'project.id = gl.project_id')
-            .select('gl.project_id')
-            .addSelect('COUNT(*) AS count')
-            .groupBy('gl.project_id')
+            .select('COUNT(*) AS count')
+            .groupBy('gl.id')
             .where(`gl.project_id = '${project_id}'`)
-            .getCount();
+            .getRawMany()).length;
     }
 }

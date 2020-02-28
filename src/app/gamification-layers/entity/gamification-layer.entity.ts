@@ -76,11 +76,11 @@ export class GamificationLayerEntity extends TrackedFileEntity {
     @IsOptional({ always: true })
     @IsEnum(GamificationLayerStatus, { always: true })
     @Column({
-        type: 'enum',
-        enum: GamificationLayerStatus,
+        type: 'varchar',
+        length: 15,
         default: GamificationLayerStatus.DRAFT
     })
-    public status: GamificationLayerStatus;
+    public status: string;
 
     @OneToMany(() => ChallengeEntity, challenge => challenge.gl_id)
     @Field(() => [ChallengeEntity])

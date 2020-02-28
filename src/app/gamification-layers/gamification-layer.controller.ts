@@ -6,6 +6,7 @@ import {
     Req,
     ForbiddenException,
     BadRequestException,
+    Headers,
     Get,
     HttpCode,
     HttpStatus,
@@ -156,17 +157,33 @@ export class GamificationLayerController implements CrudController<GamificationL
     @Override()
     async getMany(
         @User() user: any,
+        @Headers('project') project: string,
         @ParsedRequest() parsedReq: CrudRequest
     ) {
-        const projectFilterIndex = parsedReq.parsed.filter
-            .findIndex(f => f.field === 'project_id' && f.operator === 'eq');
-        if (projectFilterIndex < 0) {
+        if (!project) {
             throw new BadRequestException('Gamification layers must be listed per project');
         }
-        const accessLevel = await this.projectService.getAccessLevel(
-            parsedReq.parsed.filter[projectFilterIndex].value, user.id);
+        const accessLevel = await this.projectService.getAccessLevel(project, user.id);
         if (accessLevel < AccessLevel.VIEWER) {
             throw new ForbiddenException(`You do not have sufficient privileges`);
+        }
+        if (parsedReq.parsed.search) {
+            let prevSearch;
+            if (parsedReq.parsed.search.$and[3]) {
+                prevSearch = parsedReq.parsed.search.$and[3];
+            }
+            if (prevSearch) {
+                parsedReq.parsed.search.$and[3] = {
+                    $and: [
+                        prevSearch,
+                        { project_id: project }
+                    ]
+                };
+            } else {
+                parsedReq.parsed.search.$and[3] = { project_id: project };
+            }
+        } else {
+            parsedReq.parsed.filter.push({ field: 'project_id', operator: 'eq', value: project });
         }
         return this.base.getManyBase(parsedReq);
     }

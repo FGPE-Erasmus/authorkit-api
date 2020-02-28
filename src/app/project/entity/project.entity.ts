@@ -61,12 +61,14 @@ export class ProjectEntity extends TrackedFileEntity {
     @IsDefined({ groups: [CREATE] })
     @IsString({ always: true })
     @IsEnum(ProjectStatus, { always: true })
-    @Column('enum', {
+    @Column({
+        type: 'varchar',
+        length: 15,
         enum: ProjectStatus,
         default: ProjectStatus.DRAFT
     })
     @Field(() => ProjectStatus)
-    public status: ProjectStatus = ProjectStatus.DRAFT;
+    public status: string;
 
     /* @ApiModelProperty()
     @IsOptional({ groups: [UPDATE] })
