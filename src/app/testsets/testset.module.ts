@@ -30,10 +30,10 @@ const MODULES = [
           port: config.queueing.port
         },
         defaultJobOptions: {
-            attempts: 10,
+            attempts: 20,
             backoff: {
                 type: 'exponential',
-                delay: 2000
+                delay: 500
             },
             lifo: true,
             removeOnComplete: true
