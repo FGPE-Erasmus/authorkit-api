@@ -85,14 +85,6 @@ import { UpdateProjectDto } from './dto/update-project.dto';
         }
     }
 })
-@CrudAuth({
-    filter: req => ({
-        '$and': [
-            { 'permissions.user_id': req.user.id },
-            { 'permissions.access_level': { '$gte': AccessLevel.VIEWER } }
-        ]
-    })
-})
 export class ProjectController implements CrudController<DeepPartial<ProjectEntity>> {
 
     constructor(
@@ -159,6 +151,35 @@ export class ProjectController implements CrudController<DeepPartial<ProjectEnti
         @User() user: any,
         @ParsedRequest() parsedReq: CrudRequest
     ) {
+        if (parsedReq.parsed.search) {
+            let prevSearch;
+            if (parsedReq.parsed.search.$and[3]) {
+                prevSearch = parsedReq.parsed.search.$and[3];
+            }
+            if (prevSearch) {
+                parsedReq.parsed.search.$and[3] = {
+                    $and: [
+                        prevSearch,
+                        {
+                            $and: [
+                                { 'permissions.user_id': user.id },
+                                { 'permissions.access_level': { '$gte': AccessLevel.VIEWER } }
+                            ]
+                        }
+                    ]
+                };
+            } else {
+                parsedReq.parsed.search.$and[3] = {
+                    $and: [
+                        { 'permissions.user_id': user.id },
+                        { 'permissions.access_level': { '$gte': AccessLevel.VIEWER } }
+                    ]
+                };
+            }
+        } else {
+            parsedReq.parsed.filter.push({ field: 'permissions.user_id', operator: 'eq', value: user.id });
+            parsedReq.parsed.filter.push({ field: 'permissions.access_level', operator: 'eq', value: AccessLevel.VIEWER });
+        }
         const projects = await this.service.getManyAndCountContributorsAndExercises(parsedReq);
         return filterReadMany(projects, user);
     }

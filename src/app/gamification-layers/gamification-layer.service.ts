@@ -296,12 +296,20 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
         user: UserEntity, gamification_layer: GamificationLayerEntity, archive: Archiver, path: string, archive_path: string
     ): Promise<void> {
 
-        const fileContents = await this.githubApiService.getFileContents(
-            user, gamification_layer.project_id, path
-        );
-        archive.append(
-            Buffer.from(fileContents.content, 'base64'),
-            { name: archive_path }
-        );
+        try {
+            const contents = await this.githubApiService.getFileContents(
+                user, gamification_layer.project_id, path
+            );
+            if (!contents || !contents.content) {
+                return;
+            }
+            archive.append(
+                Buffer.from(contents.content, 'base64'),
+                { name: archive_path }
+            );
+        } catch (error) {
+            // just log error
+            this.logger.log(error);
+        }
     }
 }
