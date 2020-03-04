@@ -18,7 +18,8 @@ import {
     TEST_GENERATOR_SYNC_CREATE,
     TEST_GENERATOR_SYNC_UPDATE,
     TEST_GENERATOR_SYNC_DELETE,
-    TEST_GENERATOR_SYNC_CREATE_FILE
+    TEST_GENERATOR_SYNC_CREATE_FILE,
+    TEST_GENERATOR_SYNC_UPDATE_FILE
 } from './test-generator.constants';
 import { TestGeneratorEntity } from './entity/test-generator.entity';
 
@@ -70,8 +71,9 @@ export class TestGeneratorService {
         dto.pathname = file.originalname;
         try {
             const entity = await this.repository.save(plainToClass(TestGeneratorEntity, dto));
+            this.testGeneratorSyncQueue.add(TEST_GENERATOR_SYNC_CREATE, { user, entity });
             this.testGeneratorSyncQueue.add(
-                TEST_GENERATOR_SYNC_CREATE,
+                TEST_GENERATOR_SYNC_CREATE_FILE,
                 { user, entity, file },
                 { delay: 1000 }
             );
@@ -90,8 +92,9 @@ export class TestGeneratorService {
             const entity = await this.repository.save(
                 plainToClass(TestGeneratorEntity, { ...test_generator, ...dto })
             );
+            this.testGeneratorSyncQueue.add(TEST_GENERATOR_SYNC_UPDATE, { user, entity });
             this.testGeneratorSyncQueue.add(
-                TEST_GENERATOR_SYNC_UPDATE,
+                TEST_GENERATOR_SYNC_UPDATE_FILE,
                 { user, entity, file },
                 { delay: 1000 }
             );
