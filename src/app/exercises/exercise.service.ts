@@ -11,6 +11,7 @@ import { create, Archiver } from 'archiver';
 
 import { AppLogger } from '../app.logger';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
+import { TextFormat } from '../_helpers';
 import { DeepPartial } from '../_helpers/database/deep-partial';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
 import { GithubApiService } from '../github-api/github-api.service';
@@ -31,6 +32,9 @@ import { TestSetService } from '../testsets/testset.service';
 
 import { ExerciseEntity } from './entity/exercise.entity';
 import { EXERCISE_SYNC_QUEUE, EXERCISE_SYNC_CREATE } from './exercise.constants';
+import { ExerciseType } from './entity/exercise-type.enum';
+import { ExerciseDifficulty } from './entity/exercise-difficulty.enum';
+import { ExerciseStatus } from './entity/exercise-status.enum';
 
 @Injectable()
 export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
@@ -270,6 +274,112 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         };
 
         return await this.repository.save(exercise);
+    }
+
+    public async importSipe(
+        user: UserEntity, project_id: string, sipeFile: any
+    ): Promise<ExerciseEntity[]> {
+
+       const sipe = JSON.parse(sipeFile.buffer.toString('utf8'));
+
+       const asyncImporters = [];
+
+       sipe.forEach(singleSipe => {
+           asyncImporters.push(
+               this.importSipeSingle(user, project_id, singleSipe)
+           );
+       });
+
+       await Promise.all(asyncImporters);
+
+       return sipe;
+    }
+
+    public async importSipeSingle(
+        user: UserEntity, project_id: string, sipe: any
+    ): Promise<ExerciseEntity> {
+
+        const exercisePartial: DeepPartial<ExerciseEntity> = {
+            title: sipe.title,
+            module: sipe.module,
+            owner_id: user.id,
+            keywords: [],
+            type: ExerciseType.BLANK_SHEET,
+            difficulty: ExerciseDifficulty.EASY,
+            platform: 'Python',
+            status: ExerciseStatus.DRAFT,
+            project_id
+        };
+
+        const exercise = await this.repository.save(exercisePartial);
+
+        const asyncImporters = [];
+
+        asyncImporters.push(
+            this.statementService.importProcessEntries(
+                user, exercise, {
+                    'metadata.json': {
+                        buffer: () => Buffer.from(JSON.stringify({
+                            pathname: 'ex.txt',
+                            format: TextFormat.TXT,
+                            nat_lang: 'pl'
+                        }), 'utf8')
+                    },
+                    'ex.txt': {
+                        buffer: () => Buffer.from(sipe.task, 'utf8')
+                    }
+                }
+            )
+        );
+        asyncImporters.push(
+            this.skeletonService.importProcessEntries(
+                user, exercise, {
+                    'metadata.json': {
+                        buffer: () => Buffer.from(JSON.stringify({
+                            pathname: 'in.py',
+                            lang: 'python'
+                        }), 'utf8')
+                    },
+                    'in.py': {
+                        buffer: () => Buffer.from(sipe.initcode, 'utf8')
+                    }
+                }
+            )
+        );
+        asyncImporters.push(
+            this.staticCorrectorService.importProcessEntries(
+                user, exercise, {
+                    'metadata.json': {
+                        buffer: () => Buffer.from(JSON.stringify({
+                            pathname: 'vrules.ecl',
+                            command_line: ''
+                        }), 'utf8')
+                    },
+                    'vrules.ecl': {
+                        buffer: () => Buffer.from(sipe.inputReq, 'utf8')
+                    }
+                }
+            )
+        );
+        asyncImporters.push(
+            this.dynamicCorrectorService.importProcessEntries(
+                user, exercise, {
+                    'metadata.json': {
+                        buffer: () => Buffer.from(JSON.stringify({
+                            pathname: 'inout.ecl',
+                            command_line: ''
+                        }), 'utf8')
+                    },
+                    'inout.ecl': {
+                        buffer: () => Buffer.from(sipe.outputHas, 'utf8')
+                    }
+                }
+            )
+        );
+
+        await Promise.all(asyncImporters);
+
+        return exercise;
     }
 
     public async export(

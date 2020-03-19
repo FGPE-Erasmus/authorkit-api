@@ -135,6 +135,28 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         return this.service.import(user, dto.project_id, file);
     }
 
+    @Post('import/sipe')
+    @HttpCode(HttpStatus.OK)
+    @UseInterceptors(FileInterceptor('file'))
+    @ApiConsumes('multipart/form-data')
+    @ApiImplicitFile({ name: 'file', required: true })
+    @ApiImplicitBody({ name: 'dto', type: ImportDto, required: true })
+    async importSipe(
+        @User() user: any,
+        @Req() req,
+        @UploadedFile() file,
+        @Body() dto: ImportDto
+    ) {
+        if (!dto || !dto.project_id) {
+            throw new BadRequestException('The id of the project must be specified');
+        }
+        const accessLevel = await this.projectService.getAccessLevel(dto.project_id, user.id);
+        if (accessLevel < AccessLevel.CONTRIBUTOR) {
+            throw new ForbiddenException(`You do not have sufficient privileges`);
+        }
+        return this.service.importSipe(user, dto.project_id, file);
+    }
+
     @Get(':id/export')
     @HttpCode(HttpStatus.OK)
     @Header('Content-Type', 'application/octet-stream')
