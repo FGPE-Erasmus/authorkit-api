@@ -313,6 +313,8 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
         const exercise = await this.repository.save(exercisePartial);
 
+        this.exerciseSyncQueue.add(EXERCISE_SYNC_CREATE, { user, exercise });
+
         const asyncImporters = [];
 
         asyncImporters.push(
