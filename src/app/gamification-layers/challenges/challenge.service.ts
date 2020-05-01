@@ -170,11 +170,11 @@ export class ChallengeService extends TypeOrmCrudService<ChallengeEntity> {
     public async getAccessLevel(challenge_id: string, user_id: string): Promise<AccessLevel> {
         return await getAccessLevel(
             [
-                { src_table: 'permission', dst_table: 'project', prop: 'project_id' },
                 { src_table: 'project', dst_table: 'gl', prop: 'gamification_layers' },
                 { src_table: 'gl', dst_table: 'challenge', prop: 'challenges' }
             ],
-            `challenge.id = '${challenge_id}' AND permission.user_id = '${user_id}'`
+            `challenge.id = '${challenge_id}'`,
+            `permission.user_id = '${user_id}'`
         );
     }
 }

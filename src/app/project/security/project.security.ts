@@ -53,12 +53,12 @@ export async function filterReadMany(res: any, user: UserEntity): Promise<any> {
     if (Array.isArray(res)) {
         return await Promise.all(res.map(async p => {
             const permission = (await p.permissions).find(perm => perm.user_id === user.id);
-            return filterReadDto(p, permission && permission.access_level);
+            return filterReadDto(p, permission && permission.access_level || (p.is_public ? AccessLevel.VIEWER : AccessLevel.NONE));
         }));
     } else {
         res.data = await Promise.all(res.data.map(async (p: ProjectEntity) => {
             const permission = (await p.permissions).find(perm => perm.user_id === user.id);
-            return filterReadDto(p, permission && permission.access_level);
+            return filterReadDto(p, permission && permission.access_level || (p.is_public ? AccessLevel.VIEWER : AccessLevel.NONE));
         }));
         return res;
     }

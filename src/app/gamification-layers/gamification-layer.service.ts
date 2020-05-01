@@ -282,10 +282,10 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
     public async getAccessLevel(gl_id: string, user_id: string): Promise<AccessLevel> {
         const access_level = await getAccessLevel(
             [
-                { src_table: 'permission', dst_table: 'project', prop: 'project_id' },
                 { src_table: 'project', dst_table: 'gl', prop: 'gamification_layers' }
             ],
-            `gl.id = '${gl_id}' AND permission.user_id = '${user_id}'`
+            `gl.id = '${gl_id}'`,
+            `permission.user_id = '${user_id}'`
         );
         return access_level;
     }

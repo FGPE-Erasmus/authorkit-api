@@ -161,11 +161,11 @@ export class InstructionService {
     public async getAccessLevel(id: string, user_id: string): Promise<AccessLevel> {
         const access_level = await getAccessLevel(
             [
-                { src_table: 'permission', dst_table: 'project', prop: 'project_id' },
                 { src_table: 'project', dst_table: 'exercise', prop: 'exercises' },
                 { src_table: 'exercise', dst_table: 'instruction', prop: 'instructions' }
             ],
-            `instruction.id = '${id}' AND permission.user_id = '${user_id}'`
+            `instruction.id = '${id}'`,
+            `permission.user_id = '${user_id}'`
         );
         return access_level;
     }

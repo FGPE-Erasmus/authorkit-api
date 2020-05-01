@@ -161,18 +161,28 @@ export class ProjectController implements CrudController<DeepPartial<ProjectEnti
                     $and: [
                         prevSearch,
                         {
-                            $and: [
-                                { 'permissions.user_id': user.id },
-                                { 'permissions.access_level': { '$gte': AccessLevel.VIEWER } }
+                            $or: [
+                                { 'is_public': true },
+                                {
+                                    $and: [
+                                        { 'permissions.user_id': user.id },
+                                        { 'permissions.access_level': { '$gte': AccessLevel.VIEWER } }
+                                    ]
+                                }
                             ]
                         }
                     ]
                 };
             } else {
                 parsedReq.parsed.search.$and[3] = {
-                    $and: [
-                        { 'permissions.user_id': user.id },
-                        { 'permissions.access_level': { '$gte': AccessLevel.VIEWER } }
+                    $or: [
+                        { 'is_public': true },
+                        {
+                            $and: [
+                                { 'permissions.user_id': user.id },
+                                { 'permissions.access_level': { '$gte': AccessLevel.VIEWER } }
+                            ]
+                        }
                     ]
                 };
             }

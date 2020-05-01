@@ -607,10 +607,10 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
     public async getAccessLevel(exercise_id: string, user_id: string): Promise<AccessLevel> {
         const access_level = await getAccessLevel(
             [
-                { src_table: 'permission', dst_table: 'project', prop: 'project_id' },
                 { src_table: 'project', dst_table: 'exercise', prop: 'exercises' }
             ],
-            `exercise.id = '${exercise_id}' AND permission.user_id = '${user_id}'`
+            `exercise.id = '${exercise_id}'`,
+            `permission.user_id = '${user_id}'`
         );
         return access_level;
     }

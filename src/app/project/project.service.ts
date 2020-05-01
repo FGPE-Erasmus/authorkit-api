@@ -1,5 +1,5 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Injectable, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { Repository, FindOneOptions, FindManyOptions } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TypeOrmCrudService } from '@nestjsx/crud-typeorm';
 import { CrudRequest } from '@nestjsx/crud';
@@ -35,6 +35,7 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
         @InjectQueue(PROJECT_SYNC_QUEUE) private readonly projectSyncQueue: Queue,
 
         protected readonly githubApiService: GithubApiService,
+        @Inject(forwardRef(() => PermissionService))
         protected readonly permissionService: PermissionService,
         protected readonly exerciseService: ExerciseService,
         protected readonly gamificationLayerService: GamificationLayerService
@@ -87,6 +88,30 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
                 })))
             };
         }
+    }
+
+    public async getPublicProjects(options: FindManyOptions<ProjectEntity>) {
+        if (options.where) {
+            if (typeof options.where === 'string') {
+                options.where = options.where + ' AND is_public = true';
+            } else if (Array.isArray(options.where)) {
+                options.where.push({ is_public: true });
+            } else if (typeof options.where === 'object') {
+                options.where = {
+                    ...options.where,
+                    is_public: true
+                };
+            } else {
+                options.where = { is_public: true };
+            }
+        } else {
+            options.where = { is_public: true };
+        }
+        return await this.repository.find(options);
+    }
+
+    public async isPublicProject(id: string) {
+        return (await this.repository.findOneOrFail(id)).is_public;
     }
 
     public async deleteOne(req: CrudRequest): Promise<ProjectEntity | void> {
@@ -229,10 +254,9 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
 
     public async getAccessLevel(project_id: string, user_id: string): Promise<AccessLevel> {
         const access_level = await getAccessLevel(
-            [
-                { src_table: 'permission', dst_table: 'project', prop: 'project_id' }
-            ],
-            `project.id = '${project_id}' AND permission.user_id = '${user_id}'`
+            [],
+            `project.id = '${project_id}'`,
+            `permission.user_id = '${user_id}'`
         );
         return access_level;
     }

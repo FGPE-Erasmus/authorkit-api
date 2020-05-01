@@ -1,5 +1,4 @@
-import { Injectable, NestMiddleware, OnModuleInit } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
+import { Injectable, NestMiddleware } from '@nestjs/common';
 
 import { ProjectService } from './project.service';
 

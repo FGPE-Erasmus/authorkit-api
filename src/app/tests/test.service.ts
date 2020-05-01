@@ -216,11 +216,11 @@ export class TestService {
     public async getAccessLevel(id: string, user_id: string): Promise<AccessLevel> {
         const access_level = await getAccessLevel(
             [
-                { src_table: 'permission', dst_table: 'project', prop: 'project_id' },
                 { src_table: 'project', dst_table: 'exercise', prop: 'exercises' },
                 { src_table: 'exercise', dst_table: 'test', prop: 'tests' }
             ],
-            `test.id = '${id}' AND permission.user_id = '${user_id}'`
+            `test.id = '${id}'`,
+            `permission.user_id = '${user_id}'`
         );
         return access_level;
     }
