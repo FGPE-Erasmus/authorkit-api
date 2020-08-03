@@ -5,18 +5,24 @@ import { config } from '../../../config';
 const Email = require('email-templates');
 
 export async function mail(template: string, recipient: string, data: any): Promise<SentMessageInfo> {
-    const transporter = createTransport({
+
+    const transportOptions: any = {
         host: config.mail.host,
         port: config.mail.port,
         secure: config.mail.secure,
-        auth: {
-            user: config.mail.user,
-            pass: config.mail.password
-        },
         tls: {
             rejectUnauthorized: false
         }
-    });
+    };
+
+    if (config.mail.user || config.mail.password) {
+        transportOptions.auth = {
+            user: config.mail.user,
+            pass: config.mail.password
+        };
+    }
+
+    const transporter = createTransport(transportOptions);
 
     const message = await renderTemplate(template, data);
 
