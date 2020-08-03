@@ -6,8 +6,9 @@ import { TypeOrmCrudService } from '@nestjsx/crud-typeorm';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 
-import { Open } from 'unzipper';
 import { create, Archiver } from 'archiver';
+import { Open } from 'unzipper';
+import { Parser } from 'xml2js';
 
 import { AppLogger } from '../app.logger';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
@@ -29,6 +30,7 @@ import { TemplateService } from '../templates/template.service';
 import { TestGeneratorService } from '../test-generators/test-generator.service';
 import { TestService } from '../tests/test.service';
 import { TestSetService } from '../testsets/testset.service';
+import { languageName, fileExtension } from '../_helpers/utils';
 
 import { ExerciseEntity } from './entity/exercise.entity';
 import { EXERCISE_SYNC_QUEUE, EXERCISE_SYNC_CREATE } from './exercise.constants';
@@ -382,6 +384,292 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         await Promise.all(asyncImporters);
 
         return exercise;
+    }
+
+    public async importMef(
+        user: UserEntity, project_id: string, mefFile: any
+    ): Promise<ExerciseEntity> {
+
+        const directory = await Open.buffer(mefFile.buffer);
+        const entries = directory.files.reduce((obj, item) => {
+            obj[item.path] = item;
+            return obj;
+        }, {});
+
+        const baseFile = entries['Content.xml'];
+        if (!baseFile) {
+            this.throwBadRequestException('Archive misses required "Content.xml"');
+        }
+
+        const parser: Parser = new Parser();
+
+        let baseJson;
+        try {
+            baseJson = await parser.parseStringPromise(
+                (await baseFile.buffer()).toString('utf8')
+            );
+        } catch (error) {
+            throw error;
+        }
+
+        // create exercise
+        const exercise: ExerciseEntity = await this.importMefCreateExercise(user, project_id, baseJson.Problem.$);
+
+        this.exerciseSyncQueue.add(EXERCISE_SYNC_CREATE, { user, exercise });
+
+        const asyncImporters = [];
+
+        if (baseJson.Problem.$.Description && entries[baseJson.Problem.$.Description]) {
+            asyncImporters.push(
+                this.statementService.importProcessEntries(
+                    user, exercise, {
+                        'metadata.json': {
+                            buffer: () => Buffer.from(JSON.stringify({
+                                pathname: baseJson.Problem.$.Description,
+                                format: TextFormat.HTML,
+                                nat_lang: 'pt'
+                            }), 'utf8')
+                        },
+                        [baseJson.Problem.$.Description]: {
+                            buffer: entries[baseJson.Problem.$.Description].buffer
+                        }
+                    }
+                )
+            );
+        }
+
+        if (baseJson.Problem.$.PDF && entries[baseJson.Problem.$.PDF]) {
+            asyncImporters.push(
+                this.statementService.importProcessEntries(
+                    user, exercise, {
+                        'metadata.json': {
+                            buffer: () => Buffer.from(JSON.stringify({
+                                pathname: baseJson.Problem.$.PDF,
+                                format: TextFormat.PDF,
+                                nat_lang: 'pt'
+                            }), 'utf8')
+                        },
+                        [baseJson.Problem.$.PDF]: {
+                            buffer: entries[baseJson.Problem.$.PDF].buffer
+                        }
+                    }
+                )
+            );
+        }
+
+        if (baseJson.Problem.$.Static_corrector) {
+            asyncImporters.push(
+                this.staticCorrectorService.importProcessEntries(
+                    user, exercise, {
+                        'metadata.json': {
+                            buffer: () => Buffer.from(JSON.stringify({
+                                pathname: 'corrector.sh',
+                                command_line: baseJson.Problem.$.Static_corrector
+                            }), 'utf8')
+                        },
+                        [baseJson.Problem.$.Static_corrector]: {
+                            buffer: Buffer.from('', 'utf8')
+                        }
+                    }
+                )
+            );
+        }
+
+        if (baseJson.Problem.$.Dynamic_corrector) {
+            asyncImporters.push(
+                this.dynamicCorrectorService.importProcessEntries(
+                    user, exercise, {
+                        'metadata.json': {
+                            buffer: () => Buffer.from(JSON.stringify({
+                                pathname: 'corrector.sh',
+                                command_line: baseJson.Problem.$.Dynamic_corrector
+                            }), 'utf8')
+                        },
+                        [baseJson.Problem.$.Dynamic_corrector]: {
+                            buffer: Buffer.from('', 'utf8')
+                        }
+                    }
+                )
+            );
+        }
+
+        if (baseJson.Problem.$.Environment && entries[baseJson.Problem.$.Environment]) {
+            asyncImporters.push(
+                this.libraryService.importProcessEntries(
+                    user, exercise, {
+                        'metadata.json': {
+                            buffer: () => Buffer.from(JSON.stringify({
+                                pathname: 'corrector.sh',
+                                command_line: baseJson.Problem.$.Environment
+                            }), 'utf8')
+                        },
+                        [baseJson.Problem.$.Environment]: {
+                            buffer: Buffer.from('', 'utf8')
+                        }
+                    }
+                )
+            );
+        }
+
+        if (baseJson.Problem.$.Program && entries[baseJson.Problem.$.Program]) {
+            asyncImporters.push(
+                this.solutionService.importProcessEntries(
+                    user, exercise, {
+                        'metadata.json': {
+                            buffer: () => Buffer.from(JSON.stringify({
+                                pathname: baseJson.Problem.$.Program,
+                                lang: languageName(fileExtension(baseJson.Problem.$.Program))
+                            }), 'utf8')
+                        },
+                        [baseJson.Problem.$.Program]: {
+                            buffer: entries[baseJson.Problem.$.Program].buffer
+                        }
+                    }
+                )
+            );
+        }
+
+        if (baseJson.Problem.Solutions) {
+            Object.keys(entries)
+                .filter(path => path.startsWith('solutions'))
+                .forEach(path => {
+                    const solutionName = path.substring('solutions'.length + 1);
+                    asyncImporters.push(
+                        this.solutionService.importProcessEntries(
+                            user, exercise, {
+                                'metadata.json': {
+                                    buffer: () => Buffer.from(JSON.stringify({
+                                        pathname: solutionName,
+                                        lang: languageName(fileExtension(solutionName))
+                                    }), 'utf8')
+                                },
+                                [solutionName]: {
+                                    buffer: entries[path].buffer
+                                }
+                            }
+                        )
+                    );
+                });
+        }
+
+        if (baseJson.Problem.Skeletons) {
+            Object.keys(entries)
+                .filter(path => path.startsWith('skeletons'))
+                .forEach(path => {
+                    const skeletonName = path.substring('skeletons'.length + 1);
+                    asyncImporters.push(
+                        this.skeletonService.importProcessEntries(
+                            user, exercise, {
+                                'metadata.json': {
+                                    buffer: () => Buffer.from(JSON.stringify({
+                                        pathname: skeletonName,
+                                        lang: languageName(fileExtension(skeletonName))
+                                    }), 'utf8')
+                                },
+                                [skeletonName]: {
+                                    buffer: entries[path].buffer
+                                }
+                            }
+                        )
+                    );
+                });
+        }
+
+        if (baseJson.Problem.Images) {
+            Object.keys(entries)
+                .filter(path => path.startsWith('images'))
+                .forEach(path => {
+                    const imageName = path.substring('images'.length + 1);
+                    asyncImporters.push(
+                        this.embeddableService.importProcessEntries(
+                            user, exercise, {
+                                'metadata.json': {
+                                    buffer: () => Buffer.from(JSON.stringify({
+                                        pathname: imageName
+                                    }), 'utf8')
+                                },
+                                [imageName]: {
+                                    buffer: entries[path].buffer
+                                }
+                            }
+                        )
+                    );
+                });
+        }
+
+        if (baseJson.Problem.Tests && baseJson.Problem.Tests[0] && baseJson.Problem.Tests[0].Test) {
+            baseJson.Problem.Tests[0].Test.forEach(test => {
+                const inputPath = test.$['xml:id'].replace('tests.', 'tests/') + '/' + test.$.input;
+                const outputPath = test.$['xml:id'].replace('tests.', 'tests/') + '/' + test.$.output;
+                const timeout = test.$.Timeout ? test.$.Timeout : baseJson.Problem.$.Timeout;
+                const args = [];
+                if (test.$.args) {
+                    args.push(test.$.args);
+                }
+                if (timeout && timeout > 0) {
+                    args.push('--timeout');
+                    args.push(timeout);
+                }
+                asyncImporters.push(
+                    this.testService.importProcessEntries(
+                        user, exercise, {
+                            'metadata.json': {
+                                buffer: () => Buffer.from(JSON.stringify({
+                                    input: test.$.input,
+                                    output: test.$.output,
+                                    weight: test.$.Points ? parseInt(test.$.Points, 10) : 0,
+                                    visible: test.$.Show === 'yes',
+                                    arguments: args
+                                }), 'utf8')
+                            },
+                            [test.$.input]: {
+                                buffer: entries[inputPath].buffer
+                            },
+                            [test.$.output]: {
+                                buffer: entries[outputPath].buffer
+                            }
+                        }
+                    )
+                );
+            });
+        }
+
+        await Promise.all(asyncImporters);
+
+        return exercise;
+    }
+
+    public async importMefCreateExercise(user: UserEntity, project_id: string, metadata: any): Promise<ExerciseEntity> {
+
+        const exercise: DeepPartial<ExerciseEntity> = {
+            title: `[${metadata.Name}] ${metadata.Title}`,
+            module: metadata.Type,
+            owner_id: user.id,
+            keywords: ['Mooshak'],
+            type: ExerciseType.BLANK_SHEET,
+            event: '',
+            platform: 'Mooshak',
+            status: ExerciseStatus.DRAFT,
+            project_id
+        };
+
+        if (metadata.Difficulty === 'Very Easy') {
+            exercise.difficulty = ExerciseDifficulty.BEGINNER;
+        } else if (metadata.Difficulty === 'Easy') {
+            exercise.difficulty = ExerciseDifficulty.EASY;
+        } else if (metadata.Difficulty === 'Medium') {
+            exercise.difficulty = ExerciseDifficulty.AVERAGE;
+        } else if (metadata.Difficulty === 'Difficult') {
+            exercise.difficulty = ExerciseDifficulty.HARD;
+        } else if (metadata.Difficulty === 'Very Difficult') {
+            exercise.difficulty = ExerciseDifficulty.MASTER;
+        }
+
+        if (metadata.Type) {
+            exercise.keywords.push(metadata.Type);
+        }
+
+        return await this.repository.save(exercise);
     }
 
     public async export(

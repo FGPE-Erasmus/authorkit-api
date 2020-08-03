@@ -1,6 +1,7 @@
 import crypto from 'crypto';
-import { config } from '../../../config';
 import { CrudRequest } from '@nestjsx/crud';
+import { config } from '../../../config';
+import { PROGRAMMING_LANGUAGE_EXT } from './programming-language-ext';
 
 export function commonElements(arrays: Array<string[]>): string[] {
     return arrays.shift().reduce(function (res, v) {
@@ -51,4 +52,30 @@ export async function asyncForEach(array: any[], callback) {
     for (let index = 0; index < array.length; index++) {
         await callback(array[index], index, array);
     }
+}
+
+export function fileExtension(filename: string, opts?) {
+    if (!opts) {
+        opts = {};
+    }
+    if (!filename) {
+        return '';
+    }
+    let ext = (/[^./\\]*$/.exec(filename) || [''])[0];
+    ext = opts.preserveCase ? ext : ext.toLowerCase();
+    return ext;
+}
+
+export function languageName(extension: string) {
+    if (!extension) {
+        return null;
+    }
+    const language = PROGRAMMING_LANGUAGE_EXT[extension];
+    if (!language) {
+        return null;
+    }
+    if (Array.isArray(language)) {
+        return language[0];
+    }
+    return language;
 }
