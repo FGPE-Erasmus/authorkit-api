@@ -580,6 +580,9 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                 .filter(path => path.startsWith('images'))
                 .forEach(path => {
                     const imageName = path.substring('images'.length + 1);
+                    if (!imageName) {
+                        return;
+                    }
                     asyncImporters.push(
                         this.embeddableService.importProcessEntries(
                             user, exercise, {
