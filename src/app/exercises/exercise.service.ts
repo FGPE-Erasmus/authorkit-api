@@ -534,6 +534,9 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                 .filter(path => path.startsWith('solutions'))
                 .forEach(path => {
                     const solutionName = path.substring('solutions'.length + 1);
+                    if (!solutionName) {
+                        return;
+                    }
                     asyncImporters.push(
                         this.solutionService.importProcessEntries(
                             user, exercise, {
@@ -557,6 +560,9 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                 .filter(path => path.startsWith('skeletons'))
                 .forEach(path => {
                     const skeletonName = path.substring('skeletons'.length + 1);
+                    if (!skeletonName) {
+                        return;
+                    }
                     asyncImporters.push(
                         this.skeletonService.importProcessEntries(
                             user, exercise, {
