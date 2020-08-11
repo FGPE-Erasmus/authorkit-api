@@ -10,7 +10,8 @@ import {
     UploadedFile,
     Body,
     Patch,
-    Get
+    Get,
+    Query
 } from '@nestjs/common';
 import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitBody, ApiImplicitFile } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -103,5 +104,18 @@ export class StatementController {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         return await this.service.deleteOne(user, id);
+    }
+
+    @Post('/:id/translate')
+    async translate(
+        @User() user: any,
+        @Param('id') id: string,
+        @Query('nat_lang') nat_lang: string
+    ): Promise<StatementEntity> {
+        const accessLevel = await this.service.getAccessLevel(id, user.id);
+        if (accessLevel < AccessLevel.CONTRIBUTOR) {
+            throw new ForbiddenException(`You do not have sufficient privileges`);
+        }
+        return this.service.translate(user, id, nat_lang);
     }
 }

@@ -4,8 +4,10 @@ import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
+import translate, { languages } from 'translation-google';
 
 import { AppLogger } from '../app.logger';
+import { TextFormat } from '../_helpers';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
 import { GithubApiService } from '../github-api/github-api.service';
 import { ExerciseEntity } from '../exercises/entity/exercise.entity';
@@ -157,6 +159,36 @@ export class StatementService {
         );
 
         return entity;
+    }
+
+    public async translate(
+        user: UserEntity, id: string, nat_lang: string
+    ): Promise<StatementEntity> {
+        const statement = await this.getOne(user, id);
+        if (statement.format !== TextFormat.TXT
+            && statement.format !== TextFormat.HTML
+            && statement.format !== TextFormat.MARKDOWN
+        ) {
+            throw new BadRequestException(`Cannot translate statements in ${statement.format}`);
+        }
+        let contents = Buffer.from(await this.getContents(user, id), 'base64').toString('utf8');
+        if (statement.nat_lang !== nat_lang
+            && languages[nat_lang]
+            && languages[statement.nat_lang]) {
+            const translated = await translate(contents, {from: statement.nat_lang, to: nat_lang});
+            contents = translated.text;
+        }
+        return this.createOne(user, {
+            exercise_id: statement.exercise_id,
+            format: statement.format,
+            nat_lang
+        } as StatementEntity, {
+            originalname: nat_lang + '_' + (
+                statement.pathname.startsWith(`${statement.nat_lang}_`) ?
+                statement.pathname.substr(statement.nat_lang.length + 1) :
+                statement.pathname),
+            buffer: Buffer.from(contents)
+        });
     }
 
     public async getAccessLevel(id: string, user_id: string): Promise<AccessLevel> {

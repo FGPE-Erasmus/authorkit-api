@@ -150,7 +150,7 @@ export class UserController implements CrudController<UserEntity> {
         return req.user;
     }
 
-    @MessagePattern({ cmd: USER_CMD_REGISTER })
+    /* @MessagePattern({ cmd: USER_CMD_REGISTER })
     public async onUserRegister(user: UserEntity): Promise<void> {
         try {
             this.logger.debug(`[onUserRegister] Send verification email for user ${user.email}`);
@@ -240,5 +240,5 @@ export class UserController implements CrudController<UserEntity> {
         } catch (err) {
             this.logger.error(`[onUserRegister] Mail not sent, because ${err.message}`, err.stack);
         }
-    }
+    } */
 }

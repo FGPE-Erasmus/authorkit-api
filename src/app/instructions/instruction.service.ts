@@ -4,8 +4,10 @@ import { plainToClass } from 'class-transformer';
 import { Repository } from 'typeorm';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
+import translate, { languages } from 'translation-google';
 
 import { AppLogger } from '../app.logger';
+import { TextFormat } from '../_helpers/entity/text-format.enum';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
 import { GithubApiService } from '../github-api/github-api.service';
 import { ExerciseEntity } from '../exercises/entity';
@@ -156,6 +158,36 @@ export class InstructionService {
         );
 
         return entity;
+    }
+
+    public async translate(
+        user: UserEntity, id: string, nat_lang: string
+    ): Promise<InstructionEntity> {
+        const instruction = await this.getOne(user, id);
+        if (instruction.format !== TextFormat.TXT
+            && instruction.format !== TextFormat.HTML
+            && instruction.format !== TextFormat.MARKDOWN
+        ) {
+            throw new BadRequestException(`Cannot translate instructions in ${instruction.format}`);
+        }
+        let contents = Buffer.from(await this.getContents(user, id), 'base64').toString('utf8');
+        if (instruction.nat_lang !== nat_lang
+            && languages[nat_lang]
+            && languages[instruction.nat_lang]) {
+            const translated = await translate(contents, {from: instruction.nat_lang, to: nat_lang});
+            contents = translated.text;
+        }
+        return this.createOne(user, {
+            exercise_id: instruction.exercise_id,
+            format: instruction.format,
+            nat_lang
+        } as InstructionEntity, {
+            originalname: nat_lang + '_' + (
+                instruction.pathname.startsWith(`${instruction.nat_lang}_`) ?
+                instruction.pathname.substr(instruction.nat_lang.length + 1) :
+                instruction.pathname),
+            buffer: Buffer.from(contents)
+        });
     }
 
     public async getAccessLevel(id: string, user_id: string): Promise<AccessLevel> {
