@@ -404,7 +404,6 @@ export class GithubApiService {
                     because ${JSON.stringify(err.message)}`,
                 err.stack
             );
-            console.log(err.stack)
             throw err;
         }
     }
