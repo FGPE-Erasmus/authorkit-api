@@ -1,5 +1,5 @@
 import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor, Req, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CrudController, Crud, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
 import { Queue } from 'bull';
@@ -21,7 +21,7 @@ import { RewardService } from './reward.service';
 import { RewardEntity } from './entity/reward.entity';
 
 @Controller('rewards')
-@ApiUseTags('rewards')
+@ApiTags('rewards')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)

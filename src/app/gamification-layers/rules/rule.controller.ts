@@ -1,5 +1,5 @@
 import { Controller, UseGuards, UseInterceptors, ClassSerializerInterceptor, Req, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CrudController, Crud, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
 import { Queue } from 'bull';
@@ -21,7 +21,7 @@ import {
 } from './rule.constants';
 
 @Controller('rules')
-@ApiUseTags('rules')
+@ApiTags('rules')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)

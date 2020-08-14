@@ -1,8 +1,7 @@
 import { Column } from 'typeorm';
-import { Field } from 'type-graphql';
 import { IsString, IsOptional, IsDefined, IsEnum, MaxLength, IsEmpty } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 import { TextFormat } from './text-format.enum';
 import { TrackedFileEntity } from './tracked-file.entity';
@@ -12,15 +11,14 @@ const { CREATE, UPDATE } = CrudValidationGroups;
 export class FormattedTextEntity extends TrackedFileEntity {
 
     @Column('simple-json', { nullable: true })
-    @Field(() => TrackedFileEntity)
     public file: TrackedFileEntity;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsEmpty({ always: true })
     @Column('varchar', { nullable: false })
     public pathname: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsString({ always: true })
@@ -28,15 +26,13 @@ export class FormattedTextEntity extends TrackedFileEntity {
     @Column('enum', {
         enum: TextFormat
     })
-    @Field(() => TextFormat)
     public format: TextFormat;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsString({ always: true })
     @MaxLength(25, { always: true })
     @Column('varchar', { length: 25, nullable: true })
-    @Field()
     public nat_lang: string;
 }

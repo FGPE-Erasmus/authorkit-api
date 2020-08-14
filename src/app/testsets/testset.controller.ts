@@ -1,5 +1,5 @@
 import { Controller, UseGuards, Req, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
 import { Queue } from 'bull';
@@ -19,7 +19,7 @@ import { TestSetService } from './testset.service';
 import { TestSetEntity } from './entity/testset.entity';
 
 @Controller('testsets')
-@ApiUseTags('testsets')
+@ApiTags('testsets')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Crud({

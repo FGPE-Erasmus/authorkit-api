@@ -5,117 +5,56 @@ import {
     ClassSerializerInterceptor,
     UseInterceptors,
     Get,
-    Req
+    Req,
+    ForbiddenException,
+    Body
 } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
-import { CrudController, Crud } from '@nestjsx/crud';
+import { CrudController, Crud, Override, ParsedRequest, CrudRequest, GetManyDefaultResponse, ParsedBody } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiUseTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { config } from '../../config';
-import { mail } from '../_helpers/mail';
 import { AppLogger } from '../app.logger';
-import { createToken } from '../auth/jwt';
+import { User } from '../_helpers/decorators/user.decorator';
+import { UserRole } from '../access-control';
 import { UserEntity } from './entity';
-import { UserCommand } from './user.command';
-import {
-    USER_CMD_PASSWORD_NEW,
-    USER_CMD_PASSWORD_RESET,
-    USER_CMD_REGISTER,
-    USER_CMD_REGISTER_VERIFY
-} from './user.constants';
 import { UserService } from './user.service';
-import {
-    UseRoles,
-    CrudOperationEnum,
-    ResourcePossession,
-    UseContextAccessEvaluator,
-    ACGuard,
-    AccessControlRequestInterceptor,
-    AccessControlResponseInterceptor
-} from '../access-control';
-import { evaluateUserContextAccess } from './security/user-context-access.evaluator';
+import { UserUpdateDto } from './dto/user-update.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('users')
-@ApiUseTags('users')
+@ApiTags('users')
 @ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)
 @Crud({
     model: {
         type: UserEntity
     },
+    dto: {
+        update: UserUpdateDto
+    },
+    validation: config.validator.options,
     routes: {
         getManyBase: {
-            interceptors: [AccessControlResponseInterceptor],
-            decorators: [
-                UseGuards(AuthGuard('jwt'), ACGuard),
-                UseRoles({
-                    resource: 'user',
-                    action: CrudOperationEnum.LIST,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
+            interceptors: [],
+            decorators: []
         },
         getOneBase: {
-            interceptors: [AccessControlResponseInterceptor],
-            decorators: [
-                UseGuards(AuthGuard('jwt'), ACGuard),
-                UseRoles({
-                    resource: 'user',
-                    action: CrudOperationEnum.READ,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
+            interceptors: [],
+            decorators: []
         },
         createOneBase: {
-            interceptors: [AccessControlRequestInterceptor],
-            decorators: [
-                UseGuards(AuthGuard('jwt'), ACGuard),
-                UseRoles({
-                    resource: 'user',
-                    action: CrudOperationEnum.CREATE,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
+            interceptors: [],
+            decorators: []
         },
         updateOneBase: {
-            interceptors: [AccessControlRequestInterceptor],
-            decorators: [
-                UseGuards(AuthGuard('jwt'), ACGuard),
-                UseRoles({
-                    resource: 'user',
-                    action: CrudOperationEnum.PATCH,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
-        },
-        replaceOneBase: {
-            interceptors: [AccessControlRequestInterceptor],
-            decorators: [
-                UseGuards(AuthGuard('jwt'), ACGuard),
-                UseRoles({
-                    resource: 'user',
-                    action: CrudOperationEnum.UPDATE,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ]
+            interceptors: [],
+            decorators: []
         },
         deleteOneBase: {
             interceptors: [],
-            decorators: [
-                UseGuards(AuthGuard('jwt'), ACGuard),
-                UseRoles({
-                    resource: 'user',
-                    action: CrudOperationEnum.DELETE,
-                    possession: ResourcePossession.ANY
-                }),
-                UseContextAccessEvaluator(evaluateUserContextAccess)
-            ],
+            decorators: [],
             returnDeleted: true
         }
     }
@@ -125,120 +64,93 @@ export class UserController implements CrudController<UserEntity> {
     private logger = new AppLogger(UserController.name);
 
     constructor(
-        readonly service: UserService,
-        private userCmd: UserCommand
+        readonly service: UserService
     ) { }
 
     get base(): CrudController<UserEntity> {
         return this;
     }
 
-    @Post('import')
-    @UseGuards(AuthGuard('jwt'), ACGuard)
-    @UseRoles({
-        resource: 'user',
-        action: CrudOperationEnum.CREATE,
-        possession: ResourcePossession.ANY
-    })
-    public async importUsers(): Promise<any> {
-        return this.userCmd.create(20);
-    }
-
     @Get('me')
-    @UseGuards(AuthGuard('jwt'))
     public async me(@Req() req) {
         return req.user;
     }
 
-    /* @MessagePattern({ cmd: USER_CMD_REGISTER })
-    public async onUserRegister(user: UserEntity): Promise<void> {
-        try {
-            this.logger.debug(`[onUserRegister] Send verification email for user ${user.email}`);
-            const token = createToken(user.id.toString(), config.auth.verify.timeout, config.auth.verify.secret);
-            await mail(
-                'email-verification',
-                user.email,
-                {
-                    app_name: config.name,
-                    app_host: config.host,
-                    app_port: config.port,
-                    ui_base_url: config.ui_base_url,
-                    firstname: user.first_name,
-                    lastname: user.last_name,
-                    token
-                }
-            );
-            this.logger.debug('[onUserRegister] Verification email sent');
-        } catch (err) {
-            this.logger.error(`[onUserRegister] Verification email not sent, because ${err.message}`, err.stack);
-        }
+    @Post('change-password')
+    async changePassword(
+        @User() user: any,
+        @Body() dto: ChangePasswordDto
+    ) {
+        return this.service.updatePasswordWithOld({
+            id: user.id,
+            password: dto.new_password
+        }, dto.old_password);
     }
 
-    @MessagePattern({ cmd: USER_CMD_REGISTER_VERIFY })
-    public async onUserRegisterVerify(user: UserEntity): Promise<void> {
-        try {
-            this.logger.debug(`[onUserRegisterVerify] Send welcome email for user ${user.email}`);
-            await mail(
-                'welcome',
-                user.email,
-                {
-                    app_name: config.name,
-                    app_host: config.host,
-                    app_port: config.port,
-                    ui_base_url: config.ui_base_url,
-                    firstname: user.first_name,
-                    lastname: user.last_name
-                }
-            );
-            this.logger.debug('[onUserRegisterVerify] Welcome email sent');
-        } catch (err) {
-            this.logger.error(`[onUserRegisterVerify] Mail not sent, because ${err.message}`, err.stack);
+    @Override()
+    async getOne(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest
+    ) {
+        if (!user.roles.includes(UserRole.ADMIN) && user.id !== req.params.id) {
+            throw new ForbiddenException('You do not have sufficient privileges');
         }
+        return this.base.getOneBase(parsedReq);
     }
 
-    @MessagePattern({ cmd: USER_CMD_PASSWORD_RESET })
-    public async onUserPasswordReset(user: UserEntity): Promise<void> {
-        try {
-            this.logger.debug(`[onUserRegister] Send password reset instruction email for user ${user.email}`);
-            const token = createToken(user.id.toString(), config.auth.password_reset.timeout, config.auth.password_reset.secret);
-            await mail(
-                'reset-password',
-                user.email,
-                {
-                    app_name: config.name,
-                    app_host: config.host,
-                    app_port: config.port,
-                    ui_base_url: config.ui_base_url,
-                    firstname: user.first_name,
-                    lastname: user.last_name,
-                    token
-                }
-            );
-            this.logger.debug('[onUserRegister] Password reset email sent');
-        } catch (err) {
-            this.logger.error(`[onUserRegister] Mail not sent, because ${JSON.stringify(err.message)}`, err.stack);
+    @Override()
+    async getMany(
+        @User() user: any,
+        @ParsedRequest() parsedReq: CrudRequest
+    ): Promise<GetManyDefaultResponse<UserEntity> | UserEntity[]> {
+        if (!user.roles.includes(UserRole.ADMIN)) {
+            throw new ForbiddenException('You do not have sufficient privileges');
         }
+        return this.base.getManyBase(parsedReq);
     }
 
-    @MessagePattern({ cmd: USER_CMD_PASSWORD_NEW })
-    public async onUserPasswordNew(user: UserEntity): Promise<void> {
-        try {
-            this.logger.debug(`[onUserRegister] Send password new email for user ${user.email}`);
-            await mail(
-                'new-password',
-                user.email,
-                {
-                    app_name: config.name,
-                    app_host: config.host,
-                    app_port: config.port,
-                    ui_base_url: config.ui_base_url,
-                    firstname: user.first_name,
-                    lastname: user.last_name
-                }
-            );
-            this.logger.debug('[onUserRegister] Password new email sent');
-        } catch (err) {
-            this.logger.error(`[onUserRegister] Mail not sent, because ${err.message}`, err.stack);
+   @Override()
+    async createOne(
+        @User() user: any,
+        @ParsedRequest() parsedReq: CrudRequest,
+        @ParsedBody() dto: UserEntity
+    ): Promise<UserEntity> {
+        if (!user.roles.includes(UserRole.ADMIN)) {
+            throw new ForbiddenException('You do not have sufficient privileges');
         }
-    } */
+        return this.base.createOneBase(parsedReq, dto);
+    }
+
+    @Override()
+    async updateOne(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest,
+        @ParsedBody() dto: UserUpdateDto
+    ) {
+        if (!user.roles.includes(UserRole.ADMIN) && user.id !== req.params.id) {
+            throw new ForbiddenException('You do not have sufficient privileges');
+        }
+        if (!user.roles.includes(UserRole.ADMIN)) {
+            delete dto.roles;
+            delete dto.facebook_id;
+            delete dto.github_id;
+            delete dto.google_id;
+            delete dto.twitter_id;
+        }
+        return this.base.updateOneBase(parsedReq, dto as UserEntity);
+    }
+
+    @Override()
+    async deleteOne(
+        @User() user: any,
+        @Req() req,
+        @ParsedRequest() parsedReq: CrudRequest
+    ) {
+        if (!user.roles.includes(UserRole.ADMIN) && user.id !== req.params.id) {
+            throw new ForbiddenException('You do not have sufficient privileges');
+        }
+        return this.base.deleteOneBase(parsedReq);
+    }
 }

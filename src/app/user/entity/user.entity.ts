@@ -1,9 +1,8 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { CrudValidationGroups } from '@nestjsx/crud';
 import { IsEmail, IsOptional, IsString, MinLength, Validate, IsEnum, IsArray, IsDefined, MaxLength, IsEmpty } from 'class-validator';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { Field } from 'type-graphql';
 import { DateTime } from 'luxon';
 
 import { config } from '../../../config';
@@ -19,42 +18,41 @@ const { CREATE, UPDATE } = CrudValidationGroups;
 @Entity('user')
 export class UserEntity extends ExtendedEntity {
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsEmpty({ groups: [CREATE] })
     @PrimaryGeneratedColumn('uuid')
-    @Field()
-    public id: string;
+    public id?: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
     @MaxLength(100, { always: true })
     @Column('varchar', { length: 100, nullable: true })
-    public first_name: string;
+    public first_name?: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
     @MaxLength(100, { always: true })
     @Column('varchar', { length: 100, nullable: true })
-    public last_name: string;
+    public last_name?: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
     @MaxLength(200, { always: true })
     @Column('varchar', { length: 200, nullable: true })
-    public institution: string;
+    public institution?: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
     @MaxLength(100, { always: true })
     @Column('varchar', { length: 100, nullable: true })
-    public country: string;
+    public country?: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsString({ always: true })
     @IsEmail({ require_tld: true }, { always: true })
@@ -64,89 +62,75 @@ export class UserEntity extends ExtendedEntity {
         message: 'User already exists'
     })
     @Column('varchar', { length: 200, unique: true, nullable: false })
-    public email: string;
+    public email?: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
     @MaxLength(50, { always: true })
     @Column('varchar', { length: 50, nullable: true })
-    public phone_num: string;
+    public phone_num?: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
-    @Column({ type: 'bytea', nullable: true })
-    public profile_img: Buffer;
+    @Column('varchar', { nullable: true })
+    public profile_img?: string;
 
-    @ApiModelProperty()
-    @Exclude()
+    @ApiProperty()
+    @Exclude({ toPlainOnly: true })
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ always: true })
     @MinLength(config.validator.password.min_length, { always: true })
     @Validate(PasswordValidator, { always: true })
     @Column('varchar', { nullable: false })
-    public password: string;
+    public password?: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @Column('boolean', { default: false })
     public is_verified = false;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsArray({ always: true })
     @IsEnum(UserRole, { each: true, always: true })
     @Column('enum', { enum: UserRole, array: true, default: [UserRole.USER] })
-    public roles: UserRole[] = [UserRole.USER];
+    public roles?: UserRole[] = [UserRole.USER];
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @Column('varchar', { nullable: true })
-    public facebook_id: string;
+    public facebook_id?: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @Column('varchar', { nullable: true })
-    public google_id: string;
+    public google_id?: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @Column('varchar', { nullable: true })
-    public twitter_id: string;
+    public twitter_id?: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @Column('varchar', { nullable: true })
-    public github_id: string;
+    public github_id?: string;
 
     @Column('varchar', { default: 'registration' })
-    public provider: string;
-
-    @Column('timestamptz', { nullable: true })
-    public online_at: DateTime;
+    public provider?: string;
 
     @OneToMany(() => PermissionEntity, permission => permission.user_id, { lazy: true })
-    @Field(() => [PermissionEntity])
-    public permissions: Lazy<PermissionEntity[]>;
+    public permissions?: Lazy<PermissionEntity[]>;
 
     @OneToMany(() => ProjectEntity, project => project.owner_id, { lazy: true })
-    @Field(() => [ProjectEntity])
-    public projects: Lazy<ProjectEntity[]>;
+    public projects?: Lazy<ProjectEntity[]>;
 
     @OneToMany(() => ExerciseEntity, exercise => exercise.owner_id, { lazy: true })
-    @Field(() => [ExerciseEntity])
-    public exercises: Lazy<ExerciseEntity[]>;
+    public exercises?: Lazy<ExerciseEntity[]>;
 
     hashPassword() {
         if (this.password) {
             this.password = passwordHash(this.password);
-        }
-    }
-
-    @BeforeInsert()
-    @BeforeUpdate()
-    correctProfileImage() {
-        if (this.profile_img) {
-            this.profile_img = ('\\x' + this.profile_img.toString('hex')) as any;
         }
     }
 }

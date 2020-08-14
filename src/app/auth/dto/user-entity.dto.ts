@@ -1,66 +1,80 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsArray } from 'class-validator';
 
 import { config } from '../../../config';
 import { UserRole } from '../../access-control';
 
 export class UserEntityDto {
 
-    @ApiModelProperty()
+    @ApiProperty()
+    @IsString()
     public first_name: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
+    @IsString()
     public last_name: string;
 
-    @ApiModelProperty({
+    @ApiProperty({
         required: false
     })
+    @IsString()
     public institution?: string;
 
-    @ApiModelProperty({
+    @ApiProperty({
         required: false
     })
+    @IsString()
     public country?: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
+    @IsString()
     public email: string;
 
-    @ApiModelProperty({
+    @ApiProperty({
         minLength: config.validator.password.min_length
     })
+    @IsString()
     public password: string;
 
-    @ApiModelProperty({
+    @ApiProperty({
         required: false
     })
+    @IsString()
     public phone_num?: string;
 
-    @ApiModelProperty({
+    @ApiProperty({
         required: false
     })
+    @IsString()
     public profile_img?: string;
 
-    @ApiModelProperty({
+    @ApiProperty({
         required: false
     })
+    @IsArray()
     public roles?: UserRole[];
 
-    @ApiModelProperty({
+    @ApiProperty({
         required: false
     })
+    @IsString()
     public facebook_id?: string;
 
-    @ApiModelProperty({
+    @ApiProperty({
         required: false
     })
+    @IsString()
     public google_id?: string;
 
-    @ApiModelProperty({
+    @ApiProperty({
         required: false
     })
+    @IsString()
     public twitter_id?: string;
 
-    @ApiModelProperty({
+    @ApiProperty({
         required: false
     })
+    @IsString()
     public github_id?: string;
 }

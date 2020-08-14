@@ -1,4 +1,4 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 export class ExtendedEntity extends BaseEntity {
@@ -7,11 +7,11 @@ export class ExtendedEntity extends BaseEntity {
     @Column('boolean', { default: false })
     public is_deleted = false;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @CreateDateColumn({ type: 'timestamptz' })
     public created_at?: Date;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @UpdateDateColumn({ type: 'timestamptz', nullable: true })
     public updated_at?: Date;
 }

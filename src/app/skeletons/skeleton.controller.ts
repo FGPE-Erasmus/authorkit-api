@@ -12,10 +12,11 @@ import {
     Patch,
     Get
 } from '@nestjs/common';
-import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitBody, ApiImplicitFile } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+import { ApiFile } from '../_helpers/decorators/api-file.decorator';
 import { User } from '../_helpers/decorators/user.decorator';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
@@ -25,7 +26,7 @@ import { SkeletonService } from './skeleton.service';
 
 
 @Controller('skeletons')
-@ApiUseTags('skeletons')
+@ApiTags('skeletons')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)
@@ -63,8 +64,8 @@ export class SkeletonController {
     @Post()
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
-    @ApiImplicitFile({ name: 'file', required: true })
-    @ApiImplicitBody({ name: 'skeleton', type: SkeletonEntity })
+    @ApiFile({ name: 'file', required: true })
+    @ApiBody({ type: SkeletonEntity })
     async create(
         @User() user: any,
         @UploadedFile() file,
@@ -81,8 +82,8 @@ export class SkeletonController {
     @Patch('/:id')
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
-    @ApiImplicitFile({ name: 'file', required: true })
-    @ApiImplicitBody({ name: 'skeleton', type: SkeletonEntity })
+    @ApiFile({ name: 'file', required: true })
+    @ApiBody({ type: SkeletonEntity })
     async update(
         @User() user: any,
         @Param('id') id: string,

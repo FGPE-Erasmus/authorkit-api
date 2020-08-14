@@ -1,6 +1,5 @@
-import { ApiModelProperty } from '@nestjs/swagger';
-import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, OneToMany, OneToOne } from 'typeorm';
-import { Field } from 'type-graphql';
+import { ApiProperty } from '@nestjs/swagger';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column } from 'typeorm';
 import { IsOptional, IsEmpty, IsDefined, IsUUID, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
@@ -15,50 +14,44 @@ const { CREATE, UPDATE } = CrudValidationGroups;
 @Entity('gl-rule')
 export class RuleEntity extends TrackedFileEntity {
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsEmpty({ groups: [CREATE] })
     @PrimaryGeneratedColumn('uuid')
-    @Field()
     public id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsUUID('4', { always: true })
     @ManyToOne(() => GamificationLayerEntity, gl => gl.rules, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'gl_id' })
     @Column('uuid', { nullable: true })
-    @Field()
     public gl_id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsUUID('4', { always: true })
     @ManyToOne(() => ChallengeEntity, challenge => challenge.rules, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'challenge_id' })
     @Column('uuid', { nullable: true })
-    @Field()
     public challenge_id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsNotEmpty({ always: true })
     @IsString({ always: true })
     @MaxLength(150, { always: true })
     @Column('varchar', { length: 150, nullable: false })
-    @Field()
     public name: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @Column('simple-json', { nullable: true })
-    @Field(() => CriteriaEntity)
     public criteria: CriteriaEntity;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @Column('simple-json', { nullable: true })
-    @Field(() => [RuleActionEntity])
     public actions: RuleActionEntity[];
 }

@@ -77,6 +77,7 @@ export class AppDispatcher {
         this.app.use(query());
 
         this.app.useGlobalFilters(new HttpExceptionFilter());
+        /* this.app.useGlobalPipes(new ValidationPipe(config.validator.options)); */
 
         if (config.isProduction) {
             this.app.use(helmet());
@@ -108,7 +109,6 @@ export class AppDispatcher {
             .build();
 
         const document = SwaggerModule.createDocument(this.app, options);
-        document.paths['/graphql'] = { get: { tags: ['graphql'] }, post: { tags: ['graphql'] } };
         SwaggerModule.setup('/docs', this.app, document);
     }
 
@@ -123,7 +123,6 @@ export class AppDispatcher {
     private async startServer(): Promise<void> {
         await this.app.listen(config.port, config.host);
         this.logger.log(`Swagger is exposed at http://${config.host}:${config.port}/docs`);
-        this.logger.log(`Graphql is exposed at http://${config.host}:${config.port}/graphql`);
         this.logger.log(`Server is listening http://${config.host}:${config.port}`);
     }
 }

@@ -1,4 +1,4 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Column } from 'typeorm';
 import { IsOptional, IsDefined, IsEnum, IsArray, IsString, MaxLength } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
@@ -9,7 +9,7 @@ const { CREATE, UPDATE } = CrudValidationGroups;
 
 export class RuleActionEntity {
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsEnum(RuleActionType, { always: true })
     @Column({
@@ -18,7 +18,7 @@ export class RuleActionEntity {
     })
     public type: RuleActionType;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsArray({ always: true })

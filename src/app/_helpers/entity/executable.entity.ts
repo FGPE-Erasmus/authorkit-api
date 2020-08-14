@@ -1,6 +1,5 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Column } from 'typeorm';
-import { Field } from 'type-graphql';
 import { IsOptional, IsDefined, IsString, MaxLength, IsEmpty } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
@@ -11,20 +10,18 @@ const { CREATE, UPDATE } = CrudValidationGroups;
 export class ExecutableEntity extends TrackedFileEntity {
 
     @Column('simple-json', { nullable: true })
-    @Field(() => TrackedFileEntity)
     public file: TrackedFileEntity;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsEmpty({ always: true })
     @Column('varchar', { nullable: false })
     public pathname: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsString({ always: true })
     @MaxLength(255, { always: true })
     @Column('varchar', { length: 255, nullable: true })
-    @Field()
     public command_line: string;
 }

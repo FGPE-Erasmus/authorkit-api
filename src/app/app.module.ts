@@ -1,14 +1,12 @@
 import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { CommandModule } from 'nestjs-command';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { GraphQLModule } from '@nestjs/graphql';
 
 import { config } from '../config';
 import { AuthModule } from './auth/auth.module';
 import { AppLogger } from './app.logger';
 import { HealthCheckModule } from './healthcheck/healthcheck.module';
 import { UserModule } from './user/user.module';
-import { SharedModule } from './shared/shared.module';
 import { ProjectModule } from './project/project.module';
 import { PermissionModule } from './permissions/permission.module';
 import { ExerciseModule } from './exercises/exercise.module';
@@ -17,8 +15,7 @@ import { ChallengeModule } from './gamification-layers/challenges/challenge.modu
 import { LeaderboardModule } from './gamification-layers/leaderboards/leaderboard.module';
 import { RewardModule } from './gamification-layers/rewards/reward.module';
 import { RuleModule } from './gamification-layers/rules/rule.module';
-import { GqlConfigService, RequestContextMiddleware } from './_helpers';
-import { ProjectController } from './project/project.controller';
+import { RequestContextMiddleware } from './_helpers';
 import { TestSetModule } from './testsets/testset.module';
 import { TestModule } from './tests/test.module';
 import { DynamicCorrectorModule } from './dynamic-correctors/dynamic-corrector.module';
@@ -38,10 +35,16 @@ import { SkeletonModule } from './skeletons/skeleton.module';
         TypeOrmModule.forRoot(config.database),
         CommandModule,
         HealthCheckModule,
+
+        // uaa
         AuthModule,
         PermissionModule,
         UserModule,
+
+        // project
         ProjectModule,
+
+        // programming exercises
         ExerciseModule,
         TestSetModule,
         TestModule,
@@ -56,15 +59,13 @@ import { SkeletonModule } from './skeletons/skeleton.module';
         StaticCorrectorModule,
         TemplateModule,
         TestGeneratorModule,
+
+        // gamification
         GamificationLayerModule,
         ChallengeModule,
         LeaderboardModule,
         RewardModule,
-        RuleModule,
-        GraphQLModule.forRootAsync({
-            imports: [SharedModule, UserModule],
-            useClass: GqlConfigService
-        })
+        RuleModule
     ]
 })
 export class AppModule {

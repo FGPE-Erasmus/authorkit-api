@@ -1,8 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { CrudValidationGroups } from '@nestjsx/crud';
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEmpty, IsDefined, IsNotEmpty, IsString, MaxLength, IsUUID, IsArray, IsEnum } from 'class-validator';
-import { Field } from 'type-graphql';
 
 import { TrackedFileEntity } from '../../_helpers/entity/tracked-file.entity';
 import { UserEntity } from '../../user/entity/user.entity';
@@ -20,32 +19,29 @@ const { CREATE, UPDATE } = CrudValidationGroups;
 @Entity('gl')
 export class GamificationLayerEntity extends TrackedFileEntity {
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsEmpty({ groups: [CREATE] })
     @PrimaryGeneratedColumn('uuid')
-    @Field()
     public id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsNotEmpty({ always: true })
     @IsString({ always: true })
     @MaxLength(150, { always: true })
     @Column('varchar', { length: 150, nullable: false })
-    @Field()
     public name: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
     @MaxLength(500, { always: true })
     @Column('varchar', { length: 500, nullable: true })
-    @Field()
     public description: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsUUID('4', { always: true })
     @ManyToOne(() => UserEntity, user => user.id)
@@ -53,7 +49,7 @@ export class GamificationLayerEntity extends TrackedFileEntity {
     @Column('uuid', { nullable: false })
     public owner_id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsNotEmpty({ always: true })
@@ -63,7 +59,7 @@ export class GamificationLayerEntity extends TrackedFileEntity {
     @Column('uuid', { nullable: false })
     public project_id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsArray({ always: true })
@@ -72,7 +68,7 @@ export class GamificationLayerEntity extends TrackedFileEntity {
     @Column('simple-array', { default: [] })
     public keywords: string[];
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsEnum(GamificationLayerStatus, { always: true })
     @Column({
@@ -83,22 +79,17 @@ export class GamificationLayerEntity extends TrackedFileEntity {
     public status: string;
 
     @OneToMany(() => ChallengeEntity, challenge => challenge.gl_id)
-    @Field(() => [ChallengeEntity])
     public challenges: ChallengeEntity[];
 
     @OneToMany(() => RuleEntity, rule => rule.gl_id)
-    @Field(() => [RuleEntity])
     public rules: RuleEntity[];
 
     @OneToMany(() => RewardEntity, reward => reward.gl_id)
-    @Field(() => [RewardEntity])
     public rewards: RewardEntity[];
 
     @OneToMany(() => LeaderboardEntity, leaderboard => leaderboard.gl_id)
-    @Field(() => [LeaderboardEntity])
     public leaderboards: LeaderboardEntity[];
 
     @OneToMany(() => FeedbackGeneratorEntity, fg => fg.gl_id)
-    @Field(() => [FeedbackGeneratorEntity])
     public feedback_generators: FeedbackGeneratorEntity[];
 }

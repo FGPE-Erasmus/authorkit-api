@@ -1,16 +1,21 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNumber, IsString } from 'class-validator';
 
 export class TokenDto {
 
-    @ApiModelProperty()
+    @ApiProperty()
+    @IsString()
     id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
+    @IsNumber()
     expiresIn: number;
 
-    @ApiModelProperty()
+    @ApiProperty()
+    @IsString()
     audience: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
+    @IsString()
     issuer: string;
 }

@@ -27,10 +27,10 @@ export class PermissionLoaderInterceptor implements NestInterceptor {
     private logger = new AppLogger(PermissionLoaderInterceptor.name);
 
     constructor(
-        public readonly id_path: string[],
-        public readonly tables: Table[],
-        public readonly joins: Join[],
-        public readonly condition_tmpl: string) {
+    public readonly id_path: string[],
+    public readonly tables: Table[],
+    public readonly joins: Join[],
+    public readonly condition_tmpl: string) {
     }
 
     async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {

@@ -6,7 +6,7 @@ import {
     Req, ForbiddenException,
     BadRequestException
 } from '@nestjs/common';
-import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CrudController, Crud, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
 import { Queue } from 'bull';
@@ -27,7 +27,7 @@ import { ChallengeService } from './challenge.service';
 import { ChallengeEntity } from './entity/challenge.entity';
 
 @Controller('challenges')
-@ApiUseTags('challenges')
+@ApiTags('challenges')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)

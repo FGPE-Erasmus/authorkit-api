@@ -1,10 +1,13 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
 
 export class PasswordTokenDto {
 
-    @ApiModelProperty()
-    resetToken: string;
+    @ApiProperty()
+    @IsString()
+    readonly resetToken: string;
 
-    @ApiModelProperty()
-    password: string;
+    @ApiProperty()
+    @IsString()
+    readonly password: string;
 }

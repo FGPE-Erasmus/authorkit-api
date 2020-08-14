@@ -1,21 +1,33 @@
 import { LoggerService } from '@nestjs/common';
 import { DateTime } from 'luxon';
-import { LoggerInstance, transports, Logger as WsLogger } from 'winston';
+import { createLogger, transports, Logger as WsLogger, format } from 'winston';
+
 import { config } from '../config';
 
-export class AppLogger implements LoggerService {
-    private logger: LoggerInstance;
+const { combine, timestamp, label, printf } = format;
 
-    constructor(label?: string) {
-        this.logger = new WsLogger({
-            level: config.logger.level,
+// tslint:disable-next-line: no-shadowed-variable
+const humanReadableFormat = printf(({ level, message, label, timestamp }) => {
+    return `${timestamp} [${level.toUpperCase()}] ${label} - ${message}`;
+});
+
+export class AppLogger implements LoggerService {
+    private logger: WsLogger;
+
+    constructor(lbl?: string) {
+        this.logger = createLogger({
+            format: combine(
+                label({ label: lbl }),
+                timestamp(),
+                humanReadableFormat
+            ),
             transports: [
-                new transports.Console({
-                    label,
-                    timestamp: () => DateTime.local().toString(),
-                    formatter: options => `${options.timestamp()} [${options.level.toUpperCase()}] ${options.label} - ${options.message}`
+                new (transports.Console)({
+                    level: config.logger.level,
+                    handleExceptions: true
                 })
-            ]
+            ],
+            exitOnError: false
         });
     }
 

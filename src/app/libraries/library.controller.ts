@@ -12,10 +12,11 @@ import {
     Patch,
     Get
 } from '@nestjs/common';
-import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitBody, ApiImplicitFile } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+import { ApiFile } from '../_helpers/decorators/api-file.decorator';
 import { User } from '../_helpers/decorators/user.decorator';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
@@ -25,7 +26,7 @@ import { LibraryService } from './library.service';
 
 
 @Controller('libraries')
-@ApiUseTags('libraries')
+@ApiTags('libraries')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)
@@ -63,8 +64,8 @@ export class LibraryController {
     @Post()
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
-    @ApiImplicitFile({ name: 'file', required: true })
-    @ApiImplicitBody({ name: 'library', type: LibraryEntity })
+    @ApiFile({ name: 'file', required: true })
+    @ApiBody({ type: LibraryEntity })
     async create(
         @User() user: any,
         @UploadedFile() file,
@@ -81,8 +82,8 @@ export class LibraryController {
     @Patch('/:id')
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
-    @ApiImplicitFile({ name: 'file', required: true })
-    @ApiImplicitBody({ name: 'library', type: LibraryEntity })
+    @ApiFile({ name: 'file', required: true })
+    @ApiBody({ type: LibraryEntity })
     async update(
         @User() user: any,
         @Param('id') id: string,

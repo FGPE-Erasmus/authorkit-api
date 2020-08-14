@@ -1,6 +1,5 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column } from 'typeorm';
-import { Field } from 'type-graphql';
 import { IsOptional, IsEmpty, IsUUID } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
@@ -12,19 +11,17 @@ const { CREATE, UPDATE } = CrudValidationGroups;
 @Entity('template')
 export class TemplateEntity extends CodeEntity {
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsEmpty({ groups: [CREATE] })
     @PrimaryGeneratedColumn('uuid')
-    @Field()
     public id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsUUID('4', { always: true })
     @ManyToOne(() => ExerciseEntity, exercise => exercise.templates, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'exercise_id' })
     @Column('uuid', { nullable: false })
-    @Field()
     public exercise_id: string;
 }

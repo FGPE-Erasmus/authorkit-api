@@ -1,13 +1,17 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNumber, IsString } from 'class-validator';
 
 export class JwtDto {
 
-    @ApiModelProperty()
-    expiresIn: number;
+    @ApiProperty()
+    @IsNumber()
+    readonly expiresIn: number;
 
-    @ApiModelProperty()
-    accessToken: string;
+    @ApiProperty()
+    @IsString()
+    readonly accessToken: string;
 
-    @ApiModelProperty()
-    refreshToken: string;
+    @ApiProperty()
+    @IsString()
+    readonly refreshToken: string;
 }

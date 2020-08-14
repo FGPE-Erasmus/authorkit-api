@@ -1,11 +1,11 @@
 import { Response, Request } from 'express';
-import uuid from 'uuid';
+import { v4 } from 'uuid';
 import cls from 'cls-hooked';
 import { UserEntity } from '../user/entity';
 
 export class RequestContext {
 
-    public static nsid = uuid.v4();
+    public static nsid = v4();
     public readonly id: number;
     public request: Request;
     public response: Response;

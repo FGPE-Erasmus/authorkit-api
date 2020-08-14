@@ -1,4 +1,6 @@
 import {ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus} from '@nestjs/common';
+import { Request, Response } from 'express';
+
 import {AppLogger} from '../../app.logger';
 
 @Catch(HttpException)
@@ -7,29 +9,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     catch(exception: HttpException, host: ArgumentsHost) {
         const ctx = host.switchToHttp();
-        const response = ctx.getResponse();
-        let status = HttpStatus.BAD_REQUEST;
+        const response = ctx.getResponse<Response>();
+        const request = ctx.getRequest<Request>();
+        const status = exception.getStatus ? exception.getStatus() : HttpStatus.BAD_REQUEST;
 
-        if (typeof exception === 'string') {
-            exception = new HttpException({error: 'Undefined', message: exception}, status);
-        }
-
-        if (typeof exception.message === 'string') {
-            exception = new HttpException({error: 'Undefined', message: exception.message}, status);
-        }
-
-        if (exception.getStatus) {
-            status = exception.getStatus();
-        }
-
-        this.logger.error(`[${exception.message.error}] ${exception.message.message}`, exception.stack);
+        this.logger.error(`[${exception.name}] ${exception.message}`, exception.stack);
 
         response
             .status(status)
             .json({
                 statusCode: status,
                 ...exception.getResponse() as object,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                path: request.url
             });
     }
 }

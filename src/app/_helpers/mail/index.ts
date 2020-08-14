@@ -1,8 +1,8 @@
 import { createTransport, SentMessageInfo } from 'nodemailer';
 
-import { config } from '../../../config';
-
 const Email = require('email-templates');
+
+import { config } from '../../../config';
 
 export async function mail(template: string, recipient: string, data: any): Promise<SentMessageInfo> {
 

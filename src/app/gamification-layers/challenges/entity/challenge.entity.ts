@@ -1,6 +1,5 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, OneToMany, ManyToMany, JoinTable, RelationId } from 'typeorm';
-import { Field } from 'type-graphql';
 import { IsOptional, IsEmpty, IsDefined, IsUUID, IsNotEmpty, IsString, MaxLength, IsArray, IsEnum, IsBoolean } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
@@ -19,41 +18,37 @@ const { CREATE, UPDATE } = CrudValidationGroups;
 @Entity('gl-challenge')
 export class ChallengeEntity extends TrackedFileEntity {
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsEmpty({ groups: [CREATE] })
     @PrimaryGeneratedColumn('uuid')
-    @Field()
     public id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsUUID('4', { always: true })
     @ManyToOne(() => GamificationLayerEntity, gl => gl.challenges, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'gl_id' })
     @Column('uuid', { nullable: false })
-    @Field()
     public gl_id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsNotEmpty({ always: true })
     @IsString({ always: true })
     @MaxLength(150, { always: true })
     @Column('varchar', { length: 150, nullable: false })
-    @Field()
     public name: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
     @MaxLength(500, { always: true })
     @Column('varchar', { length: 500, nullable: true })
-    @Field()
     public description: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsEnum(ChallengeMode, { always: true })
     @Column({
@@ -63,7 +58,7 @@ export class ChallengeEntity extends TrackedFileEntity {
     })
     public mode: ChallengeMode;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsArray({ always: true })
     @IsString({ always: true, each: true })
@@ -71,7 +66,7 @@ export class ChallengeEntity extends TrackedFileEntity {
     @Column('simple-array', { default: [] })
     public mode_parameters: string[];
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsBoolean({ always: true })
     @Column({
@@ -80,7 +75,7 @@ export class ChallengeEntity extends TrackedFileEntity {
     })
     public locked: Boolean;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsBoolean({ always: true })
     @Column({
@@ -89,7 +84,7 @@ export class ChallengeEntity extends TrackedFileEntity {
     })
     public hidden: Boolean;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsEnum(ChallengeDifficulty, { always: true })
     @Column({
@@ -103,43 +98,37 @@ export class ChallengeEntity extends TrackedFileEntity {
         cascade: true,
         eager: true
     })
-    @Field(() => [FeedbackGeneratorEntity])
     public feedback_generators: FeedbackGeneratorEntity[]; */
 
     @OneToMany(() => RuleEntity, rule => rule.challenge_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [RuleEntity])
     public rules: RuleEntity[];
 
     @OneToMany(() => RewardEntity, reward => reward.challenge_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [RewardEntity])
     public rewards: RewardEntity[];
 
     @OneToMany(() => LeaderboardEntity, leaderboard => leaderboard.challenge_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [LeaderboardEntity])
     public leaderboards: LeaderboardEntity[];
 
     /** refs */
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsUUID('4', { always: true })
     @ManyToOne(() => ChallengeEntity, challenge => challenge.sub_challenges, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'parent_challenge_id' })
     @Column('uuid', { nullable: true })
-    @Field()
     public parent_challenge_id: string;
 
     @OneToMany(() => ChallengeEntity, challenge => challenge.parent_challenge_id)
-    @Field(() => [ChallengeEntity])
     public sub_challenges: ChallengeEntity[];
 
     @RelationId((challenge: ChallengeEntity) => challenge.sub_challenges)
@@ -150,17 +139,14 @@ export class ChallengeEntity extends TrackedFileEntity {
         joinColumn: { name: 'challenge_id', referencedColumnName: 'id' },
         inverseJoinColumn: { name: 'exercise_id', referencedColumnName: 'id' }
     })
-    @Field(() => [ExerciseEntity])
     public exercises: ExerciseEntity[];
 
     @RelationId((challenge: ChallengeEntity) => challenge.exercises)
     public exercise_ids: string[];
 
     @ManyToMany(() => RewardEntity, reward => reward.unlockable_exercises, { onDelete: 'CASCADE' })
-    @Field(() => [RewardEntity])
     public unlocked_by: RewardEntity[];
 
     @ManyToMany(() => RewardEntity, reward => reward.revealable_exercises, { onDelete: 'CASCADE' })
-    @Field(() => [RewardEntity])
     public revealed_by: RewardEntity[];
 }

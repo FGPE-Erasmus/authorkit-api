@@ -12,10 +12,11 @@ import {
     Patch,
     Get
 } from '@nestjs/common';
-import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitBody, ApiImplicitFile } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+import { ApiFile } from '../_helpers/decorators/api-file.decorator';
 import { User } from '../_helpers/decorators/user.decorator';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
@@ -25,7 +26,7 @@ import { EmbeddableService } from './embeddable.service';
 
 
 @Controller('embeddables')
-@ApiUseTags('embeddables')
+@ApiTags('embeddables')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)
@@ -63,8 +64,8 @@ export class EmbeddableController {
     @Post()
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
-    @ApiImplicitFile({ name: 'file', required: true })
-    @ApiImplicitBody({ name: 'embeddable', type: EmbeddableEntity })
+    @ApiFile({ name: 'file', required: true })
+    @ApiBody({ type: EmbeddableEntity })
     async create(
         @User() user: any,
         @UploadedFile() file,
@@ -81,8 +82,8 @@ export class EmbeddableController {
     @Patch('/:id')
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
-    @ApiImplicitFile({ name: 'file', required: true })
-    @ApiImplicitBody({ name: 'embeddable', type: EmbeddableEntity })
+    @ApiFile({ name: 'file', required: true })
+    @ApiBody({ type: EmbeddableEntity })
     async update(
         @User() user: any,
         @Param('id') id: string,

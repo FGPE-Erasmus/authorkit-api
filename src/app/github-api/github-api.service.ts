@@ -15,7 +15,7 @@ export class GithubApiService {
 
     private logger = new AppLogger(GithubApiService.name);
 
-    private client_cache: NodeCache = new NodeCache({ maxKeys: 100, stdTTL: 0 });
+    private client_cache: NodeCache = new NodeCache({ maxKeys: 100, stdTTL: 0, useClones: false });
 
     constructor(
         readonly userService: UserService
@@ -404,6 +404,7 @@ export class GithubApiService {
                     because ${JSON.stringify(err.message)}`,
                 err.stack
             );
+            console.log(err.stack)
             throw err;
         }
     }

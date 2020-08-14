@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, Post, UseGuards, Get, Query, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiImplicitBody, ApiModelProperty, ApiResponse, ApiUseTags } from '@nestjs/swagger';
+import { ApiBody, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,7 +9,7 @@ import { InjectQueue } from '@nestjs/bull';
 
 import { config } from '../../config';
 import { DeepPartial } from '../_helpers/database';
-import { Profile } from '../_helpers/decorators';
+import { User } from '../_helpers/decorators';
 import { AppLogger } from '../app.logger';
 import {
     USER_EMAIL_QUEUE,
@@ -33,12 +33,12 @@ import { VerifyResendDto } from './dto/verify-resend.dto';
 import { TokenDto } from './dto/token.dto';
 
 export class TestDto {
-    @ApiModelProperty()
+    @ApiProperty()
     @IsString()
     readonly phone_num: string;
 }
 
-@ApiUseTags('auth')
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
 
@@ -62,7 +62,7 @@ export class AuthController {
 
     @Post('register')
     @HttpCode(204)
-    @ApiImplicitBody({ required: true, type: UserEntityDto, name: 'UserEntityDto' })
+    @ApiBody({ required: true, type: UserEntityDto })
     @ApiResponse({ status: 204, description: 'NO_CONTENT' })
     public async register(@Body() data: DeepPartial<UserEntity>): Promise<void> {
         this.logger.debug(`[register] User ${data.email} register`);
@@ -101,7 +101,7 @@ export class AuthController {
 
     @Post('register/verify/resend')
     @HttpCode(204)
-    @ApiImplicitBody({ required: true, type: VerifyResendDto, name: 'VerifyResendDto' })
+    @ApiBody({ required: true, type: VerifyResendDto })
     @ApiResponse({ status: 204, description: 'NO CONTENT' })
     public async registerVerifyResend(@Body() body: VerifyResendDto): Promise<void> {
         this.logger.debug(`[registerVerifyResend] Resend verification email to ${body.email}`);
@@ -118,9 +118,9 @@ export class AuthController {
 
     @Post('password/reset')
     @HttpCode(204)
-    @ApiImplicitBody({ required: true, type: PasswordResetDto, name: 'PasswordResetDto' })
+    @ApiBody({ required: true, type: PasswordResetDto })
     @ApiResponse({ status: 204, description: 'NO CONTENT' })
-    public async passwordReset(@Body() body: DeepPartial<UserEntity>): Promise<void> {
+    public async passwordReset(@Body() body: PasswordResetDto): Promise<void> {
         this.logger.debug(`[passwordReset] User ${body.email} starts password reset`);
         if (body.email) {
             const user = await this.userService.findByEmail(body.email);
@@ -135,9 +135,10 @@ export class AuthController {
 
     @Post('password/new')
     @HttpCode(204)
-    @ApiImplicitBody({ required: true, type: PasswordTokenDto, name: 'PasswordTokenDto' })
+    @ApiBody({ required: true, type: PasswordTokenDto })
     @ApiResponse({ status: 204, description: 'NO CONTENT' })
     public async passwordNew(@Body() body: PasswordTokenDto): Promise<void> {
+        this.logger.debug(JSON.stringify(body));
         this.logger.debug(`[passwordNew] Token ${body.resetToken}`);
         const token = await verifyToken(body.resetToken, config.auth.password_reset.secret);
         const user = await this.userService.updatePassword({ id: token.id, password: body.password });
@@ -158,7 +159,7 @@ export class AuthController {
     @HttpCode(200)
     @UseGuards(AuthGuard('facebook-token'))
     @ApiResponse({ status: 200, description: 'OK', type: JwtDto })
-    public async fbSignIn(@Profile() profile: FacebookProfile): Promise<JwtDto> {
+    public async fbSignIn(@User() profile: FacebookProfile): Promise<JwtDto> {
         this.logger.debug(`[fbSignIn] Facebook facebook_id ${profile.id}`);
         let user = await this.userService.findOne({ where: { facebook_id: profile.id } });
         if (!user) {

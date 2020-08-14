@@ -13,13 +13,14 @@ import {
     UseInterceptors,
     UploadedFile
 } from '@nestjs/common';
-import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody, CrudAuth } from '@nestjsx/crud';
+import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 
+import { ApiFile } from '../_helpers/decorators/api-file.decorator';
 import { User } from '../_helpers/decorators/user.decorator';
 import { DeepPartial } from '../_helpers/database/deep-partial';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
@@ -34,7 +35,7 @@ import {
 import { filterReadDto, filterReadMany, filterUpdateDto } from './security/project.security';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
-@ApiUseTags('projects')
+@ApiTags('projects')
 @Controller('projects')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
@@ -100,7 +101,7 @@ export class ProjectController implements CrudController<DeepPartial<ProjectEnti
     @HttpCode(HttpStatus.OK)
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
-    @ApiImplicitFile({ name: 'file', required: true })
+    @ApiFile({ name: 'file', required: true })
     async import(
         @User() user: any,
         @Req() req,

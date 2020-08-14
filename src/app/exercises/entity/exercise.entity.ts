@@ -1,7 +1,6 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Entity, Column, ManyToOne, PrimaryGeneratedColumn, OneToMany, JoinColumn, ManyToMany } from 'typeorm';
 import { CrudValidationGroups } from '@nestjsx/crud';
-import { Field } from 'type-graphql';
 import { IsString, MaxLength, IsEnum, IsNotEmpty, IsEmpty, IsOptional, IsDefined, IsUUID, IsArray } from 'class-validator';
 
 import { TrackedFileEntity } from '../../_helpers';
@@ -32,32 +31,29 @@ const { CREATE, UPDATE } = CrudValidationGroups;
 @Entity('exercise')
 export class ExerciseEntity extends TrackedFileEntity {
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsEmpty({ groups: [CREATE] })
     @PrimaryGeneratedColumn('uuid')
-    @Field()
     public id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsNotEmpty({ always: true })
     @IsString({ always: true })
     @MaxLength(150, { always: true })
     @Column('varchar', { length: 150, nullable: false })
-    @Field()
     public title: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
     @MaxLength(150, { always: true })
     @Column('varchar', { length: 150, nullable: true })
-    @Field()
     public module: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsUUID('4', { always: true })
     @ManyToOne(() => UserEntity, user => user.id)
@@ -65,7 +61,7 @@ export class ExerciseEntity extends TrackedFileEntity {
     @Column('uuid', { nullable: false })
     public owner_id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsNotEmpty({ always: true })
@@ -75,7 +71,7 @@ export class ExerciseEntity extends TrackedFileEntity {
     @Column('uuid', { nullable: false })
     public project_id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsArray({ always: true })
@@ -84,7 +80,7 @@ export class ExerciseEntity extends TrackedFileEntity {
     @Column('simple-array', { default: [] })
     public keywords: string[];
 
-    @ApiModelProperty({ required: true })
+    @ApiProperty({ required: true })
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsEnum(ExerciseType, { always: true })
@@ -96,21 +92,21 @@ export class ExerciseEntity extends TrackedFileEntity {
     })
     public type: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
     @MaxLength(250, { always: true })
     @Column('varchar', { length: 250, nullable: true })
     public event: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
     @MaxLength(250, { always: true })
     @Column('varchar', { length: 250, nullable: true })
     public platform: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsEnum(ExerciseDifficulty, { always: true })
     @Column({
@@ -121,7 +117,7 @@ export class ExerciseEntity extends TrackedFileEntity {
     })
     public difficulty: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsEnum(ExerciseStatus, { always: true })
     @Column({
@@ -136,103 +132,87 @@ export class ExerciseEntity extends TrackedFileEntity {
         cascade: true,
         eager: true
     })
-    @Field(() => [InstructionEntity])
     public instructions: InstructionEntity[];
 
     @OneToMany(() => StatementEntity, statement => statement.exercise_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [StatementEntity])
     public statements: StatementEntity[];
 
     @OneToMany(() => EmbeddableEntity, embeddable => embeddable.exercise_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [EmbeddableEntity])
     public embeddables: EmbeddableEntity[];
 
     @OneToMany(() => LibraryEntity, library => library.exercise_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [LibraryEntity])
     public libraries: LibraryEntity[];
 
     @OneToMany(() => StaticCorrectorEntity, static_corrector => static_corrector.exercise_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [StaticCorrectorEntity])
     public static_correctors: StaticCorrectorEntity[];
 
     @OneToMany(() => DynamicCorrectorEntity, dynamic_corrector => dynamic_corrector.exercise_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [DynamicCorrectorEntity])
     public dynamic_correctors: DynamicCorrectorEntity[];
 
     @OneToMany(() => TestGeneratorEntity, test_generator => test_generator.exercise_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [TestGeneratorEntity])
     public test_generators: TestGeneratorEntity[];
 
     @OneToMany(() => FeedbackGeneratorEntity, test_generator => test_generator.exercise_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [FeedbackGeneratorEntity])
     public feedback_generators: FeedbackGeneratorEntity[];
 
     @OneToMany(() => SkeletonEntity, skeleton => skeleton.exercise_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [SkeletonEntity])
     public skeletons: SkeletonEntity[];
 
     @OneToMany(() => SolutionEntity, solution => solution.exercise_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [SolutionEntity])
     public solutions: SolutionEntity[];
 
     @OneToMany(() => TemplateEntity, tmpl => tmpl.exercise_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [TemplateEntity])
     public templates: TemplateEntity[];
 
     @OneToMany(() => TestEntity, test => test.exercise_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [TestEntity])
     public tests: TestEntity[];
 
     @OneToMany(() => TestSetEntity, testset => testset.exercise_id, {
         cascade: true,
         eager: true
     })
-    @Field(() => [TestSetEntity])
     public test_sets: TestSetEntity[];
 
     @ManyToMany(() => ChallengeEntity, challenge => challenge.exercises, { onDelete: 'CASCADE' })
-    @Field(() => [ChallengeEntity])
     public challenges: ChallengeEntity[];
 
     @ManyToMany(() => RewardEntity, reward => reward.unlockable_exercises, { onDelete: 'CASCADE' })
-    @Field(() => [RewardEntity])
     public unlocked_by: RewardEntity[];
 
     @ManyToMany(() => RewardEntity, reward => reward.revealable_exercises, { onDelete: 'CASCADE' })
-    @Field(() => [RewardEntity])
     public revealed_by: RewardEntity[];
 
 }

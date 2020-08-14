@@ -10,7 +10,7 @@ import {
     NotFoundException,
     Get
 } from '@nestjs/common';
-import { ApiUseTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CrudController, Crud, Override, ParsedRequest, CrudRequest } from '@nestjsx/crud';
 
@@ -25,7 +25,7 @@ import { ShareByEmailDto } from './dto/share-by-email.dto';
 import { RevokeDto } from './dto/revoke.dto';
 
 @Controller('permissions')
-@ApiUseTags('permissions')
+@ApiTags('permissions')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)

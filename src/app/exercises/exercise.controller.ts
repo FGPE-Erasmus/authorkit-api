@@ -17,12 +17,14 @@ import {
     UploadedFile,
     Body
 } from '@nestjs/common';
-import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile, ApiImplicitBody } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { CrudController, Override, ParsedBody, ParsedRequest, CrudRequest, Crud } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
+import { FileInterceptor } from '@nestjs/platform-express';
 
+import { ApiFile } from '../_helpers/decorators/api-file.decorator';
 import { User } from '../_helpers/decorators/user.decorator';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { ProjectService } from '../project/project.service';
@@ -36,10 +38,9 @@ import {
     EXERCISE_SYNC_DELETE
 } from './exercise.constants';
 import { ImportDto } from './dto/import.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('exercises')
-@ApiUseTags('exercises')
+@ApiTags('exercises')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)
@@ -117,8 +118,8 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
     @HttpCode(HttpStatus.OK)
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
-    @ApiImplicitFile({ name: 'file', required: true })
-    @ApiImplicitBody({ name: 'dto', type: ImportDto, required: true })
+    @ApiFile({ name: 'file', required: true })
+    @ApiBody({ type: ImportDto, required: true })
     async import(
         @User() user: any,
         @Req() req,
@@ -139,8 +140,8 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
     @HttpCode(HttpStatus.OK)
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
-    @ApiImplicitFile({ name: 'file', required: true })
-    @ApiImplicitBody({ name: 'dto', type: ImportDto, required: true })
+    @ApiFile({ name: 'file', required: true })
+    @ApiBody({ type: ImportDto, required: true })
     async importSipe(
         @User() user: any,
         @Req() req,
@@ -161,8 +162,8 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
     @HttpCode(HttpStatus.OK)
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
-    @ApiImplicitFile({ name: 'file', required: true })
-    @ApiImplicitBody({ name: 'dto', type: ImportDto, required: true })
+    @ApiFile({ name: 'file', required: true })
+    @ApiBody({ type: ImportDto, required: true })
     async importMef(
         @User() user: any,
         @Req() req,

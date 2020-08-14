@@ -75,6 +75,20 @@ export class UserService extends TypeOrmCrudService<UserEntity> {
         return this.repository.save(entity);
     }
 
+    public async updatePasswordWithOld(data: DeepPartial<UserEntity>, oldPassword: string): Promise<UserEntity> {
+        const user = await this.repository.findOneOrFail(data.id);
+        if (!user) {
+            throw new HttpException({
+                error: 'User',
+                message: `User not found`
+            }, HttpStatus.NOT_FOUND);
+        }
+        if (user.password !== passwordHash(oldPassword)) {
+            throw new BadRequestException(`Old password does not match`);
+        }
+        return this.updatePassword(data);
+    }
+
     public async socialRegister(data: DeepPartial<UserEntity>) {
         const entity = this.repository.create(data);
         await validateEntity(entity, { skipMissingProperties: true });

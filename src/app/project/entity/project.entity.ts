@@ -1,6 +1,5 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Entity, Column, OneToMany, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { Field } from 'type-graphql';
 import { IsString, IsOptional, Length, MaxLength, IsEnum, IsDefined, IsEmpty } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
@@ -16,47 +15,42 @@ const { CREATE, UPDATE } = CrudValidationGroups;
 @Entity('project')
 export class ProjectEntity extends TrackedFileEntity {
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsEmpty({ groups: [CREATE] })
     @PrimaryGeneratedColumn('uuid')
-    @Field()
     public id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsString({ always: true })
     @Length(2, 50, { always: true })
     @Column('varchar', { length: 50 })
-    @Field()
     public name: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
     @MaxLength(250, { always: true })
     @Column('varchar', { length: 250 })
-    @Field()
     public description: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
     @ManyToOne(() => UserEntity, user => user.projects)
     @JoinColumn({ name: 'owner_id' })
     @Column('uuid', { nullable: false })
-    @Field()
     public owner_id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @Column('boolean', { default: true })
-    @Field()
     public is_public: boolean;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsString({ always: true })
@@ -67,10 +61,9 @@ export class ProjectEntity extends TrackedFileEntity {
         enum: ProjectStatus,
         default: ProjectStatus.DRAFT
     })
-    @Field(() => ProjectStatus)
     public status: string;
 
-    /* @ApiModelProperty()
+    /* @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsString({ always: true })
@@ -78,10 +71,9 @@ export class ProjectEntity extends TrackedFileEntity {
     @MaxLength(40)
     @Validate(GithubUsernameValidator, { always: true })
     @Column('varchar', { length: 40 })
-    @Field()
     public repo_owner: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsString({ always: true })
@@ -89,25 +81,21 @@ export class ProjectEntity extends TrackedFileEntity {
     @MaxLength(100)
     @Validate(GithubReponameValidator, { always: true })
     @Column('varchar', { length: 100 })
-    @Field()
     public repo_name: string; */
 
     @OneToMany(() => PermissionEntity, permission => permission.project_id)
-    @Field(() => [PermissionEntity])
     public permissions: PermissionEntity[];
 
     @OneToMany(() => ExerciseEntity, exercise => exercise.project_id, {
         lazy: true,
         cascade: false
     })
-    @Field(() => [ExerciseEntity])
     public exercises: Lazy<ExerciseEntity[]>;
 
     @OneToMany(() => GamificationLayerEntity, gl => gl.project_id, {
         lazy: true,
         cascade: false
     })
-    @Field(() => [GamificationLayerEntity])
     public gamification_layers: Lazy<GamificationLayerEntity[]>;
 
     /* public getSshCloneUrl(): string {

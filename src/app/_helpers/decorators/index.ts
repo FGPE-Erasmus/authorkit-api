@@ -1,2 +1,2 @@
-export * from './profile.decorator';
+export * from './api-file.decorator';
 export * from './user.decorator';

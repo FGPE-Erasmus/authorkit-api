@@ -91,7 +91,7 @@ export class GithubClient {
 
     public async getFileContents(repo: string, path: string): Promise<FileContentsDto> {
         try {
-            return from(this.octokit.repos.getContents({
+            return from(this.octokit.repos.getContent({
                     owner: this.owner,
                     repo,
                     path
@@ -107,7 +107,7 @@ export class GithubClient {
 
     public async getDirectoryContents(repo: string, path: string): Promise<FileContentsDto[]> {
         try {
-            return from(this.octokit.repos.getContents({
+            return from(this.octokit.repos.getContent({
                     owner: this.owner,
                     repo,
                     path
@@ -124,7 +124,7 @@ export class GithubClient {
     public async createOrUpdateFile(repo: string, path: string,
         options: FileCommitDto): Promise<FileCommitResponseDto> {
         try {
-            return from(this.octokit.repos.createOrUpdateFile({
+            return from(this.octokit.repos.createOrUpdateFileContents({
                     owner: this.owner,
                     repo,
                     path,
@@ -175,7 +175,6 @@ export class GithubClient {
     protected connectClient(authToken?: string): any {
         if (authToken) {
             return new Octokit({
-                userAgent: config.name,
                 auth: authToken
             });
         }

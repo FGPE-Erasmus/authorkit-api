@@ -13,10 +13,11 @@ import {
     Get,
     Query
 } from '@nestjs/common';
-import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitBody, ApiImplicitFile } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+import { ApiFile } from '../_helpers/decorators/api-file.decorator';
 import { User } from '../_helpers/decorators/user.decorator';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
@@ -26,7 +27,7 @@ import { InstructionService } from './instruction.service';
 
 
 @Controller('instructions')
-@ApiUseTags('instructions')
+@ApiTags('instructions')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)
@@ -64,8 +65,8 @@ export class InstructionController {
     @Post()
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
-    @ApiImplicitFile({ name: 'file', required: true })
-    @ApiImplicitBody({ name: 'instruction', type: InstructionEntity })
+    @ApiFile({ name: 'file', required: true })
+    @ApiBody({ type: InstructionEntity })
     async create(
         @User() user: any,
         @UploadedFile() file,
@@ -82,8 +83,8 @@ export class InstructionController {
     @Patch('/:id')
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
-    @ApiImplicitFile({ name: 'file', required: true })
-    @ApiImplicitBody({ name: 'instruction', type: InstructionEntity })
+    @ApiFile({ name: 'file', required: true })
+    @ApiBody({ type: InstructionEntity })
     async update(
         @User() user: any,
         @Param('id') id: string,

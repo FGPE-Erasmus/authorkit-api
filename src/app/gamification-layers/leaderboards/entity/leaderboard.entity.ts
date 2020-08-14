@@ -1,11 +1,9 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column } from 'typeorm';
-import { Field } from 'type-graphql';
-import { IsOptional, IsEmpty, IsUUID, IsDefined, IsNotEmpty, IsString, MaxLength, IsArray, Validate, ValidateIf } from 'class-validator';
+import { IsOptional, IsEmpty, IsUUID, IsDefined, IsNotEmpty, IsString, MaxLength, IsArray } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
 import { TrackedFileEntity } from '../../../_helpers/entity/tracked-file.entity';
-import { NotSiblingOf } from '../../../_helpers/validators';
 import { GamificationLayerEntity } from '../../entity/gamification-layer.entity';
 import { ChallengeEntity } from '../../challenges/entity/challenge.entity';
 
@@ -16,43 +14,39 @@ export type Order = 'ASC' | 'DESC';
 @Entity('gl-leaderboard')
 export class LeaderboardEntity extends TrackedFileEntity {
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsEmpty({ groups: [CREATE] })
     @PrimaryGeneratedColumn('uuid')
-    @Field()
     public id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsUUID('4', { always: true })
     @ManyToOne(() => GamificationLayerEntity, gl => gl.leaderboards, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'gl_id', referencedColumnName: 'id' })
     @Column('uuid', { nullable: false })
-    @Field()
     public gl_id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @IsUUID('4', { always: true })
     @ManyToOne(() => ChallengeEntity, challenge => challenge.leaderboards, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'challenge_id', referencedColumnName: 'id' })
     @Column('uuid', { nullable: true })
-    @Field()
     public challenge_id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsNotEmpty({ always: true })
     @IsString({ always: true })
     @MaxLength(150, { always: true })
     @Column('varchar', { length: 150, nullable: false })
-    @Field()
     public name: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ groups: [UPDATE] })
     @IsDefined({ groups: [CREATE] })
     @IsArray({ always: true })
@@ -61,13 +55,12 @@ export class LeaderboardEntity extends TrackedFileEntity {
     @Column('simple-array', { default: [] })
     public metrics: string[];
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsOptional({ always: true })
     @Column({
         type: 'simple-array',
         enum: ['ASC', 'DESC'],
         default: []
     })
-    @Field(() => [String])
     public sorting_orders: Order[];
 }

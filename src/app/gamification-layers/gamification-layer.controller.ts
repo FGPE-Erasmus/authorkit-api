@@ -18,12 +18,13 @@ import {
     Body
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiUseTags, ApiBearerAuth, ApiConsumes, ApiImplicitFile, ApiImplicitBody } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { CrudController, Override, ParsedBody, ParsedRequest, CrudRequest, Crud } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 
+import { ApiFile } from '../_helpers/decorators/api-file.decorator';
 import { User } from '../_helpers/decorators/user.decorator';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { ProjectService } from '../project/project.service';
@@ -39,7 +40,7 @@ import {
 import { ImportDto } from './dto/import.dto';
 
 @Controller('gamification-layers')
-@ApiUseTags('gamification-layers')
+@ApiTags('gamification-layers')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @UseInterceptors(ClassSerializerInterceptor)
@@ -99,8 +100,8 @@ export class GamificationLayerController implements CrudController<GamificationL
     @HttpCode(HttpStatus.OK)
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
-    @ApiImplicitFile({ name: 'file', required: true })
-    @ApiImplicitBody({ name: 'dto', type: ImportDto, required: true })
+    @ApiFile({ name: 'file', required: true })
+    @ApiBody({ type: ImportDto, required: true })
     async import(
         @User() user: any,
         @Req() req,

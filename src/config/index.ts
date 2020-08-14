@@ -93,6 +93,7 @@ interface Config {
                 value: boolean; // indicates if validated value should be exposed in ValidationError.
             };
             whitelist: boolean;
+            forbidNonWhitelisted: boolean;
         };
         password: {
             min_length: number;
@@ -201,7 +202,8 @@ export const config: Config = {
                 target: false,
                 value: false
             },
-            whitelist: false
+            whitelist: true,
+            forbidNonWhitelisted: false
         },
         password: {
             min_length: parseInt(process.env.VALIDATOR_PASSWORD_MIN_LENGTH || '6', 10),

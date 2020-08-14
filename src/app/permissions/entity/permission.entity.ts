@@ -1,6 +1,5 @@
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Entity, Column, ManyToOne, JoinColumn, PrimaryColumn } from 'typeorm';
-import { Field, ObjectType } from 'type-graphql';
 import { IsEnum } from 'class-validator';
 
 import { ExtendedEntity } from '../../_helpers/entity/extended-entity';
@@ -9,30 +8,26 @@ import { UserEntity } from '../../user/entity/user.entity';
 import { AccessLevel } from './access-level.enum';
 
 @Entity('permission')
-@ObjectType()
 export class PermissionEntity extends ExtendedEntity {
 
-    @ApiModelProperty()
+    @ApiProperty()
     @PrimaryColumn('uuid')
     @ManyToOne(() => ProjectEntity, project => project.permissions, {
         onDelete: 'CASCADE'
     })
     @JoinColumn({ name: 'project_id', referencedColumnName: 'id' })
-    @Field()
     public project_id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @PrimaryColumn('uuid')
     @ManyToOne(() => UserEntity, user => user.permissions, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })
-    @Field()
     public user_id: string;
 
-    @ApiModelProperty()
+    @ApiProperty()
     @IsEnum(AccessLevel)
     @Column('enum', {
         enum: AccessLevel
     })
-    @Field(() => AccessLevel)
     public access_level: AccessLevel;
 }

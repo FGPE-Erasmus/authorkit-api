@@ -4,11 +4,10 @@ import {
     ValidationArguments,
     ValidationOptions,
     registerDecorator,
-    Validator
+    Validator,
+    isDefined
 } from 'class-validator';
 import { Injectable } from '@nestjs/common';
-
-const validator = new Validator();
 
 // Define new constraint that checks the existence of sibling properties
 @ValidatorConstraint({ name: 'not-sibling-of', async: false })
@@ -19,14 +18,14 @@ class NotSiblingOfConstraint implements ValidatorConstraintInterface {
     ) {}
 
     validate(value: any, args: ValidationArguments) {
-        if (validator.isDefined(value)) {
+        if (isDefined(value)) {
             return this.getFailedConstraints(args).length === 0;
         }
         return true;
     }
 
     getFailedConstraints(args: ValidationArguments) {
-        return args.constraints.filter((prop) => validator.isDefined(args.object[prop]));
+        return args.constraints.filter((prop) => isDefined(args.object[prop]));
     }
 }
 
