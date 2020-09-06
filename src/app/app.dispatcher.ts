@@ -18,7 +18,7 @@ import { AppLogger } from './app.logger';
  */
 CrudConfigService.load({
     query: {
-        limit: 25,
+        limit: 0,
         cache: 2000
     },
     params: {
