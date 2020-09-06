@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, OneToMany, ManyToMany, JoinTable, OneToOne, RelationId } from 'typeorm';
-import { IsOptional, IsEmpty, IsDefined, IsUUID, IsNotEmpty, IsString, MaxLength, IsEnum, IsArray, IsNumber } from 'class-validator';
+import { IsOptional, IsEmpty, IsDefined, IsUUID, IsNotEmpty, IsString, MaxLength, IsEnum, IsArray, IsNumber, IsBoolean, IsDataURI } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
 import { TrackedFileEntity } from '../../../_helpers/entity/tracked-file.entity';
@@ -62,6 +62,27 @@ export class RewardEntity extends TrackedFileEntity {
         enum: RewardKind
     })
     public kind: RewardKind;
+
+    @ApiProperty()
+    @IsOptional({ always: true })
+    @IsBoolean({ always: true })
+    @Column({
+        type: 'boolean',
+        default: true
+    })
+    public recurrent: Boolean;
+
+    @ApiProperty()
+    @IsOptional({ always: true })
+    @IsDataURI()
+    @Column('varchar', { nullable: true })
+    public image: string;
+
+    @ApiProperty()
+    @IsOptional({ always: true })
+    @IsNumber({ allowNaN: false, allowInfinity: false }, { always: true })
+    @Column('real', { nullable: true })
+    public cost: number;
 
     @ApiProperty()
     @IsOptional({ always: true })

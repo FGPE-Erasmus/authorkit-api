@@ -46,6 +46,9 @@ export class RewardSyncProcessor {
                 name: reward.name,
                 description: reward.description,
                 kind: reward.kind,
+                recurrent: reward.recurrent,
+                image: reward.image,
+                cost: reward.cost,
                 amount: reward.amount,
                 revealables: [
                     ...reward.revealable_challenge_ids.map(id => ({ id, type: 'CHALLENGE' })),

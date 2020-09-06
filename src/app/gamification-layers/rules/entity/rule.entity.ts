@@ -8,6 +8,7 @@ import { ChallengeEntity } from '../../challenges/entity/challenge.entity';
 import { CriteriaEntity } from './criteria.entity';
 import { GamificationLayerEntity } from '../../entity/gamification-layer.entity';
 import { RuleActionEntity } from './rule-action.entity';
+import { TriggerEntity } from './trigger.entity';
 
 const { CREATE, UPDATE } = CrudValidationGroups;
 
@@ -44,6 +45,11 @@ export class RuleEntity extends TrackedFileEntity {
     @MaxLength(150, { always: true })
     @Column('varchar', { length: 150, nullable: false })
     public name: string;
+
+    @ApiProperty()
+    @IsOptional({ always: true })
+    @Column('simple-json', { nullable: true, default: [] })
+    public triggers: TriggerEntity[];
 
     @ApiProperty()
     @IsOptional({ always: true })

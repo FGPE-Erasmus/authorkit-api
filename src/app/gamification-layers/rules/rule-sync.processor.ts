@@ -44,6 +44,7 @@ export class RuleSyncProcessor {
             Buffer.from(JSON.stringify({
                 id: rule.id,
                 name: rule.name,
+                triggers: rule.triggers,
                 criteria: rule.criteria,
                 actions: rule.actions
             })).toString('base64')
@@ -70,6 +71,7 @@ export class RuleSyncProcessor {
             Buffer.from(JSON.stringify({
                 id: rule.id,
                 name: rule.name,
+                triggers: rule.triggers,
                 criteria: rule.criteria,
                 actions: rule.actions
             })).toString('base64')
