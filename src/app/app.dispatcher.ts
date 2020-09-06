@@ -1,7 +1,8 @@
-import { INestApplication, INestApplicationContext, INestMicroservice, ValidationPipe } from '@nestjs/common';
+import { INestApplication, INestApplicationContext, INestMicroservice } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { CrudConfigService } from '@nestjsx/crud';
+import { urlencoded, json } from 'express';
 import { useContainer } from 'class-validator';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -17,8 +18,8 @@ import { AppLogger } from './app.logger';
  */
 CrudConfigService.load({
     query: {
-      limit: 25,
-      cache: 2000
+        limit: 25,
+        cache: 2000
     },
     params: {
         id: {
@@ -76,6 +77,9 @@ export class AppDispatcher {
         this.app.use(cors());
         this.app.use(query());
 
+        this.app.use(json({ limit: '2mb' }));
+        this.app.use(urlencoded({ extended: true, limit: '2mb' }));
+
         this.app.useGlobalFilters(new HttpExceptionFilter());
         /* this.app.useGlobalPipes(new ValidationPipe(config.validator.options)); */
 
@@ -83,21 +87,21 @@ export class AppDispatcher {
             this.app.use(helmet());
 
             this.app.use( // limit each IP to 250 requests per 15 minutes
-            rateLimit({
-                windowMs: 15 * 60 * 1000,
-                max: 250,
-                message:
-                'Too many requests from this IP, please try again later'
-            })
+                rateLimit({
+                    windowMs: 15 * 60 * 1000,
+                    max: 250,
+                    message:
+                        'Too many requests from this IP, please try again later'
+                })
             );
             this.app.use( // limit each IP to 10 email signup requests per hour
-            '/auth/register',
-            rateLimit({
-                windowMs: 60 * 60 * 1000,
-                max: 10,
-                message:
-                'Too many accounts created from this IP, please try again after an hour'
-            })
+                '/auth/register',
+                rateLimit({
+                    windowMs: 60 * 60 * 1000,
+                    max: 10,
+                    message:
+                        'Too many accounts created from this IP, please try again after an hour'
+                })
             );
         }
 
