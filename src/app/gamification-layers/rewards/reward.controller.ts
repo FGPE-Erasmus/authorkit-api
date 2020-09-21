@@ -58,13 +58,9 @@ import { RewardEntity } from './entity/reward.entity';
             },
             challenge_id: {
             },
-            unlockable_exercises: {
+            exercise: {
             },
-            unlockable_challenges: {
-            },
-            revealable_exercises: {
-            },
-            revealable_challenges: {
+            challenges: {
             }
         }
     }

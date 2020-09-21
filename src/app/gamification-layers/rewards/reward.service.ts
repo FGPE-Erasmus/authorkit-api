@@ -89,26 +89,15 @@ export class RewardService extends TypeOrmCrudService<RewardEntity> {
             name: metadata.name,
             description: metadata.description,
             kind: metadata.kind,
+            image: metadata.image,
+            cost: metadata.cost,
+            recurrent: metadata.recurrent,
             amount: metadata.amount,
-            congratulations: metadata.congratulations,
-            hints: metadata.hints,
-            criteria: metadata.criteria,
-            revealable_exercises: metadata.revealables
-                .filter(r => r.type === 'EXERCISE')
-                .map(r => exercises_map[r.id])
-                .filter(r => !!r),
-            unlockable_exercises: metadata.unlockables
-                .filter(r => r.type === 'EXERCISE')
-                .map(r => exercises_map[r.id])
-                .filter(r => !!r),
-            revealable_challenges: metadata.revealables
-                .filter(r => r.type === 'CHALLENGE')
-                .map(r => challenges_map[r.id])
-                .filter(r => !!r),
-            unlockable_challenges: metadata.unlockables
-                .filter(r => r.type === 'CHALLENGE')
-                .map(r => challenges_map[r.id])
-                .filter(r => !!r),
+            message: metadata.message,
+            exercise_id: exercises_map[metadata.exercise],
+            challenges: metadata.challenges
+                .map(id => ({ id: challenges_map[id] }))
+                .filter(challenge => !!challenge),
             challenge_id: parent_challenge ? parent_challenge.id : undefined,
             gl_id: gamification_layer.id
         });

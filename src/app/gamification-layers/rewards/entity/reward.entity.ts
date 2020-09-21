@@ -91,67 +91,28 @@ export class RewardEntity extends TrackedFileEntity {
     public amount: number;
 
     @ApiProperty()
-    @ManyToMany(() => ExerciseEntity, exercise => exercise.unlocked_by)
-    @JoinTable({
-        joinColumn: { name: 'reward_id', referencedColumnName: 'id' },
-        inverseJoinColumn: { name: 'exercise_id', referencedColumnName: 'id' }
-    })
-    public unlockable_exercises: ExerciseEntity[];
-
-    @RelationId((reward: RewardEntity) => reward.unlockable_exercises)
-    public unlockable_exercise_ids: string[];
-
-    @ApiProperty()
-    @ManyToMany(() => ChallengeEntity, challenge => challenge.unlocked_by)
+    @ManyToMany(() => ChallengeEntity, challenge => challenge.granted_by)
     @JoinTable({
         joinColumn: { name: 'reward_id', referencedColumnName: 'id' },
         inverseJoinColumn: { name: 'challenge_id', referencedColumnName: 'id' }
     })
-    public unlockable_challenges: ChallengeEntity[];
+    public challenges: ChallengeEntity[];
 
-    @RelationId((reward: RewardEntity) => reward.unlockable_challenges)
-    public unlockable_challenge_ids: string[];
-
-    @ApiProperty()
-    @ManyToMany(() => ExerciseEntity, exercise => exercise.revealed_by)
-    @JoinTable({
-        joinColumn: { name: 'reward_id', referencedColumnName: 'id' },
-        inverseJoinColumn: { name: 'exercise_id', referencedColumnName: 'id' }
-    })
-    public revealable_exercises: ExerciseEntity[];
-
-    @RelationId((reward: RewardEntity) => reward.revealable_exercises)
-    public revealable_exercise_ids: string[];
-
-    @ApiProperty()
-    @ManyToMany(() => ChallengeEntity, challenge => challenge.revealed_by)
-    @JoinTable({
-        joinColumn: { name: 'reward_id', referencedColumnName: 'id' },
-        inverseJoinColumn: { name: 'challenge_id', referencedColumnName: 'id' }
-    })
-    public revealable_challenges: ChallengeEntity[];
-
-    @RelationId((reward: RewardEntity) => reward.revealable_challenges)
-    public revealable_challenge_ids: string[];
+    @RelationId((reward: RewardEntity) => reward.challenges)
+    public challenge_ids: string[];
 
     @ApiProperty()
     @IsOptional({ always: true })
-    @IsArray({ always: true })
-    @IsString({ always: true, each: true })
-    @MaxLength(250, { always: true, each: true })
-    @Column('simple-array', { default: '' })
-    public hints: string[];
+    @IsUUID('4', { always: true })
+    @ManyToOne(() => ExerciseEntity, exercise => exercise.hinted_by)
+    @JoinColumn({ name: 'exercise_id' })
+    @Column('uuid', { nullable: true })
+    public exercise_id: string;
 
     @ApiProperty()
     @IsOptional({ always: true })
-    @IsArray({ always: true })
-    @IsString({ always: true, each: true })
-    @MaxLength(250, { always: true, each: true })
-    @Column('simple-array', { default: '' })
-    public congratulations: string[];
-
-    @ApiProperty()
-    @IsOptional({ always: true })
-    @Column('simple-json', { nullable: true })
-    public criteria: CriteriaEntity;
+    @IsString({ always: true })
+    @MaxLength(1000, { always: true })
+    @Column('varchar', { nullable: true })
+    public message: string;
 }

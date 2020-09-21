@@ -14,6 +14,7 @@ import {
 } from './reward.constants';
 import { RewardEntity } from './entity/reward.entity';
 import { GamificationLayerService } from '../gamification-layer.service';
+import { RewardKind } from './entity/reward-kind.enum';
 
 @Processor(REWARD_SYNC_QUEUE)
 export class RewardSyncProcessor {
@@ -50,17 +51,9 @@ export class RewardSyncProcessor {
                 image: reward.image,
                 cost: reward.cost,
                 amount: reward.amount,
-                revealables: [
-                    ...reward.revealable_challenge_ids.map(id => ({ id, type: 'CHALLENGE' })),
-                    ...reward.revealable_exercise_ids.map(id => ({ id, type: 'EXERCISE' }))
-                ],
-                unlockables: [
-                    ...reward.unlockable_challenge_ids.map(id => ({ id, type: 'CHALLENGE' })),
-                    ...reward.unlockable_exercise_ids.map(id => ({ id, type: 'EXERCISE' }))
-                ],
-                congratulations: reward.congratulations,
-                hints: reward.hints,
-                criteria: reward.criteria
+                exercise: reward.exercise_id,
+                challenges: [...reward.challenge_ids],
+                message: reward.message
             })).toString('base64')
         );
         await this.repository.update(reward.id, { sha: res.content.sha });
@@ -91,17 +84,9 @@ export class RewardSyncProcessor {
                 image: reward.image,
                 cost: reward.cost,
                 amount: reward.amount,
-                revealables: [
-                    ...reward.revealable_challenge_ids.map(id => ({ id, type: 'CHALLENGE' })),
-                    ...reward.revealable_exercise_ids.map(id => ({ id, type: 'EXERCISE' }))
-                ],
-                unlockables: [
-                    ...reward.unlockable_challenge_ids.map(id => ({ id, type: 'CHALLENGE' })),
-                    ...reward.unlockable_exercise_ids.map(id => ({ id, type: 'EXERCISE' }))
-                ],
-                congratulations: reward.congratulations,
-                hints: reward.hints,
-                criteria: reward.criteria
+                exercise: reward.exercise_id,
+                challenges: [...reward.challenge_ids],
+                message: reward.message
             })).toString('base64')
         );
         await this.repository.update(reward.id, { sha: res.content.sha });

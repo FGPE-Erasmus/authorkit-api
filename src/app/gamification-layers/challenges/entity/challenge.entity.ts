@@ -144,9 +144,7 @@ export class ChallengeEntity extends TrackedFileEntity {
     @RelationId((challenge: ChallengeEntity) => challenge.exercises)
     public exercise_ids: string[];
 
-    @ManyToMany(() => RewardEntity, reward => reward.unlockable_exercises, { onDelete: 'CASCADE' })
-    public unlocked_by: RewardEntity[];
+    @ManyToMany(() => RewardEntity, reward => reward.challenges, { onDelete: 'CASCADE' })
+    public granted_by: RewardEntity[];
 
-    @ManyToMany(() => RewardEntity, reward => reward.revealable_exercises, { onDelete: 'CASCADE' })
-    public revealed_by: RewardEntity[];
 }
