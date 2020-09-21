@@ -94,7 +94,6 @@ export class RewardService extends TypeOrmCrudService<RewardEntity> {
             recurrent: metadata.recurrent,
             amount: metadata.amount,
             message: metadata.message,
-            exercise_id: exercises_map[metadata.exercise],
             challenges: metadata.challenges
                 .map(id => ({ id: challenges_map[id] }))
                 .filter(challenge => !!challenge),

@@ -103,14 +103,6 @@ export class RewardEntity extends TrackedFileEntity {
 
     @ApiProperty()
     @IsOptional({ always: true })
-    @IsUUID('4', { always: true })
-    @ManyToOne(() => ExerciseEntity, exercise => exercise.hinted_by)
-    @JoinColumn({ name: 'exercise_id' })
-    @Column('uuid', { nullable: true })
-    public exercise_id: string;
-
-    @ApiProperty()
-    @IsOptional({ always: true })
     @IsString({ always: true })
     @MaxLength(1000, { always: true })
     @Column('varchar', { nullable: true })

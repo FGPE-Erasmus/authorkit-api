@@ -58,8 +58,6 @@ import { RewardEntity } from './entity/reward.entity';
             },
             challenge_id: {
             },
-            exercise: {
-            },
             challenges: {
             }
         }

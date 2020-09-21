@@ -209,7 +209,4 @@ export class ExerciseEntity extends TrackedFileEntity {
     @ManyToMany(() => ChallengeEntity, challenge => challenge.exercises, { onDelete: 'CASCADE' })
     public challenges: ChallengeEntity[];
 
-    @OneToMany(() => RewardEntity, reward => reward.exercise_id, { onDelete: 'CASCADE', lazy: true })
-    public hinted_by: Promise<RewardEntity[]>;
-
 }
