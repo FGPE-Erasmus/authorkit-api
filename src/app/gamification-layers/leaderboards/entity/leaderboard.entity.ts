@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column } from 'typeorm';
-import { IsOptional, IsEmpty, IsUUID, IsDefined, IsNotEmpty, IsString, MaxLength, IsArray } from 'class-validator';
+import { IsOptional, IsEmpty, IsUUID, IsDefined, IsNotEmpty, IsString, MaxLength, IsArray, IsBoolean } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
 import { TrackedFileEntity } from '../../../_helpers/entity/tracked-file.entity';
@@ -45,6 +45,15 @@ export class LeaderboardEntity extends TrackedFileEntity {
     @MaxLength(150, { always: true })
     @Column('varchar', { length: 150, nullable: false })
     public name: string;
+
+    @ApiProperty()
+    @IsOptional({ always: true })
+    @IsBoolean({ always: true })
+    @Column({
+        type: 'boolean',
+        default: false
+    })
+    public groups: boolean;
 
     @ApiProperty()
     @IsOptional({ groups: [UPDATE] })

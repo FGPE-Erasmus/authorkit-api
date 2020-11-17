@@ -44,6 +44,7 @@ export class LeaderboardSyncProcessor {
             Buffer.from(JSON.stringify({
                 id: leaderboard.id,
                 name: leaderboard.name,
+                groups: leaderboard.groups,
                 metrics: leaderboard.metrics,
                 sorting_orders: leaderboard.sorting_orders
             })).toString('base64')
@@ -70,6 +71,7 @@ export class LeaderboardSyncProcessor {
             Buffer.from(JSON.stringify({
                 id: leaderboard.id,
                 name: leaderboard.name,
+                groups: leaderboard.groups,
                 metrics: leaderboard.metrics,
                 sorting_orders: leaderboard.sorting_orders
             })).toString('base64')

@@ -103,6 +103,15 @@ export class AppDispatcher {
                         'Too many accounts created from this IP, please try again after an hour'
                 })
             );
+            this.app.use( // limit each IP to 2 contact email requests per minute
+                '/contact',
+                rateLimit({
+                    windowMs: 60 * 1000,
+                    max: 2,
+                    message:
+                        'Too many accounts created from this IP, please try again after an hour'
+                })
+            );
         }
 
         const options = new DocumentBuilder()

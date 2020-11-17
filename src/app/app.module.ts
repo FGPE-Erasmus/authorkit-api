@@ -29,6 +29,7 @@ import { StaticCorrectorModule } from './static-correctors/static-corrector.modu
 import { TemplateModule } from './templates/template.module';
 import { TestGeneratorModule } from './test-generators/test-generator.module';
 import { SkeletonModule } from './skeletons/skeleton.module';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
     imports: [
@@ -40,6 +41,9 @@ import { SkeletonModule } from './skeletons/skeleton.module';
         AuthModule,
         PermissionModule,
         UserModule,
+
+        // support
+        ContactModule,
 
         // project
         ProjectModule,

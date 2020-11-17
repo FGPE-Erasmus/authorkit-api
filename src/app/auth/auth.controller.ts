@@ -71,7 +71,7 @@ export class AuthController {
             throw new ConflictException('User already exists.');
         }
         user = await this.userService.register(data);
-        this.userEmailQueue.add(USER_EMAIL_REGISTER, { user });
+        await this.userEmailQueue.add(USER_EMAIL_REGISTER, { user });
         this.logger.debug(`[register] Send registration email for email ${data.email}`);
     }
 
@@ -94,7 +94,7 @@ export class AuthController {
             throw new BadRequestException(`User ${user.email} already verified`);
         }
         await this.repository.update(token.id, { is_verified: true });
-        this.userEmailQueue.add(USER_EMAIL_REGISTER_VERIFY, { user });
+        await this.userEmailQueue.add(USER_EMAIL_REGISTER_VERIFY, { user });
         this.logger.debug(`[registerVerify] Sent command register verify for user id ${user.id}`);
         return createAuthToken(user);
     }
@@ -112,7 +112,7 @@ export class AuthController {
         if (user.is_verified) {
             throw new BadRequestException(`User with email "${user.email}" already verified`);
         }
-        this.userEmailQueue.add(USER_EMAIL_REGISTER, { user });
+        await this.userEmailQueue.add(USER_EMAIL_REGISTER, { user });
         this.logger.debug(`[registerVerifyResend] Sent command registry verify for email ${body.email}`);
     }
 
@@ -127,7 +127,7 @@ export class AuthController {
             if (!user) {
                 throw new BadRequestException(`User with email "${body.email}" does not exist.`);
             }
-            this.userEmailQueue.add(USER_EMAIL_PASSWORD_RESET, { user });
+            await this.userEmailQueue.add(USER_EMAIL_PASSWORD_RESET, { user });
         } else {
             throw new BadRequestException('User email is required');
         }
@@ -143,7 +143,7 @@ export class AuthController {
         const token = await verifyToken(body.resetToken, config.auth.password_reset.secret);
         const user = await this.userService.updatePassword({ id: token.id, password: body.password });
         this.logger.debug(`[passwordNew] Send change password email for user ${user.email}`);
-        this.userEmailQueue.add(USER_EMAIL_PASSWORD_NEW, { user });
+        await this.userEmailQueue.add(USER_EMAIL_PASSWORD_NEW, { user });
     }
 
     @Post('refresh')
@@ -172,7 +172,7 @@ export class AuthController {
                 provider: profile.provider,
                 is_verified: true
             });
-            this.userEmailQueue.add(USER_EMAIL_REGISTER_VERIFY, { user });
+            await this.userEmailQueue.add(USER_EMAIL_REGISTER_VERIFY, { user });
         }
         return createAuthToken(user);
     }

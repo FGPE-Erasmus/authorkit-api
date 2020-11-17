@@ -31,7 +31,12 @@ export async function mail(template: string, recipient: string, data: any): Prom
         to: recipient,
         subject: message.subject,
         text: message.text,
-        html: message.html
+        html: message.html,
+        attachments: [{
+            filename: 'fgpe-logo.jpg',
+            path: config.mail.templatesDir + '/images/fgpe-logo.jpg',
+            cid: 'logo'
+        }]
     });
 }
 

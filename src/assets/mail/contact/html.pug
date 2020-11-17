@@ -3,7 +3,7 @@ html(xmlns="http://www.w3.org/1999/xhtml")
     head
         meta(name="viewport" content="width=device-width")
         meta(http-equiv="Content-Type" content="text/html; charset=UTF-8")
-        title #{firstname} #{lastname}, you are one step away of joining FGPE AuthorKit!
+        title [FGPE AuthorKit Support] #{email.subject}
         link(href="styles/style.css" media="all" rel="stylesheet" type="text/css" data-inline="data-inline")
     body.text-primary(itemscope="" itemtype="http://schema.org/EmailMessage")
         table.body-wrap
@@ -16,38 +16,44 @@ html(xmlns="http://www.w3.org/1999/xhtml")
                                 td.content-block
                                     img(src="cid:logo" alt="FGPE Logo" class="logo")
                     .content
-                        table.main(width="100%" cellpadding="0" cellspacing="0" itemprop="action" itemscope="" itemtype="http://schema.org/ConfirmAction")
+                        table.main(width="100%" cellpadding="0" cellspacing="0" itemprop="action" itemscope="" itemtype="http://schema.org/Contact")
                             tr
                                 td.content-wrap
-                                    meta(itemprop="name" content="Confirm Email")
+                                    meta(itemprop="name" content="Contact")
                                     table(width="100%" cellpadding="0" cellspacing="0")
                                         tr
                                             td.content-block
                                                 p
-                                                  | Hi #{firstname} #{lastname},
+                                                    | Dear FGPE Team,
                                         tr
                                             td.content-block
                                                 p
-                                                  | We may need to send you critical information about our service, so it is important that we have an accurate email address.
+                                                    | You have received a new support request at FGPE AuthorKit.
                                         tr
                                             td.content-block
                                                 p
-                                                  | Please confirm your email address by clicking the link below.
-                                        tr
-                                            td.content-block.text-center(itemprop="handler" itemscope="" itemtype="http://schema.org/HttpActionHandler")
-                                                a.btn-primary.text-secondary(href=ui_base_url + "/pages/verify-email?token=" + token itemprop="url") Confirm my email address
+                                                    strong Name:
+                                                    | #{user.first_name} #{user.last_name}
+                                                    br
+                                                    strong Institution:
+                                                    | #{user.institution}
+                                                    br
+                                                    strong E-mail:
+                                                    | #{user.email}
                                         tr
                                             td.content-block
                                                 p
-                                                    | After validating your email, you will be able to use FGPE Authorkit for free forever.
-                                                p
-                                                    | Note: If you do not confirm your account in the next <strong>24 hours</strong>, it will be automatically deleted.
+                                                    strong Subject:
+                                                    | #{email.subject}
+                                                    br
+                                                    strong Message:
+                                                    | #{email.description}
                                         tr
                                             td.content-block.greetings
                                                 p
                                                     | Kind Regards,
                                                     br
-                                                    | The FGPE Team
+                                                    | The FGPE AuthorKit Agent
                     .footer
                         table(width="100%")
                             tr
@@ -55,5 +61,3 @@ html(xmlns="http://www.w3.org/1999/xhtml")
                                     | Follow 
                                     a.text-secondary(href="http://twitter.com/fgpe-project") @fgpe-project 
                                     | on Twitter.
-
-
