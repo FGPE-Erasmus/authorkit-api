@@ -198,7 +198,30 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         );
         try {
             await this.service.export(user, req.params.id, req.query.format || 'zip', res);
-            res.end();
+        } catch (err) {
+            throw new InternalServerErrorException('Archive creation failed');
+        }
+    }
+
+    @Get(':id/export/mef')
+    @HttpCode(HttpStatus.OK)
+    @Header('Content-Type', 'application/octet-stream')
+    async exportMef(
+        @User() user: any,
+        @Req() req,
+        @Res() res
+    ) {
+        const accessLevel = await this.service.getAccessLevel(req.params.id, user.id);
+        if (accessLevel < AccessLevel.VIEWER) {
+            throw new ForbiddenException('You do not have sufficient privileges');
+        }
+        res.set(
+            'Content-Disposition',
+            `attachment; filename=${req.params.id}.${req.query.format || 'zip'}`
+        );
+        try {
+
+            await this.service.exportMef(user, req.params.id, req.query.format || 'zip', res);
         } catch (err) {
             throw new InternalServerErrorException('Archive creation failed');
         }
@@ -265,7 +288,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
             dto.owner_id = user.id;
         }
         const exercise = await this.base.createOneBase(parsedReq, dto);
-        this.exerciseSyncQueue.add(EXERCISE_SYNC_CREATE, { user, exercise });
+        await this.exerciseSyncQueue.add(EXERCISE_SYNC_CREATE, { user, exercise });
         return exercise;
     }
 
@@ -281,7 +304,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const exercise = await this.base.updateOneBase(parsedReq, dto);
-        this.exerciseSyncQueue.add(EXERCISE_SYNC_UPDATE, { user, exercise });
+        await this.exerciseSyncQueue.add(EXERCISE_SYNC_UPDATE, { user, exercise });
         return exercise;
     }
 
@@ -298,7 +321,7 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         }
         const exercise = await this.base.deleteOneBase(parsedReq);
         if (exercise) {
-            this.exerciseSyncQueue.add(EXERCISE_SYNC_DELETE, { user, exercise });
+            await this.exerciseSyncQueue.add(EXERCISE_SYNC_DELETE, { user, exercise });
         }
         return exercise;
     }

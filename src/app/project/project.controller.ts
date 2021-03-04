@@ -128,7 +128,6 @@ export class ProjectController implements CrudController<DeepPartial<ProjectEnti
         );
         try {
             await this.service.export(user, req.params.id, req.query.format || 'zip', res);
-            res.end();
         } catch (err) {
             throw new InternalServerErrorException('Archive creation failed');
         }

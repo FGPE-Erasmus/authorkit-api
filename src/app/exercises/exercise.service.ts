@@ -1,4 +1,4 @@
-import { Injectable, forwardRef, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CrudRequest, GetManyDefaultResponse } from '@nestjsx/crud';
@@ -6,9 +6,11 @@ import { TypeOrmCrudService } from '@nestjsx/crud-typeorm';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 
-import { create, Archiver } from 'archiver';
+import { Archiver, create } from 'archiver';
 import { Open } from 'unzipper';
 import { Parser } from 'xml2js';
+import * as stream from 'stream';
+import { yapexil2mef, yapexil2mefStream } from 'yapexil-mef-converter';
 
 import { AppLogger } from '../app.logger';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
@@ -30,10 +32,10 @@ import { TemplateService } from '../templates/template.service';
 import { TestGeneratorService } from '../test-generators/test-generator.service';
 import { TestService } from '../tests/test.service';
 import { TestSetService } from '../testsets/testset.service';
-import { languageName, fileExtension } from '../_helpers/utils';
+import { fileExtension, languageName } from '../_helpers/utils';
 
 import { ExerciseEntity } from './entity/exercise.entity';
-import { EXERCISE_SYNC_QUEUE, EXERCISE_SYNC_CREATE } from './exercise.constants';
+import { EXERCISE_SYNC_CREATE, EXERCISE_SYNC_QUEUE } from './exercise.constants';
 import { ExerciseType } from './entity/exercise-type.enum';
 import { ExerciseDifficulty } from './entity/exercise-difficulty.enum';
 import { ExerciseStatus } from './entity/exercise-status.enum';
@@ -117,7 +119,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
         const exercise = await this.importMetadataFile(user, project_id, root_metadata);
 
-        this.exerciseSyncQueue.add(EXERCISE_SYNC_CREATE, { user, exercise });
+        await this.exerciseSyncQueue.add(EXERCISE_SYNC_CREATE, { user, exercise });
 
         const result = Object.keys(entries).reduce(function(acc, curr) {
             const match = curr.match('^([a-zA-Z-]+)/([0-9a-zA-Z-]+)/(.*)$');
@@ -315,7 +317,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
         const exercise = await this.repository.save(exercisePartial);
 
-        this.exerciseSyncQueue.add(EXERCISE_SYNC_CREATE, { user, exercise });
+        await this.exerciseSyncQueue.add(EXERCISE_SYNC_CREATE, { user, exercise });
 
         const asyncImporters = [];
 
@@ -415,7 +417,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         // create exercise
         const exercise: ExerciseEntity = await this.importMefCreateExercise(user, project_id, baseJson.Problem.$);
 
-        this.exerciseSyncQueue.add(EXERCISE_SYNC_CREATE, { user, exercise });
+        await this.exerciseSyncQueue.add(EXERCISE_SYNC_CREATE, { user, exercise });
 
         const asyncImporters = [];
 
@@ -702,6 +704,17 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         await archive.finalize();
     }
 
+    public async exportMef(
+        user: UserEntity, exercise_id: string, format: string = 'zip', res: any
+    ): Promise<void> {
+
+        const pass = new stream.PassThrough();
+
+        await this.export(user, exercise_id, format, pass);
+
+        return yapexil2mefStream(pass, res);
+    }
+
     public async collectAllToExport(
         user: UserEntity, exercise_id: string, archive: Archiver, asyncArchiveWriters: any[], archive_base_path: string
     ): Promise<void> {
@@ -719,9 +732,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${dynamic_corrector_path}metadata.json`, `${archive_base_path}${dynamic_corrector_path}metadata.json`
-                )
-            );
-            asyncArchiveWriters.push(
+                ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${dynamic_corrector_path}${dynamic_corrector.pathname}`, `${archive_base_path}${dynamic_corrector_path}${dynamic_corrector.pathname}`
                 )
@@ -733,9 +744,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${static_corrector_path}metadata.json`, `${archive_base_path}${static_corrector_path}metadata.json`
-                )
-            );
-            asyncArchiveWriters.push(
+                ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${static_corrector_path}${static_corrector.pathname}`, `${archive_base_path}${static_corrector_path}${static_corrector.pathname}`
                 )
@@ -747,9 +756,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${embeddable_path}metadata.json`, `${archive_base_path}${embeddable_path}metadata.json`
-                )
-            );
-            asyncArchiveWriters.push(
+                ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${embeddable_path}${embeddable.pathname}`, `${archive_base_path}${embeddable_path}${embeddable.pathname}`
                 )
@@ -761,9 +768,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${feedback_generator_path}metadata.json`, `${archive_base_path}${feedback_generator_path}metadata.json`
-                )
-            );
-            asyncArchiveWriters.push(
+                ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${feedback_generator_path}${feedback_generator.pathname}`, `${archive_base_path}${feedback_generator_path}${feedback_generator.pathname}`
                 )
@@ -775,9 +780,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${instruction_path}metadata.json`, `${archive_base_path}${instruction_path}metadata.json`
-                )
-            );
-            asyncArchiveWriters.push(
+                ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${instruction_path}${instruction.pathname}`, `${archive_base_path}${instruction_path}${instruction.pathname}`
                 )
@@ -789,9 +792,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${library_path}metadata.json`, `${archive_base_path}${library_path}metadata.json`
-                )
-            );
-            asyncArchiveWriters.push(
+                ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${library_path}${library.pathname}`, `${archive_base_path}${library_path}${library.pathname}`
                 )
@@ -803,9 +804,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${skeleton_path}metadata.json`, `${archive_base_path}${skeleton_path}metadata.json`
-                )
-            );
-            asyncArchiveWriters.push(
+                ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${skeleton_path}${skeleton.pathname}`, `${archive_base_path}${skeleton_path}${skeleton.pathname}`
                 )
@@ -817,9 +816,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${solution_path}metadata.json`, `${archive_base_path}${solution_path}metadata.json`
-                )
-            );
-            asyncArchiveWriters.push(
+                ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${solution_path}${solution.pathname}`, `${archive_base_path}${solution_path}${solution.pathname}`
                 )
@@ -831,9 +828,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${statement_path}metadata.json`, `${archive_base_path}${statement_path}metadata.json`
-                )
-            );
-            asyncArchiveWriters.push(
+                ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${statement_path}${statement.pathname}`, `${archive_base_path}${statement_path}${statement.pathname}`
                 )
@@ -845,9 +840,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${template_path}metadata.json`, `${archive_base_path}${template_path}metadata.json`
-                )
-            );
-            asyncArchiveWriters.push(
+                ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${template_path}${template.pathname}`, `${archive_base_path}${template_path}${template.pathname}`
                 )
@@ -859,9 +852,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${test_generator_path}metadata.json`, `${archive_base_path}${test_generator_path}metadata.json`
-                )
-            );
-            asyncArchiveWriters.push(
+                ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${test_generator_path}${test_generator.pathname}`, `${archive_base_path}${test_generator_path}${test_generator.pathname}`
                 )
@@ -886,14 +877,10 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${test_path}metadata.json`, `${archive_base_path}${test_path}metadata.json`
-                )
-            );
-            asyncArchiveWriters.push(
+                ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${test_path}${test.input.pathname}`, `${archive_base_path}${test_path}${test.input.pathname}`
-                )
-            );
-            asyncArchiveWriters.push(
+                ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${test_path}${test.output.pathname}`, `${archive_base_path}${test_path}${test.output.pathname}`
                 )
@@ -902,20 +889,23 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
     }
 
     public async getAccessLevel(exercise_id: string, user_id: string): Promise<AccessLevel> {
-        const access_level = await getAccessLevel(
+        return await getAccessLevel(
             [
                 { src_table: 'project', dst_table: 'exercise', prop: 'exercises' }
             ],
             `exercise.id = '${exercise_id}'`,
             `permission.user_id = '${user_id}'`
         );
-        return access_level;
     }
 
     /* Private Methods */
 
     private async addFileFromGithubToArchive(
-        user: UserEntity, exercise: ExerciseEntity, archive: Archiver, path: string, archive_path: string
+        user: UserEntity,
+        exercise: ExerciseEntity,
+        archive: Archiver,
+        path: string,
+        archive_path: string
     ): Promise<void> {
 
         try {

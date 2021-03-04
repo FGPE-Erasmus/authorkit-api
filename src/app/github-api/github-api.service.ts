@@ -387,7 +387,7 @@ export class GithubApiService {
     public async getFileContents(user: UserEntity, repo: string, path: string):
             Promise<FileContentsDto> {
         try {
-            this.logger.debug(`[getFileContents] Get ${path} contents from Github repository ${repo}`);
+            // this.logger.debug(`[getFileContents] Get ${path} contents from Github repository ${repo}`);
             const client = await this.getClientForToken(config.githubApi.secret);
             const result = await client.getFileContents(
                 repo,
@@ -396,7 +396,7 @@ export class GithubApiService {
             if (!result) {
                 throw new Error(`Failed to get ${path} contents`);
             }
-            this.logger.debug(`[getFileContents] Contents of ${path} retrieved from Github repository ${repo}`);
+            // this.logger.debug(`[getFileContents] Contents of ${path} retrieved from Github repository ${repo}`);
             return result;
         } catch (err) {
             this.logger.error(

@@ -6,7 +6,12 @@ server {
 	root /app/public;
 	client_max_body_size ${NGINX_MAX_BODY};
 
+	proxy_buffers 16 4k;
+    proxy_buffer_size 2k;
+    proxy_read_timeout 300s;
+
 	location / {
+        proxy_buffering off;
 		# try_files $uri =404;
 		proxy_pass  http://${API_HOST}:${API_PORT};
 		proxy_set_header Host $host;

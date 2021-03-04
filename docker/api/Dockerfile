@@ -25,9 +25,6 @@ RUN apk add --no-cache bash coreutils
 
 COPY --from=builder /usr/src/app/node_modules node_modules
 
-COPY ./docker/api/wait-for-it.sh .
-RUN chmod +x ./wait-for-it.sh
-
 COPY . .
-# "./wait-for-it.sh", "db", "3306", "--",
+
 CMD [ "npm", "run", "watch:dev" ]

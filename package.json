@@ -11,7 +11,7 @@
     "watch:dev": "nodemon",
     "watch:debug": "nodemon --config nodemon-debug.json",
     "prebuild": "rm -rf ./dist",
-    "build": "tsc",
+    "build": "npx tsc",
     "postbuild": "cp -R ./src/assets ./dist",
     "prod": "node -r dotenv-safe/config dist/index.js",
     "lint:check": "tslint --project ./",
@@ -80,7 +80,8 @@
     "unzipper": "^0.10.11",
     "uuid": "^8.3.0",
     "winston": "^3.3.3",
-    "xml2js": "^0.4.23"
+    "xml2js": "^0.4.23",
+    "yapexil-mef-converter": "^1.0.4"
   },
   "devDependencies": {
     "@nestjs/testing": "^7.4.2",

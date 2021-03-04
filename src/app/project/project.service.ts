@@ -216,8 +216,6 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
             throw err;
         });
 
-        const asyncArchiveWriters = [];
-
         const fileContents = await this.githubApiService.getFileContents(
             user, project.id, 'metadata.json'
         );
@@ -225,6 +223,8 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
             Buffer.from(fileContents.content, 'base64'),
             { name: 'metadata.json' }
         );
+
+        const asyncArchiveWriters = [];
 
         for (const exercise_id of project['__exercises__']) {
             await this.exerciseService.collectAllToExport(
