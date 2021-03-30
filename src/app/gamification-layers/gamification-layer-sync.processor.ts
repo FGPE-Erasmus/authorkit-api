@@ -30,7 +30,7 @@ export class GamificationLayerSyncProcessor {
 
     @Process(GAMIFICATION_LAYER_SYNC_CREATE)
     public async onGamificationLayerCreate(job: Job) {
-        this.logger.debug(`[onGamificationLayerCreate] Create gamification layer in Github repository`);
+        // this.logger.debug(`[onGamificationLayerCreate] Create gamification layer in Github repository`);
         const { user, gamification_layer } = job.data;
         const res = await this.githubApiService.createFile(
             user,
@@ -45,14 +45,14 @@ export class GamificationLayerSyncProcessor {
             })).toString('base64')
         );
         await this.repository.update(gamification_layer.id, { sha: res.content.sha });
-        this.logger.debug('[onGamificationLayerCreate] Gamification layer created in Github repository');
+        // this.logger.debug('[onGamificationLayerCreate] Gamification layer created in Github repository');
     }
 
     @Process(GAMIFICATION_LAYER_SYNC_UPDATE)
     public async onGamificationLayerUpdate(job: Job) {
-        this.logger.debug(`[onGamificationLayerUpdate] Update gamification layer in Github repository`);
+        // this.logger.debug(`[onGamificationLayerUpdate] Update gamification layer in Github repository`);
         const { user, gamification_layer } = job.data;
-        this.logger.debug(JSON.stringify(classToPlain(gamification_layer)));
+        // this.logger.debug(JSON.stringify(classToPlain(gamification_layer)));
         const res = await this.githubApiService.updateFile(
             user,
             gamification_layer.project_id,
@@ -67,7 +67,7 @@ export class GamificationLayerSyncProcessor {
             })).toString('base64')
         );
         await this.repository.update(gamification_layer.id, { sha: res.content.sha });
-        this.logger.debug('[onGamificationLayerUpdate] Gamification layer updated in Github repository');
+        // this.logger.debug('[onGamificationLayerUpdate] Gamification layer updated in Github repository');
     }
 
     @Process(GAMIFICATION_LAYER_SYNC_DELETE)

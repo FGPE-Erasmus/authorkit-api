@@ -25,7 +25,7 @@ export class UserEmailProcessor {
 
     @Process(USER_EMAIL_REGISTER)
     public async onUserEmailRegister(job: Job) {
-        this.logger.debug('[onUserEmailRegister] Send verification email');
+        // this.logger.debug('[onUserEmailRegister] Send verification email');
         const { user } = job.data;
         const token = createToken(user.id.toString(), config.auth.verify.timeout, config.auth.verify.secret);
         await mail(
@@ -41,12 +41,12 @@ export class UserEmailProcessor {
                 token
             }
         );
-        this.logger.debug('[onUserEmailRegister] Verification email sent');
+        // this.logger.debug('[onUserEmailRegister] Verification email sent');
     }
 
     @Process(USER_EMAIL_REGISTER_VERIFY)
     public async onUserEmailRegisterVerify(job: Job) {
-        this.logger.debug('[onUserEmailRegisterVerify] Send welcome email');
+        // this.logger.debug('[onUserEmailRegisterVerify] Send welcome email');
         const { user } = job.data;
         await mail(
             'welcome',
@@ -60,12 +60,12 @@ export class UserEmailProcessor {
                 lastname: user.last_name
             }
         );
-        this.logger.debug('[onUserEmailRegisterVerify] Welcome email sent');
+        // this.logger.debug('[onUserEmailRegisterVerify] Welcome email sent');
     }
 
     @Process(USER_EMAIL_PASSWORD_RESET)
     public async onUserEmailPasswordReset(job: Job) {
-        this.logger.debug('[onUserEmailPasswordReset] Send password reset instruction email');
+        // this.logger.debug('[onUserEmailPasswordReset] Send password reset instruction email');
         const { user } = job.data;
         const token = createToken(user.id.toString(), config.auth.password_reset.timeout, config.auth.password_reset.secret);
         await mail(

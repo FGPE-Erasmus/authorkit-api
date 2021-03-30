@@ -10,7 +10,7 @@ import { Archiver, create } from 'archiver';
 import { Open } from 'unzipper';
 import { Parser } from 'xml2js';
 import * as stream from 'stream';
-import { yapexil2mef, yapexil2mefStream } from 'yapexil-mef-converter';
+import { yapexil2mefStream } from 'yapexil-mef-converter';
 
 import { AppLogger } from '../app.logger';
 import { AccessLevel } from '../permissions/entity/access-level.enum';

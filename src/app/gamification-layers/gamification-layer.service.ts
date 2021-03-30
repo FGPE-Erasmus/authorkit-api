@@ -103,7 +103,7 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
 
         const gamification_layer = await this.importMetadataFile(user, project_id, root_metadata);
 
-        this.gamificationLayerSyncQueue.add(GAMIFICATION_LAYER_SYNC_CREATE, { user, gamification_layer });
+        await this.gamificationLayerSyncQueue.add(GAMIFICATION_LAYER_SYNC_CREATE, { user, gamification_layer });
 
         const result = Object.keys(entries).reduce(function(acc, curr) {
             const match = curr.match('^([a-zA-Z-]+)/([0-9a-zA-Z-]+)/(.*)$');

@@ -4,7 +4,6 @@ import { plainToClass } from 'class-transformer';
 
 const { Octokit } = require('@octokit/rest');
 
-import { config } from '../../config';
 import { AppLogger } from '../app.logger';
 import { asyncForEach } from '../_helpers';
 import {

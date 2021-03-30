@@ -88,7 +88,7 @@ export class RuleService extends TypeOrmCrudService<RuleEntity> {
             gl_id: gamification_layer.id
         });
 
-        this.ruleSyncQueue.add(
+        await this.ruleSyncQueue.add(
             RULE_SYNC_CREATE, { user, rule: entity }
         );
 

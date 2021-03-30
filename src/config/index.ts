@@ -120,7 +120,7 @@ export const config: Config = {
         database: process.env.DB_DATABASE,
 
         synchronize: true,
-        logging: 'all',
+        logging: ['error'],
         migrationsRun: true,
         migrations: [
             __dirname + '/../migrations/*{.ts,.js}'

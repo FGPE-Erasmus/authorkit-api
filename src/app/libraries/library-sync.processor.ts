@@ -33,7 +33,7 @@ export class LibrarySyncProcessor {
 
     @Process(LIBRARY_SYNC_CREATE)
     public async onLibraryCreate(job: Job) {
-        this.logger.debug(`[onLibraryCreate] Create library in Github repository`);
+        // this.logger.debug(`[onLibraryCreate] Create library in Github repository`);
 
         const { user, entity } = job.data;
 
@@ -52,12 +52,12 @@ export class LibrarySyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
-        this.logger.debug('[onLibraryCreate] Library created in Github repository');
+        // this.logger.debug('[onLibraryCreate] Library created in Github repository');
     }
 
     @Process(LIBRARY_SYNC_CREATE_FILE)
     public async onLibraryCreateFile(job: Job) {
-        this.logger.debug(`[onLibraryCreateFile] Create library file in Github repository`);
+        // this.logger.debug(`[onLibraryCreateFile] Create library file in Github repository`);
 
         const { user, entity, file } = job.data;
 
@@ -72,12 +72,12 @@ export class LibrarySyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onLibraryCreateFile] Library file created in Github repository');
+        // this.logger.debug('[onLibraryCreateFile] Library file created in Github repository');
     }
 
     @Process(LIBRARY_SYNC_UPDATE)
     public async onLibraryUpdate(job: Job) {
-        this.logger.debug(`[onLibraryUpdate] Update library in Github repository`);
+        // this.logger.debug(`[onLibraryUpdate] Update library in Github repository`);
 
         const { user, entity } = job.data;
 

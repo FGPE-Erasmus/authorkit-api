@@ -33,7 +33,7 @@ export class SkeletonSyncProcessor {
 
     @Process(SKELETON_SYNC_CREATE)
     public async onSkeletonCreate(job: Job) {
-        this.logger.debug(`[onSkeletonCreate] Create skeleton in Github repository`);
+        // this.logger.debug(`[onSkeletonCreate] Create skeleton in Github repository`);
 
         const { user, entity } = job.data;
 
@@ -52,12 +52,12 @@ export class SkeletonSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
-        this.logger.debug('[onSkeletonCreate] Skeleton created in Github repository');
+        // this.logger.debug('[onSkeletonCreate] Skeleton created in Github repository');
     }
 
     @Process(SKELETON_SYNC_CREATE_FILE)
     public async onSkeletonCreateFile(job: Job) {
-        this.logger.debug(`[onSkeletonCreateFile] Create skeleton file in Github repository`);
+        // this.logger.debug(`[onSkeletonCreateFile] Create skeleton file in Github repository`);
 
         const { user, entity, file } = job.data;
 
@@ -72,12 +72,12 @@ export class SkeletonSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onSkeletonCreateFile] Skeleton file created in Github repository');
+        // this.logger.debug('[onSkeletonCreateFile] Skeleton file created in Github repository');
     }
 
     @Process(SKELETON_SYNC_UPDATE)
     public async onSkeletonUpdate(job: Job) {
-        this.logger.debug(`[onSkeletonUpdate] Update skeleton in Github repository`);
+        // this.logger.debug(`[onSkeletonUpdate] Update skeleton in Github repository`);
 
         const { user, entity } = job.data;
 

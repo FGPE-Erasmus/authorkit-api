@@ -35,7 +35,7 @@ export class EmbeddableSyncProcessor {
 
     @Process(EMBEDDABLE_SYNC_CREATE)
     public async onEmbeddableCreate(job: Job) {
-        this.logger.debug(`[onEmbeddableCreate] Create embeddable in Github repository`);
+        // this.logger.debug(`[onEmbeddableCreate] Create embeddable in Github repository`);
 
         const { user, entity } = job.data;
 
@@ -54,12 +54,12 @@ export class EmbeddableSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
-        this.logger.debug('[onEmbeddableCreate] Embeddable created in Github repository');
+        // this.logger.debug('[onEmbeddableCreate] Embeddable created in Github repository');
     }
 
     @Process(EMBEDDABLE_SYNC_CREATE_FILE)
     public async onEmbeddableCreateFile(job: Job) {
-        this.logger.debug(`[onEmbeddableCreateFile] Create embeddable file in Github repository`);
+        // this.logger.debug(`[onEmbeddableCreateFile] Create embeddable file in Github repository`);
 
         const { user, entity, file } = job.data;
 
@@ -74,12 +74,12 @@ export class EmbeddableSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onEmbeddableCreateFile] Embeddable file created in Github repository');
+        // this.logger.debug('[onEmbeddableCreateFile] Embeddable file created in Github repository');
     }
 
     @Process(EMBEDDABLE_SYNC_UPDATE)
     public async onEmbeddableUpdate(job: Job) {
-        this.logger.debug(`[onEmbeddableUpdate] Update embeddable in Github repository`);
+        // this.logger.debug(`[onEmbeddableUpdate] Update embeddable in Github repository`);
 
         const { user, entity } = job.data;
 

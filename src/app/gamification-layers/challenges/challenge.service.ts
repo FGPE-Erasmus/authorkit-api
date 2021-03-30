@@ -111,7 +111,7 @@ export class ChallengeService extends TypeOrmCrudService<ChallengeEntity> {
             this.repository.update(child_id, { parent_challenge_id: challenge.id });
         });
 
-        this.challengeSyncQueue.add(
+        await this.challengeSyncQueue.add(
             CHALLENGE_SYNC_CREATE, { user, challenge: (await this.findOne(challenge.id)) }
         );
 

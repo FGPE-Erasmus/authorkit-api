@@ -29,7 +29,7 @@ export class LeaderboardSyncProcessor {
 
     @Process(LEADERBOARD_SYNC_CREATE)
     public async onLeaderboardCreate(job: Job) {
-        this.logger.debug(`[onLeaderboardCreate] Create leaderboard in Github repository`);
+        // this.logger.debug(`[onLeaderboardCreate] Create leaderboard in Github repository`);
         const { user, leaderboard } = job.data;
         const gamificationLayer = await this.gamificationLayerService.findOne(leaderboard.gl_id);
         let path = `gamification-layers/${leaderboard.gl_id}`;
@@ -50,7 +50,7 @@ export class LeaderboardSyncProcessor {
             })).toString('base64')
         );
         await this.repository.update(leaderboard.id, { sha: res.content.sha });
-        this.logger.debug('[onLeaderboardCreate] Leaderboard created in Github repository');
+        // this.logger.debug('[onLeaderboardCreate] Leaderboard created in Github repository');
     }
 
     @Process(LEADERBOARD_SYNC_UPDATE)

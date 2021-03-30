@@ -33,7 +33,7 @@ export class FeedbackGeneratorSyncProcessor {
 
     @Process(FEEDBACK_GENERATOR_SYNC_CREATE)
     public async onFeedbackGeneratorCreate(job: Job) {
-        this.logger.debug(`[onFeedbackGeneratorCreate] Create feedback generator in Github repository`);
+        // this.logger.debug(`[onFeedbackGeneratorCreate] Create feedback generator in Github repository`);
 
         const { user, entity } = job.data;
 
@@ -52,12 +52,12 @@ export class FeedbackGeneratorSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
-        this.logger.debug('[onFeedbackGeneratorCreate] Feedback generator created in Github repository');
+        // this.logger.debug('[onFeedbackGeneratorCreate] Feedback generator created in Github repository');
     }
 
     @Process(FEEDBACK_GENERATOR_SYNC_CREATE_FILE)
     public async onFeedbackGeneratorCreateFile(job: Job) {
-        this.logger.debug(`[onFeedbackGeneratorCreateFile] Create feedback generator in Github repository`);
+        // this.logger.debug(`[onFeedbackGeneratorCreateFile] Create feedback generator in Github repository`);
 
         const { user, entity, file } = job.data;
 
@@ -72,12 +72,12 @@ export class FeedbackGeneratorSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        this.logger.debug('[onFeedbackGeneratorCreateFile] Feedback generator created in Github repository');
+        // this.logger.debug('[onFeedbackGeneratorCreateFile] Feedback generator created in Github repository');
     }
 
     @Process(FEEDBACK_GENERATOR_SYNC_UPDATE)
     public async onFeedbackGeneratorUpdate(job: Job) {
-        this.logger.debug(`[onFeedbackGeneratorUpdate] Update feedback generator in Github repository`);
+        // this.logger.debug(`[onFeedbackGeneratorUpdate] Update feedback generator in Github repository`);
 
         const { user, entity } = job.data;
 

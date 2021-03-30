@@ -94,14 +94,14 @@ export class RewardService extends TypeOrmCrudService<RewardEntity> {
             recurrent: metadata.recurrent,
             amount: metadata.amount,
             message: metadata.message,
-            challenges: metadata.challenges
+            challenges: metadata.challenges ? metadata.challenges
                 .map(id => ({ id: challenges_map[id] }))
-                .filter(challenge => !!challenge),
+                .filter(challenge => !!challenge) : [],
             challenge_id: parent_challenge ? parent_challenge.id : undefined,
             gl_id: gamification_layer.id
         });
 
-        this.rewardSyncQueue.add(
+        await this.rewardSyncQueue.add(
             REWARD_SYNC_CREATE, { user, reward: entity }
         );
 

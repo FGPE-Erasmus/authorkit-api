@@ -84,7 +84,7 @@ export class LeaderboardService extends TypeOrmCrudService<LeaderboardEntity> {
             gl_id: gamification_layer.id
         });
 
-        this.leaderboardSyncQueue.add(
+        await this.leaderboardSyncQueue.add(
             LEADERBOARD_SYNC_CREATE, { user, leaderboard: entity }
         );
 

@@ -29,7 +29,7 @@ export class RuleSyncProcessor {
 
     @Process(RULE_SYNC_CREATE)
     public async onRuleCreate(job: Job) {
-        this.logger.debug(`[onRuleCreate] Create rule in Github repository`);
+        // this.logger.debug(`[onRuleCreate] Create rule in Github repository`);
         const { user, rule } = job.data;
         const gamificationLayer = await this.gamificationLayerService.findOne(rule.gl_id);
         let path = `gamification-layers/${rule.gl_id}`;
@@ -50,7 +50,7 @@ export class RuleSyncProcessor {
             })).toString('base64')
         );
         await this.repository.update(rule.id, { sha: res.content.sha });
-        this.logger.debug('[onRuleCreate] Rule created in Github repository');
+        // this.logger.debug('[onRuleCreate] Rule created in Github repository');
     }
 
     @Process(RULE_SYNC_UPDATE)
