@@ -1,22 +1,23 @@
 import {
+    ClassSerializerInterceptor,
     Controller,
-    UseGuards,
-    Req,
     ForbiddenException,
-    InternalServerErrorException,
-    Res,
     Get,
     Header,
-    HttpStatus,
-    Post,
     HttpCode,
-    UseInterceptors,
-    UploadedFile
+    HttpStatus,
+    InternalServerErrorException,
+    Post,
+    Req,
+    Res,
+    UploadedFile,
+    UseGuards,
+    UseInterceptors
 } from '@nestjs/common';
-import { Crud, CrudController, Override, ParsedRequest, CrudRequest, ParsedBody } from '@nestjsx/crud';
+import { Crud, CrudController, CrudRequest, CrudRequestInterceptor, Override, ParsedBody, ParsedRequest } from '@nestjsx/crud';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 
@@ -26,19 +27,12 @@ import { DeepPartial } from '../_helpers/database/deep-partial';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { ProjectEntity } from './entity/project.entity';
 import { ProjectService } from './project.service';
-import {
-    PROJECT_SYNC_QUEUE,
-    PROJECT_SYNC_CREATE_REPO,
-    PROJECT_SYNC_UPDATE_REPO,
-    PROJECT_SYNC_DELETE_REPO
-} from './project.constants';
+import { PROJECT_SYNC_CREATE_REPO, PROJECT_SYNC_DELETE_REPO, PROJECT_SYNC_QUEUE, PROJECT_SYNC_UPDATE_REPO } from './project.constants';
 import { filterReadDto, filterReadMany, filterUpdateDto } from './security/project.security';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
 @ApiTags('projects')
 @Controller('projects')
-@ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
 @Crud({
     model: {
         type: ProjectEntity
@@ -98,6 +92,8 @@ export class ProjectController implements CrudController<DeepPartial<ProjectEnti
     }
 
     @Post('import')
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @HttpCode(HttpStatus.OK)
     @UseInterceptors(FileInterceptor('file'))
     @ApiConsumes('multipart/form-data')
@@ -111,6 +107,8 @@ export class ProjectController implements CrudController<DeepPartial<ProjectEnti
     }
 
     @Get(':id/export')
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @HttpCode(HttpStatus.OK)
     @Header('Content-Type', 'application/octet-stream')
     async export(
@@ -133,6 +131,57 @@ export class ProjectController implements CrudController<DeepPartial<ProjectEnti
         }
     }
 
+    @Get(':id/public-export')
+    @HttpCode(HttpStatus.OK)
+    @Header('Content-Type', 'application/octet-stream')
+    async publicExport(
+        @Req() req,
+        @Res() res
+    ) {
+        if (!(await this.service.isPublicProject(req.params.id))) {
+            throw new ForbiddenException('You do not have sufficient privileges');
+        }
+        res.set(
+            'Content-Disposition',
+            `attachment; filename=${req.params.id}.${req.query.format || 'zip'}`
+        );
+        try {
+            await this.service.export(undefined, req.params.id, req.query.format || 'zip', res);
+        } catch (err) {
+            throw new InternalServerErrorException('Archive creation failed');
+        }
+    }
+
+    @Get('public-list')
+    @UseInterceptors(CrudRequestInterceptor, ClassSerializerInterceptor)
+    @HttpCode(HttpStatus.OK)
+    @Header('Content-Type', 'application/json')
+    async publicList(
+        @ParsedRequest() parsedReq
+    ) {
+        if (parsedReq.parsed.search) {
+            let prevSearch;
+            if (parsedReq.parsed.search.$and[3]) {
+                prevSearch = parsedReq.parsed.search.$and[3];
+            }
+            if (prevSearch) {
+                parsedReq.parsed.search.$and[3] = {
+                    $and: [
+                        prevSearch,
+                        { 'is_public': true }
+                    ]
+                };
+            } else {
+                parsedReq.parsed.search.$and[3] = { 'is_public': true };
+            }
+        } else {
+            parsedReq.parsed.filter.push({ field: 'is_public', operator: 'eq', value: true });
+        }
+        return await this.service.getManyAndCountContributorsAndExercises(parsedReq);
+    }
+
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @Override()
     async getOne(
         @User() user: any,
@@ -146,6 +195,8 @@ export class ProjectController implements CrudController<DeepPartial<ProjectEnti
         return filterReadDto(await this.base.getOneBase(parsedReq), accessLevel);
     }
 
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @Override()
     async getMany(
         @User() user: any,
@@ -195,6 +246,8 @@ export class ProjectController implements CrudController<DeepPartial<ProjectEnti
     }
 
     @Get(':id/users')
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @HttpCode(HttpStatus.OK)
     @Header('Content-Type', 'application/json')
     async getProjectUsers(
@@ -208,6 +261,8 @@ export class ProjectController implements CrudController<DeepPartial<ProjectEnti
         return this.service.getProjectUsers(req.params.id);
     }
 
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @Override()
     async createOne(
         @User() user: any,
@@ -216,10 +271,12 @@ export class ProjectController implements CrudController<DeepPartial<ProjectEnti
     ) {
         dto.owner_id = user.id;
         const project = await this.base.createOneBase(parsedReq, dto);
-        this.projectSyncQueue.add(PROJECT_SYNC_CREATE_REPO, { user, project });
+        await this.projectSyncQueue.add(PROJECT_SYNC_CREATE_REPO, { user, project });
         return project;
     }
 
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @Override()
     async updateOne(
         @User() user: any,
@@ -233,10 +290,12 @@ export class ProjectController implements CrudController<DeepPartial<ProjectEnti
             throw new ForbiddenException(`You do not have sufficient privileges`);
         }
         const project = await this.base.updateOneBase(parsedReq, filterUpdateDto(dto, accessLevel));
-        this.projectSyncQueue.add(PROJECT_SYNC_UPDATE_REPO, { user, project });
+        await this.projectSyncQueue.add(PROJECT_SYNC_UPDATE_REPO, { user, project });
         return project;
     }
 
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @Override()
     async deleteOne(
         @User() user: any,
@@ -251,7 +310,7 @@ export class ProjectController implements CrudController<DeepPartial<ProjectEnti
         }
         const project = await this.base.deleteOneBase(parsedReq);
         if (project) {
-            this.projectSyncQueue.add(PROJECT_SYNC_DELETE_REPO, { user, project });
+            await this.projectSyncQueue.add(PROJECT_SYNC_DELETE_REPO, { user, project });
         }
         return project;
     }
