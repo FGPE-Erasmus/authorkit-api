@@ -29,7 +29,7 @@ export class RewardSyncProcessor {
 
     @Process(REWARD_SYNC_CREATE)
     public async onRewardCreate(job: Job) {
-        // this.logger.debug(`[onRewardCreate] Create reward in Github repository`);
+        this.logger.debug(`[onRewardCreate] Create reward in Github repository`);
         const { user, reward } = job.data;
         const gamificationLayer = await this.gamificationLayerService.findOne(reward.gl_id);
         let path = `gamification-layers/${reward.gl_id}`;
@@ -55,12 +55,12 @@ export class RewardSyncProcessor {
             })).toString('base64')
         );
         await this.repository.update(reward.id, { sha: res.content.sha });
-        // this.logger.debug('[onRewardCreate] Reward created in Github repository');
+        this.logger.debug('[onRewardCreate] Reward created in Github repository');
     }
 
     @Process(REWARD_SYNC_UPDATE)
     public async onRewardUpdate(job: Job) {
-        // this.logger.debug(`[onRewardUpdate] Update reward in Github repository`);
+        this.logger.debug(`[onRewardUpdate] Update reward in Github repository`);
         const { user, reward } = job.data;
         const gamificationLayer = await this.gamificationLayerService.findOne(reward.gl_id);
         let path = `gamification-layers/${reward.gl_id}`;
@@ -87,12 +87,12 @@ export class RewardSyncProcessor {
             })).toString('base64')
         );
         await this.repository.update(reward.id, { sha: res.content.sha });
-        // this.logger.debug('[onRewardUpdate] Reward updated in Github repository');
+        this.logger.debug('[onRewardUpdate] Reward updated in Github repository');
     }
 
     @Process(REWARD_SYNC_DELETE)
     public async onRewardDelete(job: Job) {
-        // this.logger.debug(`[onRewardDelete] Delete reward in Github repository`);
+        this.logger.debug(`[onRewardDelete] Delete reward in Github repository`);
         const { user, reward } = job.data;
         const gamificationLayer = await this.gamificationLayerService.findOne(reward.gl_id);
         let path = `gamification-layers/${reward.gl_id}`;

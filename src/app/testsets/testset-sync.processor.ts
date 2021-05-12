@@ -32,7 +32,7 @@ export class TestSetSyncProcessor {
 
     @Process(TESTSET_SYNC_CREATE)
     public async onTestSetCreate(job: Job) {
-        // this.logger.debug(`[onTestSetCreate] Create test set in Github repository`);
+        this.logger.debug(`[onTestSetCreate] Create test set in Github repository`);
         const { user, testset } = job.data;
         const exercise = await this.exerciseService.findOne(testset.exercise_id);
         const res = await this.githubApiService.createFile(
@@ -48,12 +48,12 @@ export class TestSetSyncProcessor {
             })).toString('base64')
         );
         await this.repository.update(testset.id, { sha: res.content.sha });
-        // this.logger.debug('[onTestSetCreate] Test set created in Github repository');
+        this.logger.debug('[onTestSetCreate] Test set created in Github repository');
     }
 
     @Process(TESTSET_SYNC_UPDATE)
     public async onTestSetUpdate(job: Job) {
-        // this.logger.debug(`[onTestSetUpdate] Update test set in Github repository`);
+        this.logger.debug(`[onTestSetUpdate] Update test set in Github repository`);
         const { user, testset } = job.data;
         const exercise = await this.exerciseService.findOne(testset.exercise_id);
         const res = await this.githubApiService.updateFile(
@@ -70,12 +70,12 @@ export class TestSetSyncProcessor {
             })).toString('base64')
         );
         await this.repository.update(testset.id, { sha: res.content.sha });
-        // this.logger.debug('[onTestSetUpdate] Test set updated in Github repository');
+        this.logger.debug('[onTestSetUpdate] Test set updated in Github repository');
     }
 
     @Process(TESTSET_SYNC_DELETE)
     public async onTestSetDelete(job: Job) {
-        // this.logger.debug(`[onTestSetDelete] Delete test set in Github repository`);
+        this.logger.debug(`[onTestSetDelete] Delete test set in Github repository`);
         const { user, testset } = job.data;
         const exercise = await this.exerciseService.findOne(testset.exercise_id);
         await this.githubApiService.deleteFolder(

@@ -33,7 +33,7 @@ export class StaticCorrectorSyncProcessor {
 
     @Process(STATIC_CORRECTOR_SYNC_CREATE)
     public async onStaticCorrectorCreate(job: Job) {
-        // this.logger.debug(`[onStaticCorrectorCreate] Create static corrector in Github repository`);
+        this.logger.debug(`[onStaticCorrectorCreate] Create static corrector in Github repository`);
 
         const { user, entity } = job.data;
 
@@ -52,12 +52,12 @@ export class StaticCorrectorSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
-        // this.logger.debug('[onStaticCorrectorCreate] Static corrector created in Github repository');
+        this.logger.debug('[onStaticCorrectorCreate] Static corrector created in Github repository');
     }
 
     @Process(STATIC_CORRECTOR_SYNC_CREATE_FILE)
     public async onStaticCorrectorCreateFile(job: Job) {
-        // this.logger.debug(`[onStaticCorrectorCreateFile] Create static corrector file in Github repository`);
+        this.logger.debug(`[onStaticCorrectorCreateFile] Create static corrector file in Github repository`);
 
         const { user, entity, file } = job.data;
 
@@ -72,12 +72,12 @@ export class StaticCorrectorSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        // this.logger.debug('[onStaticCorrectorCreateFile] Static corrector file created in Github repository');
+        this.logger.debug('[onStaticCorrectorCreateFile] Static corrector file created in Github repository');
     }
 
     @Process(STATIC_CORRECTOR_SYNC_UPDATE)
     public async onStaticCorrectorUpdate(job: Job) {
-        // this.logger.debug(`[onStaticCorrectorUpdate] Update static corrector in Github repository`);
+        this.logger.debug(`[onStaticCorrectorUpdate] Update static corrector in Github repository`);
 
         const { user, entity } = job.data;
 

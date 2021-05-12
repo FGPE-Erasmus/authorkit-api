@@ -35,7 +35,7 @@ export class TestSyncProcessor {
 
     @Process(TEST_SYNC_CREATE)
     public async onTestCreate(job: Job) {
-        // this.logger.debug(`[onTestCreate] Create test in Github repository`);
+        this.logger.debug(`[onTestCreate] Create test in Github repository`);
 
         const { user, test } = job.data;
 
@@ -63,12 +63,12 @@ export class TestSyncProcessor {
         );
         await this.repository.update(test.id, { sha: res.content.sha });
 
-        // this.logger.debug('[onTestCreate] Test created in Github repository');
+        this.logger.debug('[onTestCreate] Test created in Github repository');
     }
 
     @Process(TEST_SYNC_UPDATE)
     public async onTestUpdate(job: Job) {
-        // this.logger.debug(`[onTestUpdate] Update test in Github repository`);
+        this.logger.debug(`[onTestUpdate] Update test in Github repository`);
 
         const { user, test } = job.data;
 
@@ -97,12 +97,12 @@ export class TestSyncProcessor {
         );
         await this.repository.update(test.id, { sha: res.content.sha });
 
-        // this.logger.debug('[onTestUpdate] Test updated in Github repository');
+        this.logger.debug('[onTestUpdate] Test updated in Github repository');
     }
 
     @Process(TEST_SYNC_DELETE)
     public async onTestDelete(job: Job) {
-        // this.logger.debug(`[onTestDelete] Delete test in Github repository`);
+        this.logger.debug(`[onTestDelete] Delete test in Github repository`);
 
         const { user, test } = job.data;
 

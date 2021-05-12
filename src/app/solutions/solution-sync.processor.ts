@@ -33,7 +33,7 @@ export class SolutionSyncProcessor {
 
     @Process(SOLUTION_SYNC_CREATE)
     public async onSolutionCreate(job: Job) {
-        // this.logger.debug(`[onSolutionCreate] Create solution in Github repository`);
+        this.logger.debug(`[onSolutionCreate] Create solution in Github repository`);
 
         const { user, entity } = job.data;
 
@@ -52,12 +52,12 @@ export class SolutionSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
-        // this.logger.debug('[onSolutionCreate] Solution created in Github repository');
+        this.logger.debug('[onSolutionCreate] Solution created in Github repository');
     }
 
     @Process(SOLUTION_SYNC_CREATE_FILE)
     public async onSolutionCreateFile(job: Job) {
-        // this.logger.debug(`[onSolutionCreateFile] Create solution file in Github repository`);
+        this.logger.debug(`[onSolutionCreateFile] Create solution file in Github repository`);
 
         const { user, entity, file } = job.data;
 
@@ -72,12 +72,12 @@ export class SolutionSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        // this.logger.debug('[onSolutionCreateFile] Solution file created in Github repository');
+        this.logger.debug('[onSolutionCreateFile] Solution file created in Github repository');
     }
 
     @Process(SOLUTION_SYNC_UPDATE)
     public async onSolutionUpdate(job: Job) {
-        // this.logger.debug(`[onSolutionUpdate] Update solution in Github repository`);
+        this.logger.debug(`[onSolutionUpdate] Update solution in Github repository`);
 
         const { user, entity } = job.data;
 

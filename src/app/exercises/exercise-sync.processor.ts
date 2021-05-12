@@ -29,7 +29,7 @@ export class ExerciseSyncProcessor {
 
     @Process(EXERCISE_SYNC_CREATE)
     public async onExerciseCreate(job: Job) {
-        // this.logger.debug(`[onExerciseCreate] Create exercise in Github repository`);
+        this.logger.debug(`[onExerciseCreate] Create exercise in Github repository`);
         const { user, exercise } = job.data;
         const owner = await this.userService.findOne(exercise.owner_id);
         const res = await this.githubApiService.createFile(
@@ -67,12 +67,12 @@ export class ExerciseSyncProcessor {
             })).toString('base64')
         );
         await this.repository.update(exercise.id, { sha: res.content.sha });
-        // this.logger.debug('[onExerciseCreate] Exercise created in Github repository');
+        this.logger.debug('[onExerciseCreate] Exercise created in Github repository');
     }
 
     @Process(EXERCISE_SYNC_UPDATE)
     public async onExerciseUpdate(job: Job) {
-        // this.logger.debug(`[onExerciseUpdate] Update exercise in Github repository`);
+        this.logger.debug(`[onExerciseUpdate] Update exercise in Github repository`);
 
         const { user, exercise } = job.data;
         const owner = await this.userService.findOne(exercise.owner_id);
@@ -113,12 +113,12 @@ export class ExerciseSyncProcessor {
         );
         await this.repository.update(exercise.id, { sha: res.content.sha });
 
-        // this.logger.debug('[onExerciseUpdate] Exercise updated in Github repository');
+        this.logger.debug('[onExerciseUpdate] Exercise updated in Github repository');
     }
 
     @Process(EXERCISE_SYNC_DELETE)
     public async onExerciseDelete(job: Job) {
-        // this.logger.debug(`[onExerciseDelete] Delete exercise in Github repository`);
+        this.logger.debug(`[onExerciseDelete] Delete exercise in Github repository`);
 
         const { user, exercise } = job.data;
         await this.githubApiService.deleteFolder(
@@ -127,6 +127,6 @@ export class ExerciseSyncProcessor {
             `exercises/${exercise.id}`
         );
 
-        // this.logger.debug('[onExerciseDelete] Exercise deleted in Github repository');
+        this.logger.debug('[onExerciseDelete] Exercise deleted in Github repository');
     }
 }

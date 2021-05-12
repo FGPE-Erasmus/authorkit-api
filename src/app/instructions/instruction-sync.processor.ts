@@ -33,7 +33,7 @@ export class InstructionSyncProcessor {
 
     @Process(INSTRUCTION_SYNC_CREATE)
     public async onInstructionCreate(job: Job) {
-        // this.logger.debug(`[onInstructionCreate] Create instruction in Github repository`);
+        this.logger.debug(`[onInstructionCreate] Create instruction in Github repository`);
 
         const { user, entity } = job.data;
 
@@ -53,12 +53,12 @@ export class InstructionSyncProcessor {
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
 
-        // this.logger.debug('[onInstructionCreate] Instruction created in Github repository');
+        this.logger.debug('[onInstructionCreate] Instruction created in Github repository');
     }
 
     @Process(INSTRUCTION_SYNC_CREATE_FILE)
     public async onInstructionCreateFile(job: Job) {
-        // this.logger.debug(`[onInstructionCreateFile] Create instruction file in Github repository`);
+        this.logger.debug(`[onInstructionCreateFile] Create instruction file in Github repository`);
 
         const { user, entity, file } = job.data;
 
@@ -73,12 +73,12 @@ export class InstructionSyncProcessor {
         );
         await this.repository.update(entity.id, { file: { sha: file_res.content.sha } });
 
-        // this.logger.debug('[onInstructionCreateFile] Instruction file created in Github repository');
+        this.logger.debug('[onInstructionCreateFile] Instruction file created in Github repository');
     }
 
     @Process(INSTRUCTION_SYNC_UPDATE)
     public async onInstructionUpdate(job: Job) {
-        // this.logger.debug(`[onInstructionUpdate] Update instruction in Github repository`);
+        this.logger.debug(`[onInstructionUpdate] Update instruction in Github repository`);
 
         const { user, entity } = job.data;
 

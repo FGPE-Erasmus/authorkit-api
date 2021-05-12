@@ -217,9 +217,7 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
     ): Promise<void> {
 
         const gamification_layer: GamificationLayerEntity =
-            await this.findOne(gamification_layer_id, {
-                relations: ['challenges', 'leaderboards', 'rewards', 'rules']
-            });
+            await this.findOne(gamification_layer_id);
 
         const base_path = `gamification-layers/${gamification_layer_id}/`;
 

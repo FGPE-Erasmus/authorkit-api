@@ -50,7 +50,7 @@ export class UserCommand {
                 updated_at: DateTime.utc().toString()
             });
             persons.push(person);
-            // this.logger.debug(`[create] create random person ppl with provider "faker" as ${JSON.stringify(person)}`);
+            this.logger.debug(`[create] create random person ppl with provider "faker" as ${JSON.stringify(person)}`);
             // await this.userService.create(person);
         }
 
