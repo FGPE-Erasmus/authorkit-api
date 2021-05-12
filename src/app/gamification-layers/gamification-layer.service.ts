@@ -1,4 +1,4 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CrudRequest, GetManyDefaultResponse } from '@nestjsx/crud';
@@ -17,7 +17,7 @@ import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { UserEntity } from '../user/entity/user.entity';
 
 import { GamificationLayerEntity } from './entity/gamification-layer.entity';
-import { GAMIFICATION_LAYER_SYNC_QUEUE, GAMIFICATION_LAYER_SYNC_CREATE } from './gamification-layer.constants';
+import { GAMIFICATION_LAYER_SYNC_CREATE, GAMIFICATION_LAYER_SYNC_QUEUE } from './gamification-layer.constants';
 import { ChallengeService } from './challenges/challenge.service';
 import { LeaderboardService } from './leaderboards/leaderboard.service';
 import { RewardService } from './rewards/reward.service';
@@ -31,21 +31,15 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
     constructor(
         @InjectRepository(GamificationLayerEntity)
         protected readonly repository: Repository<GamificationLayerEntity>,
-
         @InjectQueue(GAMIFICATION_LAYER_SYNC_QUEUE)
         private readonly gamificationLayerSyncQueue: Queue,
-
         protected readonly githubApiService: GithubApiService,
-
         @Inject(forwardRef(() => ChallengeService))
         protected readonly challengeService: ChallengeService,
-
         @Inject(forwardRef(() => LeaderboardService))
         protected readonly leaderboardService: LeaderboardService,
-
         @Inject(forwardRef(() => RewardService))
         protected readonly rewardService: RewardService,
-
         @Inject(forwardRef(() => RuleService))
         protected readonly ruleService: RuleService
     ) {
@@ -213,11 +207,20 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
     }
 
     public async collectAllToExport(
-        user: UserEntity, gamification_layer_id: string, archive: Archiver, asyncArchiveWriters: any[], archive_base_path: string
+        user: UserEntity,
+        gamification_layer_id: string,
+        archive: Archiver,
+        asyncArchiveWriters: any[],
+        archive_base_path: string
     ): Promise<void> {
 
         const gamification_layer: GamificationLayerEntity =
-            await this.findOne(gamification_layer_id);
+            await this.repository.findOne(gamification_layer_id, {
+                loadRelationIds: {
+                    relations: ['challenges', 'leaderboards', 'rewards', 'rules'
+                    ]
+                }
+            });
 
         const base_path = `gamification-layers/${gamification_layer_id}/`;
 
@@ -227,8 +230,8 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             )
         );
 
-        for (const challenge of gamification_layer.challenges) {
-            const challenge_path = `challenges/${challenge.id}/`;
+        for (const challengeId of gamification_layer.challenges) {
+            const challenge_path = `challenges/${challengeId}/`;
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, gamification_layer, archive, `${base_path}${challenge_path}metadata.json`, `${archive_base_path}${challenge_path}metadata.json`
@@ -236,7 +239,8 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             );
         }
 
-        for (const leaderboard of gamification_layer.leaderboards) {
+        for (const leaderboardId of gamification_layer.leaderboards) {
+            const leaderboard = await this.leaderboardService.findOne(leaderboardId);
             let leaderboard_path = '';
             if (leaderboard.challenge_id) {
                 leaderboard_path += `challenges/${leaderboard.challenge_id}/`;
@@ -249,7 +253,8 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             );
         }
 
-        for (const reward of gamification_layer.rewards) {
+        for (const rewardId of gamification_layer.rewards) {
+            const reward = await this.rewardService.findOne(rewardId);
             let reward_path = '';
             if (reward.challenge_id) {
                 reward_path += `challenges/${reward.challenge_id}/`;
@@ -262,7 +267,8 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             );
         }
 
-        for (const rule of gamification_layer.rules) {
+        for (const ruleId of gamification_layer.rules) {
+            const rule = await this.ruleService.findOne(ruleId);
             let rule_path = '';
             if (rule.challenge_id) {
                 rule_path += `challenges/${rule.challenge_id}/`;
@@ -278,14 +284,13 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
     }
 
     public async getAccessLevel(gl_id: string, user_id: string): Promise<AccessLevel> {
-        const access_level = await getAccessLevel(
+        return await getAccessLevel(
             [
                 { src_table: 'project', dst_table: 'gl', prop: 'gamification_layers' }
             ],
             `gl.id = '${gl_id}'`,
             `permission.user_id = '${user_id}'`
         );
-        return access_level;
     }
 
     /* Private Methods */
