@@ -66,4 +66,15 @@ export class TestEntity extends TrackedFileEntity {
     @IsBoolean({ always: true })
     @Column('boolean', { default: true })
     public visible: boolean;
+
+    @ApiProperty()
+    @IsOptional({ always: true })
+    @IsNumber({ allowNaN: false, allowInfinity: false }, { always: true })
+    @Column('real', { default: -1 })
+    public timeout: number;
+
+    @ApiProperty()
+    @IsOptional({ always: true })
+    @Column('simple-json', { default: () => '(\'{}\')' })
+    public feedback: { message: string, weight: number }[];
 }

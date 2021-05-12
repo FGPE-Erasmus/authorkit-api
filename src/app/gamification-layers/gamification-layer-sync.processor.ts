@@ -41,7 +41,12 @@ export class GamificationLayerSyncProcessor {
                 name: gamification_layer.name,
                 description: gamification_layer.description,
                 keywords: gamification_layer.keywords,
-                status: gamification_layer.status
+                status: gamification_layer.status,
+                challenges: gamification_layer.challenges,
+                rules: gamification_layer.rules,
+                rewards: gamification_layer.rewards,
+                leaderboards: gamification_layer.leaderboards,
+                feedback_generators: gamification_layer.feedback_generators
             })).toString('base64')
         );
         await this.repository.update(gamification_layer.id, { sha: res.content.sha });
@@ -63,7 +68,12 @@ export class GamificationLayerSyncProcessor {
                 name: gamification_layer.name,
                 description: gamification_layer.description,
                 keywords: gamification_layer.keywords,
-                status: gamification_layer.status
+                status: gamification_layer.status,
+                challenges: gamification_layer.challenges,
+                rules: gamification_layer.rules,
+                rewards: gamification_layer.rewards,
+                leaderboards: gamification_layer.leaderboards,
+                feedback_generators: gamification_layer.feedback_generators
             })).toString('base64')
         );
         await this.repository.update(gamification_layer.id, { sha: res.content.sha });

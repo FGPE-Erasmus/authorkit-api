@@ -56,7 +56,9 @@ export class TestSyncProcessor {
                 weight: test.weight,
                 visible: test.visible,
                 input: test.input.pathname,
-                output: test.output.pathname
+                output: test.output.pathname,
+                timeout: exercise.timeout,
+                feedback: test.feedback
             })).toString('base64')
         );
         await this.repository.update(test.id, { sha: res.content.sha });
@@ -88,7 +90,9 @@ export class TestSyncProcessor {
                 weight: test.weight,
                 visible: test.visible,
                 input: test.input.pathname,
-                output: test.output.pathname
+                output: test.output.pathname,
+                timeout: test.timeout,
+                feedback: test.feedback
             })).toString('base64')
         );
         await this.repository.update(test.id, { sha: res.content.sha });

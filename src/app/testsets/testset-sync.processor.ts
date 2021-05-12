@@ -43,7 +43,8 @@ export class TestSetSyncProcessor {
                 id: testset.id,
                 name: testset.name,
                 weight: testset.weight,
-                visible: testset.visible
+                visible: testset.visible,
+                tests: testset.tests
             })).toString('base64')
         );
         await this.repository.update(testset.id, { sha: res.content.sha });
@@ -64,7 +65,8 @@ export class TestSetSyncProcessor {
                 id: testset.id,
                 name: testset.name,
                 weight: testset.weight,
-                visible: testset.visible
+                visible: testset.visible,
+                tests: testset.tests
             })).toString('base64')
         );
         await this.repository.update(testset.id, { sha: res.content.sha });

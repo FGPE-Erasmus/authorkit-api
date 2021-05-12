@@ -1,12 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, OneToMany, ManyToMany, JoinTable, OneToOne, RelationId } from 'typeorm';
-import { IsOptional, IsEmpty, IsDefined, IsUUID, IsNotEmpty, IsString, MaxLength, IsEnum, IsArray, IsNumber, IsBoolean, IsDataURI } from 'class-validator';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, ManyToMany, JoinTable, OneToOne, RelationId } from 'typeorm';
+import { IsOptional, IsEmpty, IsDefined, IsUUID, IsNotEmpty, IsString, MaxLength, IsEnum, IsNumber, IsBoolean, IsDataURI } from 'class-validator';
 import { CrudValidationGroups } from '@nestjsx/crud';
 
 import { TrackedFileEntity } from '../../../_helpers/entity/tracked-file.entity';
-import { ExerciseEntity } from '../../../exercises/entity/exercise.entity';
 import { ChallengeEntity } from '../../challenges/entity/challenge.entity';
-import { CriteriaEntity } from '../../rules/entity/criteria.entity';
 import { GamificationLayerEntity } from '../../entity/gamification-layer.entity';
 import { RewardKind } from '../entity/reward-kind.enum';
 

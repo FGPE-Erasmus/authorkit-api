@@ -1,13 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Entity, Column, ManyToOne, PrimaryGeneratedColumn, OneToMany, JoinColumn, ManyToMany } from 'typeorm';
 import { CrudValidationGroups } from '@nestjsx/crud';
-import { IsString, MaxLength, IsEnum, IsNotEmpty, IsEmpty, IsOptional, IsDefined, IsUUID, IsArray } from 'class-validator';
+import { IsString, MaxLength, IsEnum, IsNotEmpty, IsEmpty, IsOptional, IsDefined, IsUUID, IsArray, IsNumber } from 'class-validator';
 
 import { TrackedFileEntity } from '../../_helpers';
 import { UserEntity } from '../../user/entity/user.entity';
 import { ProjectEntity } from '../../project/entity/project.entity';
 import { ChallengeEntity } from '../../gamification-layers/challenges/entity/challenge.entity';
-import { RewardEntity } from '../../gamification-layers/rewards/entity/reward.entity';
 import { DynamicCorrectorEntity } from '../../dynamic-correctors/entity/dynamic-corrector.entity';
 import { EmbeddableEntity } from '../../embeddables/entity/embeddable.entity';
 import { FeedbackGeneratorEntity } from '../../feedback-generators/entity/feedback-generator.entity';
@@ -127,6 +126,20 @@ export class ExerciseEntity extends TrackedFileEntity {
         default: ExerciseStatus.DRAFT
     })
     public status: string;
+
+    @ApiProperty()
+    @IsOptional({ always: true })
+    @IsNumber({ allowNaN: false, allowInfinity: false }, { always: true })
+    @Column('real', { default: -1 })
+    public timeout: number;
+
+    @ApiProperty()
+    @IsOptional({ always: true })
+    @IsArray({ always: true })
+    @IsString({ always: true, each: true })
+    @MaxLength(50, { always: true, each: true })
+    @Column('simple-array', { default: [] })
+    public programmingLanguages: string[];
 
     @OneToMany(() => InstructionEntity, instruction => instruction.exercise_id, {
         cascade: true,
