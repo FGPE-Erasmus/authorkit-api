@@ -138,7 +138,7 @@ export class ExerciseEntity extends TrackedFileEntity {
     @IsArray({ always: true })
     @IsString({ always: true, each: true })
     @MaxLength(50, { always: true, each: true })
-    @Column('simple-array', { default: [] })
+    @Column('simple-array', { default: () => '(\'[]\')' })
     public programmingLanguages: string[];
 
     @OneToMany(() => InstructionEntity, instruction => instruction.exercise_id, {
