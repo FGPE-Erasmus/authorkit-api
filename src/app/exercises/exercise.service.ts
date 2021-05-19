@@ -274,6 +274,8 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             event: metadata.event,
             platform: metadata.platform,
             status: metadata.status,
+            programmingLanguages: metadata.programmingLanguages,
+            timeout: metadata.timeout,
             project_id
         };
 
@@ -312,6 +314,8 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             difficulty: ExerciseDifficulty.EASY,
             platform: 'Python',
             status: ExerciseStatus.DRAFT,
+            programmingLanguages: ['python'],
+            timeout: -1,
             project_id
         };
 
@@ -617,10 +621,10 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                 if (test.$.args) {
                     args.push(test.$.args);
                 }
-                if (timeout && timeout > 0) {
+                /*if (timeout && timeout > 0) {
                     args.push('--timeout');
                     args.push(timeout);
-                }
+                }*/
                 asyncImporters.push(
                     this.testService.importProcessEntries(
                         user, exercise, {
@@ -630,7 +634,8 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                                     output: test.$.output,
                                     weight: test.$.Points ? parseInt(test.$.Points, 10) : 0,
                                     visible: test.$.Show === 'yes',
-                                    arguments: args
+                                    arguments: args,
+                                    timeout
                                 }), 'utf8')
                             },
                             [test.$.input]: {
@@ -661,6 +666,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             event: '',
             platform: 'Mooshak',
             status: ExerciseStatus.DRAFT,
+            timeout: metadata.Timeout,
             project_id
         };
 

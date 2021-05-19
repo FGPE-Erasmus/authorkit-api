@@ -5,6 +5,7 @@ import { CrudRequest, GetManyDefaultResponse } from '@nestjsx/crud';
 import { TypeOrmCrudService } from '@nestjsx/crud-typeorm';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
+import * as stream from 'stream';
 
 import { Open } from 'unzipper';
 import { Archiver, create } from 'archiver';
@@ -22,6 +23,7 @@ import { ChallengeService } from './challenges/challenge.service';
 import { LeaderboardService } from './leaderboards/leaderboard.service';
 import { RewardService } from './rewards/reward.service';
 import { RuleService } from './rules/rule.service';
+import { ExerciseService } from '../exercises/exercise.service';
 
 @Injectable()
 export class GamificationLayerService extends TypeOrmCrudService<GamificationLayerEntity> {
@@ -41,7 +43,9 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
         @Inject(forwardRef(() => RewardService))
         protected readonly rewardService: RewardService,
         @Inject(forwardRef(() => RuleService))
-        protected readonly ruleService: RuleService
+        protected readonly ruleService: RuleService,
+        @Inject(forwardRef(() => ExerciseService))
+        protected readonly exerciseService: ExerciseService
     ) {
         super(repository);
     }
@@ -186,7 +190,7 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
     }
 
     public async export(
-        user: UserEntity, gamification_layer_id: string, format: string = 'zip', res: any
+        user: UserEntity, gamification_layer_id: string, exerciseFormat: string, format: string = 'zip', res: any
     ): Promise<void> {
 
         const archive: Archiver = create(format);
@@ -199,7 +203,7 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
 
         const asyncArchiveWriters = [];
 
-        await this.collectAllToExport(user, gamification_layer_id, archive, asyncArchiveWriters, '');
+        await this.collectAllToExport(user, gamification_layer_id, exerciseFormat, archive, asyncArchiveWriters, '');
 
         await Promise.all(asyncArchiveWriters);
 
@@ -209,6 +213,7 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
     public async collectAllToExport(
         user: UserEntity,
         gamification_layer_id: string,
+        exerciseFormat: string,
         archive: Archiver,
         asyncArchiveWriters: any[],
         archive_base_path: string
@@ -222,6 +227,8 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
                 }
             });
 
+        const exercises = new Set<string>();
+
         const base_path = `gamification-layers/${gamification_layer_id}/`;
 
         asyncArchiveWriters.push(
@@ -231,12 +238,16 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
         );
 
         for (const challengeId of gamification_layer.challenges) {
+            const challenge = await this.challengeService.findOne(challengeId);
             const challenge_path = `challenges/${challengeId}/`;
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
                     user, gamification_layer, archive, `${base_path}${challenge_path}metadata.json`, `${archive_base_path}${challenge_path}metadata.json`
                 )
             );
+            for (const exercise of challenge.exercise_ids) {
+                exercises.add(exercise);
+            }
         }
 
         for (const leaderboardId of gamification_layer.leaderboards) {
@@ -281,6 +292,19 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             );
         }
 
+        if (exerciseFormat) {
+            for (const exercise of exercises) {
+                const pass = new stream.PassThrough();
+                if (exerciseFormat === 'yapexil') {
+                    await this.exerciseService.export(user, exercise, 'zip', pass);
+                } else if (exerciseFormat === 'mef') {
+                    await this.exerciseService.exportMef(user, exercise, 'zip', pass);
+                } else {
+                    break;
+                }
+                archive.append(pass, { name: `${archive_base_path}exercises/${exercise}.zip` });
+            }
+        }
     }
 
     public async getAccessLevel(gl_id: string, user_id: string): Promise<AccessLevel> {

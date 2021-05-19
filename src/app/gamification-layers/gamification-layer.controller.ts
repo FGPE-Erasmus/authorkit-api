@@ -135,7 +135,7 @@ export class GamificationLayerController implements CrudController<GamificationL
             `attachment; filename=${req.params.id}.${req.query.format || 'zip'}`
         );
         try {
-            await this.service.export(user, req.params.id, req.query.format || 'zip', res);
+            await this.service.export(user, req.params.id, req.query.exercises, req.query.format || 'zip', res);
         } catch (err) {
             throw new InternalServerErrorException('Archive creation failed');
         }

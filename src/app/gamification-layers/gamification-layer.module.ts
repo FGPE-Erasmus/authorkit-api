@@ -17,6 +17,7 @@ import { LeaderboardModule } from './leaderboards/leaderboard.module';
 import { ChallengeModule } from './challenges/challenge.module';
 import { RewardModule } from './rewards/reward.module';
 import { RuleModule } from './rules/rule.module';
+import { ExerciseModule } from '../exercises/exercise.module';
 
 const PROVIDERS = [
     GamificationLayerService,
@@ -45,6 +46,7 @@ const MODULES = [
     PermissionModule,
     forwardRef(() => UserModule),
     forwardRef(() => ProjectModule),
+    forwardRef(() => ExerciseModule),
     GithubApiModule,
 
     forwardRef(() => ChallengeModule),

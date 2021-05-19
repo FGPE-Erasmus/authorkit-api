@@ -234,7 +234,7 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
 
         for (const gamification_layer_id of project['__gamification_layers__']) {
             await this.gamificationLayerService.collectAllToExport(
-                user, gamification_layer_id, archive, asyncArchiveWriters, `gamification-layers/${gamification_layer_id}/`
+                user, gamification_layer_id, undefined, archive, asyncArchiveWriters, `gamification-layers/${gamification_layer_id}/`
             );
         }
 
