@@ -60,7 +60,7 @@ export class LeaderboardEntity extends TrackedFileEntity {
     @IsDefined({ groups: [CREATE] })
     @IsArray({ always: true })
     @IsString({ always: true, each: true })
-    @MaxLength(50, { always: true, each: true })
+    @MaxLength(250, { always: true, each: true })
     @Column('simple-array', { default: [] })
     public metrics: string[];
 

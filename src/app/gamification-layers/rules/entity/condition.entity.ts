@@ -32,7 +32,7 @@ export class ConditionEntity {
     @IsDefined({ groups: [CREATE] })
     @IsNotEmpty({ always: true })
     @IsString({ always: true })
-    @MaxLength(150, { always: true })
+    @MaxLength(250, { always: true })
     @Column('varchar', { length: 150, nullable: false })
     public left_property: string;
 
@@ -58,7 +58,7 @@ export class ConditionEntity {
     @ApiProperty()
     @IsOptional({ always: true })
     @IsString({ always: true })
-    @MaxLength(150, { always: true })
+    @MaxLength(250, { always: true })
     @Column('varchar', { length: 150 })
     public right_property: string;
 }
