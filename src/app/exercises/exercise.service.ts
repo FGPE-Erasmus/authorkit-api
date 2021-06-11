@@ -718,7 +718,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
         await this.export(user, exercise_id, format, pass);
 
-        return yapexil2mefStream(pass, res);
+        await yapexil2mefStream(pass, res);
     }
 
     public async collectAllToExport(

@@ -32,9 +32,8 @@ const MODULES = [
             attempts: 20,
             backoff: {
                 type: 'exponential',
-                delay: 500
+                delay: 750
             },
-            lifo: true,
             removeOnComplete: true
         }
     }),

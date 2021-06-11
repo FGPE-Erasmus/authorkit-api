@@ -303,6 +303,7 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
                     break;
                 }
                 archive.append(pass, { name: `${archive_base_path}exercises/${exercise}.zip` });
+                pass.end();
             }
         }
     }
