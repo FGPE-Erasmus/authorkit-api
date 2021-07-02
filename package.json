@@ -81,7 +81,7 @@
     "uuid": "^8.3.0",
     "winston": "^3.3.3",
     "xml2js": "^0.4.23",
-    "yapexil-mef-converter": "^1.0.8"
+    "yapexil-mef-converter": "^1.1.0"
   },
   "devDependencies": {
     "@nestjs/testing": "^7.4.2",
