@@ -10,3 +10,4 @@ docker/mongodb/data/*
 docker/mariadb/data/*
 docker/postgres/data/*
 /package-lock.json
+docker/keycloak/postgres/pgdata
