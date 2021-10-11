@@ -30,6 +30,8 @@ import { TemplateModule } from './templates/template.module';
 import { TestGeneratorModule } from './test-generators/test-generator.module';
 import { SkeletonModule } from './skeletons/skeleton.module';
 import { ContactModule } from './contact/contact.module';
+import { KeycloakModule } from './keycloak/keycloak.module';
+import { appConfig } from 'app.config';
 
 @Module({
     imports: [
@@ -41,6 +43,18 @@ import { ContactModule } from './contact/contact.module';
         AuthModule,
         PermissionModule,
         UserModule,
+        KeycloakModule.registerAsync({
+            useFactory: () => ({
+                authServerUrl: `${appConfig.auth.keycloak.url}/auth`,
+                realm: appConfig.auth.keycloak.realm,
+                clientId: appConfig.auth.keycloak.clientId,
+                secret: appConfig.auth.keycloak.clientSecret,
+                clientUniqueId: appConfig.auth.keycloak.clientUniqueId,
+                adminUser: appConfig.auth.keycloak.adminUsername || 'admin',
+                adminPass: appConfig.auth.keycloak.adminPassword || 'pass',
+                debug: appConfig.isDevelopment
+            })
+        }),
 
         // support
         ContactModule,

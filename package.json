@@ -58,6 +58,7 @@
     "faker": "^4.1.0",
     "helmet": "^4.0.0",
     "jsonwebtoken": "^8.5.1",
+    "keycloak-connect": "^11.0.3",
     "lodash": "^4.17.19",
     "luxon": "^1.24.1",
     "nestjs-command": "^1.5.0",
