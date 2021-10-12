@@ -1,4 +1,4 @@
-import * as Keycloak from 'keycloak-connect';
+import Keycloak from 'keycloak-connect';
 
 import {
     DynamicModule,
