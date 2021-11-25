@@ -66,7 +66,13 @@ import { ChallengeEntity } from './entity/challenge.entity';
             },
             'rules': {
             }
-        }
+        },
+        sort: [
+            {
+                field: 'name',
+                order: 'ASC',
+            }
+        ]
     }
 })
 export class ChallengeController implements CrudController<ChallengeEntity> {
