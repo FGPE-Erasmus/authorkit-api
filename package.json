@@ -30,6 +30,12 @@
   "precommit": [
     "lint:check"
   ],
+    "resolutions": {
+        "crc32-stream": "^4.0.2"
+    },
+    "overrides": {
+        "crc32-stream": "^4.0.2"
+    },
   "dependencies": {
     "@nestjs/bull": "0.1.2",
     "@nestjs/common": "^7.0.0",
@@ -48,7 +54,7 @@
     "async": "^3.2.0",
     "async-exit-hook": "^2.0.1",
     "bull": "^3.16.0",
-    "class-transformer": "^0.3.1",
+    "class-transformer": "0.3.1",
     "class-validator": "^0.12.2",
     "cls-hooked": "^4.2.2",
     "cors": "^2.8.5",
