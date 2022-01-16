@@ -32,11 +32,6 @@ import { PasswordTokenDto } from './dto/password-token.dto';
 import { VerifyResendDto } from './dto/verify-resend.dto';
 import { TokenDto } from './dto/token.dto';
 
-export class TestDto {
-    @ApiProperty()
-    @IsString()
-    readonly phone_num: string;
-}
 
 @ApiTags('auth')
 @Controller('auth')

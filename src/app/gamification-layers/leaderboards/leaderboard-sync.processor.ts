@@ -46,7 +46,7 @@ export class LeaderboardSyncProcessor {
                 name: leaderboard.name,
                 groups: leaderboard.groups,
                 metrics: leaderboard.metrics,
-                sorting_orders: leaderboard.sorting_orders
+                sorting_orders: leaderboard.sorting_orders?.toUpperCase()
             })).toString('base64')
         );
         await this.repository.update(leaderboard.id, { sha: res.content.sha });
@@ -73,7 +73,7 @@ export class LeaderboardSyncProcessor {
                 name: leaderboard.name,
                 groups: leaderboard.groups,
                 metrics: leaderboard.metrics,
-                sorting_orders: leaderboard.sorting_orders
+                sorting_orders: leaderboard.sorting_orders?.toUpperCase()
             })).toString('base64')
         );
         await this.repository.update(leaderboard.id, { sha: res.content.sha });

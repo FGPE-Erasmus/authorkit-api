@@ -1,12 +1,10 @@
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MessagePattern } from '@nestjs/microservices';
 import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
 
 import { AppLogger } from '../app.logger';
 import { GithubApiService } from '../github-api/github-api.service';
-import { UserEntity } from '../user/entity/user.entity';
 import { UserService } from '../user/user.service';
 import { ExerciseService } from '../exercises/exercise.service';
 

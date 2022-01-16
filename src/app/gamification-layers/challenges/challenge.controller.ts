@@ -70,7 +70,7 @@ import { ChallengeEntity } from './entity/challenge.entity';
         sort: [
             {
                 field: 'name',
-                order: 'ASC',
+                order: 'ASC'
             }
         ]
     }

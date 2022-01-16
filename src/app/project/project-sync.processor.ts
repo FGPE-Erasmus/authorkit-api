@@ -49,7 +49,7 @@ export class ProjectSyncProcessor {
                 id: project.id,
                 name: project.name,
                 description: project.description,
-                status: project.status,
+                status: project.status?.toUpperCase(),
                 is_public: project.is_public
             })).toString('base64')
         );
@@ -79,7 +79,7 @@ export class ProjectSyncProcessor {
                 id: project.id,
                 name: project.name,
                 description: project.description,
-                status: project.status,
+                status: project.status?.toUpperCase(),
                 is_public: project.is_public
             })).toString('base64')
         );

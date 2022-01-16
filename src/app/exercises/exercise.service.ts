@@ -707,7 +707,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
         await Promise.all(asyncArchiveWriters);
 
-        await archive.finalize();
+        return await archive.finalize();
     }
 
     public async exportMef(

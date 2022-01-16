@@ -31,7 +31,7 @@ export class ExerciseSyncProcessor {
     public async onExerciseCreate(job: Job) {
         this.logger.debug(`[onExerciseCreate] Create exercise in Github repository`);
         const { user, exercise } = job.data;
-        const owner = await this.userService.findOne(exercise.owner_id);
+        const author = await this.userService.findOne(exercise.owner_id);
         const res = await this.githubApiService.createFile(
             user,
             exercise.project_id,
@@ -40,13 +40,13 @@ export class ExerciseSyncProcessor {
                 id: exercise.id,
                 title: exercise.title,
                 module: exercise.module,
-                owner: `${owner.first_name} ${owner.last_name}`,
+                author: `${author.first_name} ${author.last_name}`,
                 keywords: exercise.keywords,
-                type: exercise.type,
+                type: exercise.type?.toUpperCase(),
                 event: exercise.event,
                 platform: exercise.platform,
-                difficulty: exercise.difficulty,
-                status: exercise.status,
+                difficulty: exercise.difficulty?.toUpperCase(),
+                status: exercise.status?.toUpperCase(),
                 timeout: exercise.timeout,
                 programmingLanguages: exercise.programmingLanguages,
                 instructions: exercise.instructions,
@@ -75,7 +75,7 @@ export class ExerciseSyncProcessor {
         this.logger.debug(`[onExerciseUpdate] Update exercise in Github repository`);
 
         const { user, exercise } = job.data;
-        const owner = await this.userService.findOne(exercise.owner_id);
+        const author = await this.userService.findOne(exercise.owner_id);
         const res = await this.githubApiService.updateFile(
             user,
             exercise.project_id,
@@ -85,13 +85,13 @@ export class ExerciseSyncProcessor {
                 id: exercise.id,
                 title: exercise.title,
                 module: exercise.module,
-                owner: `${owner.first_name} ${owner.last_name}`,
+                author: `${author.first_name} ${author.last_name}`,
                 keywords: exercise.keywords,
-                type: exercise.type,
+                type: exercise.type?.toUpperCase(),
                 event: exercise.event,
                 platform: exercise.platform,
-                difficulty: exercise.difficulty,
-                status: exercise.status,
+                difficulty: exercise.difficulty?.toUpperCase(),
+                status: exercise.status?.toUpperCase(),
                 timeout: exercise.timeout,
                 programmingLanguages: exercise.programmingLanguages,
                 instructions: exercise.instructions,

@@ -48,7 +48,7 @@ export class StatementSyncProcessor {
                 id: entity.id,
                 pathname: entity.pathname,
                 nat_lang: entity.nat_lang,
-                format: entity.format
+                format: entity.format?.toUpperCase()
             })).toString('base64')
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
@@ -94,7 +94,7 @@ export class StatementSyncProcessor {
                 id: entity.id,
                 pathname: entity.pathname,
                 nat_lang: entity.nat_lang,
-                format: entity.format
+                format: entity.format?.toUpperCase()
             })).toString('base64')
         );
         await this.repository.update(entity.id, { sha: res.content.sha });
