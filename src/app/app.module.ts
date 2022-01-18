@@ -3,6 +3,7 @@ import { CommandModule } from 'nestjs-command';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { config } from '../config';
+import { GamificationTemplateModule } from './gamification-template/gamification-template.module';
 import { AuthModule } from './auth/auth.module';
 import { AppLogger } from './app.logger';
 import { HealthCheckModule } from './healthcheck/healthcheck.module';
@@ -69,7 +70,8 @@ import { ContactModule } from './contact/contact.module';
         ChallengeModule,
         LeaderboardModule,
         RewardModule,
-        RuleModule
+        RuleModule,
+        GamificationTemplateModule
     ]
 })
 export class AppModule {
