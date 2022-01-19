@@ -19,12 +19,12 @@ import { RewardModule } from './rewards/reward.module';
 import { RuleModule } from './rules/rule.module';
 import { ExerciseModule } from '../exercises/exercise.module';
 
-const PROVIDERS = [
+export const PROVIDERS = [
     GamificationLayerService,
     GamificationLayerSyncProcessor
 ];
 
-const MODULES = [
+export const MODULES = [
     TypeOrmModule.forFeature([GamificationLayerEntity]),
     BullModule.registerQueue({
         name: GAMIFICATION_LAYER_SYNC_QUEUE,
