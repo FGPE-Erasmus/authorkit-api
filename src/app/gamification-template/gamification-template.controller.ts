@@ -32,7 +32,13 @@ export class GamificationTemplateController {
         const url = 'https://raw.githubusercontent.com/uniparthenope-fgpe/gamification-template/main/' + dto.template_id + '.zip';
         const obj = await (await fetch(url)).buffer();
         const data = {'buffer': obj};
-        return await this.gamificationService.import(user, dto.project_id, data);
+
+        const exercises_map = {};
+        const exercises = dto.exercise_ids;
+        exercises.forEach((exercise, i) => {
+            exercises_map['EX_' + ++i] = exercise['id'];
+        });
+        return await this.gamificationService.import(user, dto.project_id, data, exercises_map);
     }
 }
 

@@ -12,12 +12,12 @@ import { Archiver, create } from 'archiver';
 
 import { AppLogger } from '../app.logger';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
-import { DeepPartial } from '../_helpers/database/deep-partial';
+import { DeepPartial } from '../_helpers';
 import { GithubApiService } from '../github-api/github-api.service';
-import { AccessLevel } from '../permissions/entity/access-level.enum';
-import { UserEntity } from '../user/entity/user.entity';
+import { AccessLevel } from '../permissions/entity';
+import { UserEntity } from '../user/entity';
 
-import { GamificationLayerEntity } from './entity/gamification-layer.entity';
+import { GamificationLayerEntity } from './entity';
 import { GAMIFICATION_LAYER_SYNC_CREATE, GAMIFICATION_LAYER_SYNC_QUEUE } from './gamification-layer.constants';
 import { ChallengeService } from './challenges/challenge.service';
 import { LeaderboardService } from './leaderboards/leaderboard.service';
@@ -75,8 +75,8 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
     }
 
     public async import(
-        user: UserEntity, project_id: string, input: any
-    ): Promise<void> {
+        user: UserEntity, project_id: string, input: any, exercises_map: any = {}
+    ): Promise<GamificationLayerEntity> {
 
         const directory = await Open.buffer(input.buffer);
 
@@ -85,7 +85,8 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             project_id,
             directory.files.reduce(
                 (obj, item) => Object.assign(obj, { [item.path]: item }), {}
-            )
+            ),
+            exercises_map
         );
     }
 
@@ -169,6 +170,8 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
         });
 
         await Promise.all(asyncImporters);
+
+        return gamification_layer;
     }
 
     public async importMetadataFile(
