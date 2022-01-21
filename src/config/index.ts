@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { Transport } from '@nestjs/microservices';
 import { ConnectionOptions } from 'typeorm';
 
 const appPackage = readFileSync(`${__dirname}/../../package.json`, {
@@ -71,6 +71,8 @@ interface Config {
     githubApi: {
         baseUrl: string;
         secret: string;
+        template_repo: string;
+        template_path: string;
     };
     port: number;
     host: string;
@@ -182,7 +184,9 @@ export const config: Config = {
     },
     githubApi: {
         baseUrl: 'https://api.github.com',
-        secret: process.env.GITHUB_API_SECRET
+        secret: process.env.GITHUB_API_SECRET,
+        template_repo: process.env.GITHUB_TEMPLATE_REPO,
+        template_path: process.env.GITHUB_TEMPLATE_PATH
     },
     port: parseInt(process.env.APP_PORT, 10),
     host: process.env.APP_HOST,
