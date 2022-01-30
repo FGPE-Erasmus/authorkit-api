@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
 
 import { config } from '../../../config';
-import { GithubApiModule } from '../../github-api/github-api.module';
+import { GitModule } from '../../git/git.module';
 import { GamificationLayerModule } from '../gamification-layer.module';
 import { ChallengeModule } from '../challenges/challenge.module';
 
@@ -23,8 +23,8 @@ const MODULES = [
     BullModule.registerQueue({
         name: LEADERBOARD_SYNC_QUEUE,
         redis: {
-          host: config.queueing.host,
-          port: config.queueing.port
+            host: config.queueing.host,
+            port: config.queueing.port
         },
         defaultJobOptions: {
             attempts: 20,
@@ -36,7 +36,7 @@ const MODULES = [
         }
     }),
     HttpModule,
-    GithubApiModule,
+    GitModule,
 
     forwardRef(() => GamificationLayerModule),
     forwardRef(() => ChallengeModule)

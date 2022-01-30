@@ -7,7 +7,7 @@ import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 
 import { getAccessLevel } from '../_helpers/security/check-access-level';
-import { GithubApiService } from '../github-api/github-api.service';
+import { GitService } from '../git/git.service';
 import { ExerciseEntity } from '../exercises/entity/exercise.entity';
 import { ExerciseService } from '../exercises/exercise.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
@@ -19,14 +19,14 @@ import { TESTSET_SYNC_QUEUE, TESTSET_SYNC_CREATE } from './testset.constants';
 
 @Injectable()
 export class TestSetService extends TypeOrmCrudService<TestSetEntity> {
-
     constructor(
         @InjectRepository(TestSetEntity)
         protected readonly repository: Repository<TestSetEntity>,
 
-        @InjectQueue(TESTSET_SYNC_QUEUE) private readonly testsetSyncQueue: Queue,
+        @InjectQueue(TESTSET_SYNC_QUEUE)
+        private readonly testsetSyncQueue: Queue,
 
-        protected readonly githubApiService: GithubApiService,
+        protected readonly gitService: GitService,
 
         @Inject(forwardRef(() => ExerciseService))
         protected readonly exerciseService: ExerciseService,
@@ -37,11 +37,17 @@ export class TestSetService extends TypeOrmCrudService<TestSetEntity> {
         super(repository);
     }
 
-    public async createOne(req: CrudRequest, dto: DeepPartial<TestSetEntity>): Promise<TestSetEntity> {
+    public async createOne(
+        req: CrudRequest,
+        dto: DeepPartial<TestSetEntity>
+    ): Promise<TestSetEntity> {
         return await super.createOne(req, dto);
     }
 
-    public async updateOne(req: CrudRequest, dto: DeepPartial<TestSetEntity>): Promise<TestSetEntity> {
+    public async updateOne(
+        req: CrudRequest,
+        dto: DeepPartial<TestSetEntity>
+    ): Promise<TestSetEntity> {
         return super.updateOne(req, dto);
     }
 
@@ -50,17 +56,22 @@ export class TestSetService extends TypeOrmCrudService<TestSetEntity> {
     }
 
     public async importProcessEntries(
-        user: UserEntity, exercise: ExerciseEntity, entries: any
+        user: UserEntity,
+        exercise: ExerciseEntity,
+        entries: any
     ): Promise<void> {
-
         const root_metadata = entries['metadata.json'];
         if (!root_metadata) {
             throw new BadRequestException('Archive misses required metadata');
         }
 
-        const entity = await this.importMetadataFile(user, exercise, root_metadata);
+        const entity = await this.importMetadataFile(
+            user,
+            exercise,
+            root_metadata
+        );
 
-        const result = Object.keys(entries).reduce(function(acc, curr) {
+        const result = Object.keys(entries).reduce(function (acc, curr) {
             const match = curr.match('^tests/([0-9a-zA-Z-]+)/(.*)$');
             if (!match) {
                 return acc;
@@ -74,10 +85,13 @@ export class TestSetService extends TypeOrmCrudService<TestSetEntity> {
 
         const asyncImporters = [];
 
-        Object.keys(result).forEach(related_entity_key => {
+        Object.keys(result).forEach((related_entity_key) => {
             asyncImporters.push(
                 this.testService.importProcessEntries(
-                    user, exercise, result[related_entity_key], entity
+                    user,
+                    exercise,
+                    result[related_entity_key],
+                    entity
                 )
             );
         });
@@ -86,9 +100,10 @@ export class TestSetService extends TypeOrmCrudService<TestSetEntity> {
     }
 
     public async importMetadataFile(
-        user: UserEntity, exercise: ExerciseEntity, metadataFile: any
+        user: UserEntity,
+        exercise: ExerciseEntity,
+        metadataFile: any
     ): Promise<TestSetEntity> {
-
         const metadata = JSON.parse((await metadataFile.buffer()).toString());
 
         const entity: TestSetEntity = await this.repository.save({
@@ -98,18 +113,30 @@ export class TestSetService extends TypeOrmCrudService<TestSetEntity> {
             exercise_id: exercise.id
         });
 
-        this.testsetSyncQueue.add(
-            TESTSET_SYNC_CREATE, { user, testset: entity }
-        );
+        this.testsetSyncQueue.add(TESTSET_SYNC_CREATE, {
+            user,
+            testset: entity
+        });
 
         return entity;
     }
 
-    public async getAccessLevel(id: string, user_id: string): Promise<AccessLevel> {
+    public async getAccessLevel(
+        id: string,
+        user_id: string
+    ): Promise<AccessLevel> {
         const access_level = await getAccessLevel(
             [
-                { src_table: 'project', dst_table: 'exercise', prop: 'exercises' },
-                { src_table: 'exercise', dst_table: 'testset', prop: 'test_sets' }
+                {
+                    src_table: 'project',
+                    dst_table: 'exercise',
+                    prop: 'exercises'
+                },
+                {
+                    src_table: 'exercise',
+                    dst_table: 'testset',
+                    prop: 'test_sets'
+                }
             ],
             `testset.id = '${id}'`,
             `permission.user_id = '${user_id}'`

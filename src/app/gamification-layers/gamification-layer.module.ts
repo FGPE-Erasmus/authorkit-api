@@ -6,7 +6,7 @@ import { config } from '../../config';
 import { PermissionModule } from '../permissions/permission.module';
 import { UserModule } from '../user/user.module';
 import { ProjectModule } from '../project/project.module';
-import { GithubApiModule } from '../github-api/github-api.module';
+import { GitModule } from '../git/git.module';
 
 import { GamificationLayerService } from './gamification-layer.service';
 import { GamificationLayerController } from './gamification-layer.controller';
@@ -29,8 +29,8 @@ const MODULES = [
     BullModule.registerQueue({
         name: GAMIFICATION_LAYER_SYNC_QUEUE,
         redis: {
-          host: config.queueing.host,
-          port: config.queueing.port
+            host: config.queueing.host,
+            port: config.queueing.port
         },
         defaultJobOptions: {
             attempts: 20,
@@ -46,7 +46,7 @@ const MODULES = [
     forwardRef(() => UserModule),
     forwardRef(() => ProjectModule),
     forwardRef(() => ExerciseModule),
-    GithubApiModule,
+    GitModule,
 
     forwardRef(() => ChallengeModule),
     forwardRef(() => LeaderboardModule),

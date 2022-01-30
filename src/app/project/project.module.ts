@@ -5,7 +5,7 @@ import { BullModule } from '@nestjs/bull';
 import { config } from '../../config';
 import { PermissionModule } from '../permissions/permission.module';
 import { UserModule } from '../user/user.module';
-import { GithubApiModule } from '../github-api/github-api.module';
+import { GitModule } from '../git/git.module';
 import { ExerciseModule } from '../exercises/exercise.module';
 import { GamificationLayerModule } from '../gamification-layers/gamification-layer.module';
 
@@ -28,8 +28,8 @@ const MODULES = [
     BullModule.registerQueue({
         name: PROJECT_SYNC_QUEUE,
         redis: {
-          host: config.queueing.host,
-          port: config.queueing.port
+            host: config.queueing.host,
+            port: config.queueing.port
         },
         defaultJobOptions: {
             attempts: 20,
@@ -43,7 +43,7 @@ const MODULES = [
     HttpModule,
     forwardRef(() => PermissionModule),
     UserModule,
-    GithubApiModule,
+    GitModule,
 
     forwardRef(() => ExerciseModule),
     forwardRef(() => GamificationLayerModule)
