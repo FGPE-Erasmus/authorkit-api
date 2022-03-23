@@ -7,18 +7,17 @@ const MIN_LENGTH = config.validator.password.min_length;
 const REGEX_LOWERCASE_LETTER  = '(?=.*[a-z])';
 const REGEX_UPPERCASE_LETTER  = '(?=.*[A-Z])';
 const REGEX_DIGIT             = '(?=.*\\d)';
-const REGEX_SPECIAL_CHARACTER = '(?=.*[@$!%*?&\.,\-_])';
+const REGEX_SPECIAL_CHARACTER = '(?=.*[*!@$%^&(){}[\\]:;<>,.?\\/~_+=|-])';
 const REGEX_STRONG_PASSWORD   = new RegExp(
     '^' +
     REGEX_LOWERCASE_LETTER +
     REGEX_UPPERCASE_LETTER +
     REGEX_DIGIT +
     REGEX_SPECIAL_CHARACTER +
-    '[A-Za-z\\d@$!%*?&\.,\-_]' +
-    '{' + MIN_LENGTH + ',}$');
+    '(?=.{' + MIN_LENGTH + ',})');
 const REGEX_WEAK_PASSWORD     = new RegExp(
     '^' +
-    '[A-Za-z\\d@$!%*?&\.,\-_]' +
+    '[A-Za-z\\d*!@$%^&(){}[\\]:;<>,.?\\/~_+=|-]' +
     '{' + MIN_LENGTH + ',}$');
 
 @ValidatorConstraint({ name: 'password', async: false })
