@@ -240,12 +240,18 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             )
         );
 
+        let type = '';
+        if (exerciseFormat === 'template') {
+            type = 'exportAsTemplate';
+        }
+
+        const obj = { id: 1 };
         for (const challengeId of gamification_layer.challenges) {
             const challenge = await this.challengeService.findOne(challengeId);
             const challenge_path = `challenges/${challengeId}/`;
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
-                    user, gamification_layer, archive, `${base_path}${challenge_path}metadata.json`, `${archive_base_path}${challenge_path}metadata.json`
+                    user, gamification_layer, archive, `${base_path}${challenge_path}metadata.json`, `${archive_base_path}${challenge_path}metadata.json`, type, obj
                 )
             );
             for (const exercise of challenge.exercise_ids) {
@@ -300,7 +306,7 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
                 const pass = new stream.PassThrough();
                 if (exerciseFormat === 'yapexil') {
                     await this.exerciseService.export(user, exercise, 'zip', pass);
-                } else if (exerciseFormat === 'mef') {
+                } else if (exerciseFormat === 'mef' || exerciseFormat === 'template') {
                     await this.exerciseService.exportMef(user, exercise, 'zip', pass);
                 } else {
                     break;
@@ -324,7 +330,7 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
     /* Private Methods */
 
     private async addFileFromGithubToArchive(
-        user: UserEntity, gamification_layer: GamificationLayerEntity, archive: Archiver, path: string, archive_path: string
+        user: UserEntity, gamification_layer: GamificationLayerEntity, archive: Archiver, path: string, archive_path: string, type: string = '', obj: any = {}
     ): Promise<void> {
 
         try {
@@ -334,10 +340,23 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             if (!contents || !contents.content) {
                 return;
             }
-            archive.append(
-                Buffer.from(contents.content, 'base64'),
-                { name: archive_path }
-            );
+            if (type === 'exportAsTemplate') {
+                const content = Buffer.from(contents.content, 'base64').toString('binary');
+                const contentJson = JSON.parse(content);
+                for (let i = 0; i < contentJson['refs'].length; i++) {
+                    contentJson['refs'][i] = 'EX_' + obj.id;
+                    obj.id++;
+                }
+                archive.append(
+                    Buffer.from(JSON.stringify(contentJson), 'utf-8'),
+                    { name: archive_path }
+                );
+            } else {
+                archive.append(
+                    Buffer.from(contents.content, 'base64'),
+                    { name: archive_path }
+                );
+            }
         } catch (error) {
             // just log error
             this.logger.log(error);

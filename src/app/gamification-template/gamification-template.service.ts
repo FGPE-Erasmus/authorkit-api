@@ -33,13 +33,15 @@ export class GamificationTemplateService {
 
             const files = directory.files;
             for (const fdx in files) {
-                // Count exercises
-                if (files[fdx].type === 'File' && (files[fdx].path).includes('exercises/')) {
-                    count_ex++;
-                } else if (files[fdx].type === 'Directory' && (files[fdx].path).includes('challenges/')) {
-                    const challenges_path = (files[fdx].path.replace('challenges/', '')).split('/');
-                    if (challenges_path.length === 2) {
-                        count_ch++;
+                // Count exercises and challenges
+                if (files[fdx].type === 'File') {
+                    if (files[fdx].path.startsWith('exercises/')) {
+                        count_ex++;
+                    } else if (files[fdx].path.startsWith('challenges/')) {
+                        const challenges_path = (files[fdx].path.replace('challenges/', '')).split('/');
+                        if (challenges_path.length === 2) {
+                            count_ch++;
+                        }
                     }
                 }
             }
@@ -51,6 +53,7 @@ export class GamificationTemplateService {
                 'tot_challenges': count_ch
             };
         }
+
         return info;
     }
 
