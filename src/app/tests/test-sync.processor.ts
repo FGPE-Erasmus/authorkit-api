@@ -4,7 +4,7 @@ import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
 
 import { AppLogger } from '../app.logger';
-import { GithubApiService } from '../github-api/github-api.service';
+import { GitService } from '../git/git.service';
 import { UserService } from '../user/user.service';
 import { ExerciseService } from '../exercises/exercise.service';
 
@@ -22,16 +22,15 @@ import { TestEntity } from './entity/test.entity';
 
 @Processor(TEST_SYNC_QUEUE)
 export class TestSyncProcessor {
-
     private logger = new AppLogger(TestSyncProcessor.name);
 
     constructor(
         @InjectRepository(TestEntity)
         protected readonly repository: Repository<TestEntity>,
         protected readonly exerciseService: ExerciseService,
-        protected readonly githubApiService: GithubApiService,
+        protected readonly gitService: GitService,
         protected readonly userService: UserService
-    ) { }
+    ) {}
 
     @Process(TEST_SYNC_CREATE)
     public async onTestCreate(job: Job) {
@@ -46,22 +45,24 @@ export class TestSyncProcessor {
         }
 
         // test
-        const res = await this.githubApiService.createFile(
+        const res = await this.gitService.createFile(
             user,
             exercise.project_id,
             `exercises/${exercise.id}/${testset_path}tests/${test.id}/metadata.json`,
-            Buffer.from(JSON.stringify({
-                id: test.id,
-                arguments: test.arguments,
-                weight: test.weight,
-                visible: test.visible,
-                input: test.input.pathname,
-                output: test.output.pathname,
-                timeout: exercise.timeout,
-                feedback: test.feedback
-            })).toString('base64')
+            Buffer.from(
+                JSON.stringify({
+                    id: test.id,
+                    arguments: test.arguments,
+                    weight: test.weight,
+                    visible: test.visible,
+                    input: test.input.pathname,
+                    output: test.output.pathname,
+                    timeout: exercise.timeout,
+                    feedback: test.feedback
+                })
+            ).toString('base64')
         );
-        await this.repository.update(test.id, { sha: res.content.sha });
+        await this.repository.update(test.id, { sha: res });
 
         this.logger.debug('[onTestCreate] Test created in Github repository');
     }
@@ -79,23 +80,24 @@ export class TestSyncProcessor {
         }
 
         // test
-        const res = await this.githubApiService.updateFile(
+        const res = await this.gitService.updateFile(
             user,
             exercise.project_id,
             `exercises/${exercise.id}/${testset_path}tests/${test.id}/metadata.json`,
-            test.sha,
-            Buffer.from(JSON.stringify({
-                id: test.id,
-                arguments: test.arguments,
-                weight: test.weight,
-                visible: test.visible,
-                input: test.input.pathname,
-                output: test.output.pathname,
-                timeout: test.timeout,
-                feedback: test.feedback
-            })).toString('base64')
+            Buffer.from(
+                JSON.stringify({
+                    id: test.id,
+                    arguments: test.arguments,
+                    weight: test.weight,
+                    visible: test.visible,
+                    input: test.input.pathname,
+                    output: test.output.pathname,
+                    timeout: test.timeout,
+                    feedback: test.feedback
+                })
+            ).toString('base64')
         );
-        await this.repository.update(test.id, { sha: res.content.sha });
+        await this.repository.update(test.id, { sha: res });
 
         this.logger.debug('[onTestUpdate] Test updated in Github repository');
     }
@@ -111,7 +113,7 @@ export class TestSyncProcessor {
         if (test.testset_id) {
             testset_path = `testsets/${test.testset_id}/`;
         }
-        await this.githubApiService.deleteFolder(
+        await this.gitService.deleteFolder(
             user,
             exercise.project_id,
             `exercises/${exercise.id}/${testset_path}tests/${test.id}`
@@ -122,7 +124,9 @@ export class TestSyncProcessor {
 
     @Process(TEST_INPUT_SYNC_CREATE)
     public async onTestInputCreate(job: Job) {
-        this.logger.debug(`[onTestInputCreate] Create test input in Github repository`);
+        this.logger.debug(
+            `[onTestInputCreate] Create test input in Github repository`
+        );
 
         const { user, test, content } = job.data;
 
@@ -131,22 +135,26 @@ export class TestSyncProcessor {
         if (test.testset_id) {
             testset_path = `testsets/${test.testset_id}/`;
         }
-        const res = await this.githubApiService.createFile(
+        const res = await this.gitService.createFile(
             user,
             exercise.project_id,
             `exercises/${exercise.id}/${testset_path}tests/${test.id}/${test.input.pathname}`,
             Buffer.from(content.buffer).toString('base64')
         );
         await this.repository.update(test.id, {
-            input: { pathname: test.input.pathname, sha: res.content.sha }
+            input: { pathname: test.input.pathname, sha: res }
         });
 
-        this.logger.debug('[onTestInputCreate] Test input created in Github repository');
+        this.logger.debug(
+            '[onTestInputCreate] Test input created in Github repository'
+        );
     }
 
     @Process(TEST_INPUT_SYNC_UPDATE)
     public async onTestInputUpdate(job: Job) {
-        this.logger.debug(`[onTestInputUpdate] Update test input in Github repository`);
+        this.logger.debug(
+            `[onTestInputUpdate] Update test input in Github repository`
+        );
 
         const { user, test, content } = job.data;
 
@@ -155,23 +163,26 @@ export class TestSyncProcessor {
         if (test.testset_id) {
             testset_path = `testsets/${test.testset_id}/`;
         }
-        const res = await this.githubApiService.updateFile(
+        const res = await this.gitService.updateFile(
             user,
             exercise.project_id,
             `exercises/${exercise.id}/${testset_path}tests/${test.id}/${test.input.pathname}`,
-            test.input.sha,
             Buffer.from(content.buffer).toString('base64')
         );
         await this.repository.update(test.id, {
-            input: { pathname: test.input.pathname, sha: res.content.sha }
+            input: { pathname: test.input.pathname, sha: res }
         });
 
-        this.logger.debug('[onTestInputUpdate] Test input updated in Github repository');
+        this.logger.debug(
+            '[onTestInputUpdate] Test input updated in Github repository'
+        );
     }
 
     @Process(TEST_OUTPUT_SYNC_CREATE)
     public async onTestOutputCreate(job: Job) {
-        this.logger.debug(`[onTestOutputCreate] Create test output in Github repository`);
+        this.logger.debug(
+            `[onTestOutputCreate] Create test output in Github repository`
+        );
 
         const { user, test, content } = job.data;
 
@@ -180,22 +191,26 @@ export class TestSyncProcessor {
         if (test.testset_id) {
             testset_path = `testsets/${test.testset_id}/`;
         }
-        const res = await this.githubApiService.createFile(
+        const res = await this.gitService.createFile(
             user,
             exercise.project_id,
             `exercises/${exercise.id}/${testset_path}tests/${test.id}/${test.output.pathname}`,
             Buffer.from(content.buffer).toString('base64')
         );
         await this.repository.update(test.id, {
-            output: { pathname: test.output.pathname, sha: res.content.sha }
+            output: { pathname: test.output.pathname, sha: res }
         });
 
-        this.logger.debug('[onTestOutputCreate] Test output created in Github repository');
+        this.logger.debug(
+            '[onTestOutputCreate] Test output created in Github repository'
+        );
     }
 
     @Process(TEST_OUTPUT_SYNC_UPDATE)
     public async onTestOutputUpdate(job: Job) {
-        this.logger.debug(`[onTestOutputUpdate] Update test output in Github repository`);
+        this.logger.debug(
+            `[onTestOutputUpdate] Update test output in Github repository`
+        );
 
         const { user, test, content } = job.data;
 
@@ -204,17 +219,18 @@ export class TestSyncProcessor {
         if (test.testset_id) {
             testset_path = `testsets/${test.testset_id}/`;
         }
-        const res = await this.githubApiService.updateFile(
+        const res = await this.gitService.updateFile(
             user,
             exercise.project_id,
             `exercises/${exercise.id}/${testset_path}tests/${test.id}/${test.output.pathname}`,
-            test.output.sha,
             Buffer.from(content.buffer).toString('base64')
         );
         await this.repository.update(test.id, {
-            output: { pathname: test.output.pathname, sha: res.content.sha }
+            output: { pathname: test.output.pathname, sha: res }
         });
 
-        this.logger.debug('[onTestOutputUpdate] Test output updated in Github repository');
+        this.logger.debug(
+            '[onTestOutputUpdate] Test output updated in Github repository'
+        );
     }
 }

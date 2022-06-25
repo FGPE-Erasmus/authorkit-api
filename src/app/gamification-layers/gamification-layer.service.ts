@@ -13,7 +13,7 @@ import { Archiver, create } from 'archiver';
 import { AppLogger } from '../app.logger';
 import { getAccessLevel } from '../_helpers/security/check-access-level';
 import { DeepPartial } from '../_helpers/database/deep-partial';
-import { GithubApiService } from '../github-api/github-api.service';
+import { GitService } from '../git/git.service';
 import { AccessLevel } from '../permissions/entity/access-level.enum';
 import { UserEntity } from '../user/entity/user.entity';
 
@@ -27,7 +27,6 @@ import { ExerciseService } from '../exercises/exercise.service';
 
 @Injectable()
 export class GamificationLayerService extends TypeOrmCrudService<GamificationLayerEntity> {
-
     private logger = new AppLogger(GamificationLayerService.name);
 
     constructor(
@@ -35,7 +34,7 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
         protected readonly repository: Repository<GamificationLayerEntity>,
         @InjectQueue(GAMIFICATION_LAYER_SYNC_QUEUE)
         private readonly gamificationLayerSyncQueue: Queue,
-        protected readonly githubApiService: GithubApiService,
+        protected readonly gitService: GitService,
         @Inject(forwardRef(() => ChallengeService))
         protected readonly challengeService: ChallengeService,
         @Inject(forwardRef(() => LeaderboardService))
@@ -54,79 +53,112 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
         return await super.getOne(req);
     }
 
-    public async getMany(req: CrudRequest): Promise<GetManyDefaultResponse<GamificationLayerEntity> | GamificationLayerEntity[]> {
+    public async getMany(
+        req: CrudRequest
+    ): Promise<
+        | GetManyDefaultResponse<GamificationLayerEntity>
+        | GamificationLayerEntity[]
+    > {
         return await super.getMany(req);
     }
 
-    public async createOne(req: CrudRequest, dto: GamificationLayerEntity): Promise<GamificationLayerEntity> {
+    public async createOne(
+        req: CrudRequest,
+        dto: GamificationLayerEntity
+    ): Promise<GamificationLayerEntity> {
         return super.createOne(req, dto);
     }
 
-    public async updateOne(req: CrudRequest, dto: GamificationLayerEntity): Promise<GamificationLayerEntity> {
+    public async updateOne(
+        req: CrudRequest,
+        dto: GamificationLayerEntity
+    ): Promise<GamificationLayerEntity> {
         return super.updateOne(req, dto);
     }
 
-    public async replaceOne(req: CrudRequest, dto: GamificationLayerEntity): Promise<GamificationLayerEntity> {
+    public async replaceOne(
+        req: CrudRequest,
+        dto: GamificationLayerEntity
+    ): Promise<GamificationLayerEntity> {
         return super.updateOne(req, dto);
     }
 
-    public async deleteOne(req: CrudRequest): Promise<GamificationLayerEntity | void> {
+    public async deleteOne(
+        req: CrudRequest
+    ): Promise<GamificationLayerEntity | void> {
         return super.deleteOne(req);
     }
 
     public async import(
-        user: UserEntity, project_id: string, input: any
+        user: UserEntity,
+        project_id: string,
+        input: any
     ): Promise<void> {
-
         const directory = await Open.buffer(input.buffer);
 
         return await this.importProcessEntries(
             user,
             project_id,
             directory.files.reduce(
-                (obj, item) => Object.assign(obj, { [item.path]: item }), {}
+                (obj, item) => Object.assign(obj, { [item.path]: item }),
+                {}
             )
         );
     }
 
     public async importProcessEntries(
-        user: UserEntity, project_id: string, entries: any,
+        user: UserEntity,
+        project_id: string,
+        entries: any,
         exercises_map: any = {}
     ) {
-
         const root_metadata = entries['metadata.json'];
         if (!root_metadata) {
             this.throwBadRequestException('Archive misses required metadata');
         }
 
-        const gamification_layer = await this.importMetadataFile(user, project_id, root_metadata);
+        const gamification_layer = await this.importMetadataFile(
+            user,
+            project_id,
+            root_metadata
+        );
 
-        await this.gamificationLayerSyncQueue.add(GAMIFICATION_LAYER_SYNC_CREATE, { user, gamification_layer });
+        await this.gamificationLayerSyncQueue.add(
+            GAMIFICATION_LAYER_SYNC_CREATE,
+            { user, gamification_layer }
+        );
 
-        const result = Object.keys(entries).reduce(function(acc, curr) {
-            const match = curr.match('^([a-zA-Z-]+)/([0-9a-zA-Z-]+)/(.*)$');
-            if (!match || !acc[match[1]]) {
+        const result = Object.keys(entries).reduce(
+            function (acc, curr) {
+                const match = curr.match('^([a-zA-Z-]+)/([0-9a-zA-Z-]+)/(.*)$');
+                if (!match || !acc[match[1]]) {
+                    return acc;
+                }
+                if (!acc[match[1]][match[2]]) {
+                    acc[match[1]][match[2]] = {};
+                }
+                acc[match[1]][match[2]][match[3]] = entries[curr];
                 return acc;
+            },
+            {
+                challenges: [],
+                leaderboards: [],
+                rewards: [],
+                rules: []
             }
-            if (!acc[match[1]][match[2]]) {
-                acc[match[1]][match[2]] = {};
-            }
-            acc[match[1]][match[2]][match[3]] = entries[curr];
-            return acc;
-        }, {
-            'challenges': [],
-            'leaderboards': [],
-            'rewards': [],
-            'rules': []
-        });
+        );
 
         const challenge_results = [];
         const challenge_map = {};
         for (const key in result['challenges']) {
             if (result['challenges'].hasOwnProperty(key)) {
-                const challenge_result = await this.challengeService.importProcessEntries(
-                    user, gamification_layer, result['challenges'][key], exercises_map
-                );
+                const challenge_result =
+                    await this.challengeService.importProcessEntries(
+                        user,
+                        gamification_layer,
+                        result['challenges'][key],
+                        exercises_map
+                    );
                 challenge_results.push(challenge_result);
                 challenge_map[key] = challenge_result.challenge.id;
             }
@@ -135,35 +167,49 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
         const asyncImporters = [];
 
         // 2nd pass
-        challenge_results.forEach(challenge_result => {
+        challenge_results.forEach((challenge_result) => {
             asyncImporters.push(
                 this.challengeService.importProcessEntriesAfterAllChallengesImported(
-                    user, gamification_layer, challenge_result.challenge, challenge_result.children,
-                    challenge_result.related_entities, exercises_map, challenge_map
+                    user,
+                    gamification_layer,
+                    challenge_result.challenge,
+                    challenge_result.children,
+                    challenge_result.related_entities,
+                    exercises_map,
+                    challenge_map
                 )
             );
         });
 
-        Object.keys(result['leaderboards']).forEach(related_entity_key => {
+        Object.keys(result['leaderboards']).forEach((related_entity_key) => {
             asyncImporters.push(
                 this.leaderboardService.importProcessEntries(
-                    user, gamification_layer, result['leaderboards'][related_entity_key]
+                    user,
+                    gamification_layer,
+                    result['leaderboards'][related_entity_key]
                 )
             );
         });
 
-        Object.keys(result['rewards']).forEach(related_entity_key => {
+        Object.keys(result['rewards']).forEach((related_entity_key) => {
             asyncImporters.push(
                 this.rewardService.importProcessEntries(
-                    user, gamification_layer, result['rewards'][related_entity_key], undefined, exercises_map, challenge_map
+                    user,
+                    gamification_layer,
+                    result['rewards'][related_entity_key],
+                    undefined,
+                    exercises_map,
+                    challenge_map
                 )
             );
         });
 
-        Object.keys(result['rules']).forEach(related_entity_key => {
+        Object.keys(result['rules']).forEach((related_entity_key) => {
             asyncImporters.push(
                 this.ruleService.importProcessEntries(
-                    user, gamification_layer, result['rules'][related_entity_key]
+                    user,
+                    gamification_layer,
+                    result['rules'][related_entity_key]
                 )
             );
         });
@@ -172,9 +218,10 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
     }
 
     public async importMetadataFile(
-        user: UserEntity, project_id: string, metadataFile: any
+        user: UserEntity,
+        project_id: string,
+        metadataFile: any
     ): Promise<GamificationLayerEntity> {
-
         const metadata = JSON.parse((await metadataFile.buffer()).toString());
 
         const gamification_layer: DeepPartial<GamificationLayerEntity> = {
@@ -190,20 +237,30 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
     }
 
     public async export(
-        user: UserEntity, gamification_layer_id: string, exerciseFormat: string, format: string = 'zip', res: any
+        user: UserEntity,
+        gamification_layer_id: string,
+        exerciseFormat: string,
+        format: string = 'zip',
+        res: any
     ): Promise<void> {
-
         const archive: Archiver = create(format);
 
         archive.pipe(res);
 
-        archive.on('error', function(err) {
+        archive.on('error', function (err) {
             throw err;
         });
 
         const asyncArchiveWriters = [];
 
-        await this.collectAllToExport(user, gamification_layer_id, exerciseFormat, archive, asyncArchiveWriters, '');
+        await this.collectAllToExport(
+            user,
+            gamification_layer_id,
+            exerciseFormat,
+            archive,
+            asyncArchiveWriters,
+            ''
+        );
 
         await Promise.all(asyncArchiveWriters);
 
@@ -218,11 +275,14 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
         asyncArchiveWriters: any[],
         archive_base_path: string
     ): Promise<void> {
-
         const gamification_layer: GamificationLayerEntity =
             await this.repository.findOne(gamification_layer_id, {
                 loadRelationIds: {
-                    relations: ['challenges', 'leaderboards', 'rewards', 'rules'
+                    relations: [
+                        'challenges',
+                        'leaderboards',
+                        'rewards',
+                        'rules'
                     ]
                 }
             });
@@ -233,7 +293,11 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
 
         asyncArchiveWriters.push(
             this.addFileFromGithubToArchive(
-                user, gamification_layer, archive, `${base_path}metadata.json`, `${archive_base_path}metadata.json`
+                user,
+                gamification_layer,
+                archive,
+                `${base_path}metadata.json`,
+                `${archive_base_path}metadata.json`
             )
         );
 
@@ -242,7 +306,11 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             const challenge_path = `challenges/${challengeId}/`;
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
-                    user, gamification_layer, archive, `${base_path}${challenge_path}metadata.json`, `${archive_base_path}${challenge_path}metadata.json`
+                    user,
+                    gamification_layer,
+                    archive,
+                    `${base_path}${challenge_path}metadata.json`,
+                    `${archive_base_path}${challenge_path}metadata.json`
                 )
             );
             for (const exercise of challenge.exercise_ids) {
@@ -251,7 +319,9 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
         }
 
         for (const leaderboardId of gamification_layer.leaderboards) {
-            const leaderboard = await this.leaderboardService.findOne(leaderboardId);
+            const leaderboard = await this.leaderboardService.findOne(
+                leaderboardId
+            );
             let leaderboard_path = '';
             if (leaderboard.challenge_id) {
                 leaderboard_path += `challenges/${leaderboard.challenge_id}/`;
@@ -259,7 +329,11 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             leaderboard_path += `leaderboards/${leaderboard.id}/`;
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
-                    user, gamification_layer, archive, `${base_path}${leaderboard_path}metadata.json`, `${archive_base_path}${leaderboard_path}metadata.json`
+                    user,
+                    gamification_layer,
+                    archive,
+                    `${base_path}${leaderboard_path}metadata.json`,
+                    `${archive_base_path}${leaderboard_path}metadata.json`
                 )
             );
         }
@@ -273,7 +347,11 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             reward_path += `rewards/${reward.id}/`;
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
-                    user, gamification_layer, archive, `${base_path}${reward_path}metadata.json`, `${archive_base_path}${reward_path}metadata.json`
+                    user,
+                    gamification_layer,
+                    archive,
+                    `${base_path}${reward_path}metadata.json`,
+                    `${archive_base_path}${reward_path}metadata.json`
                 )
             );
         }
@@ -287,7 +365,11 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             rule_path += `rules/${rule.id}/`;
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
-                    user, gamification_layer, archive, `${base_path}${rule_path}metadata.json`, `${archive_base_path}${rule_path}metadata.json`
+                    user,
+                    gamification_layer,
+                    archive,
+                    `${base_path}${rule_path}metadata.json`,
+                    `${archive_base_path}${rule_path}metadata.json`
                 )
             );
         }
@@ -296,22 +378,41 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             for (const exercise of exercises) {
                 const pass = new stream.PassThrough();
                 if (exerciseFormat === 'yapexil') {
-                    await this.exerciseService.export(user, exercise, 'zip', pass);
+                    await this.exerciseService.export(
+                        user,
+                        exercise,
+                        'zip',
+                        pass
+                    );
                 } else if (exerciseFormat === 'mef') {
-                    await this.exerciseService.exportMef(user, exercise, 'zip', pass);
+                    await this.exerciseService.exportMef(
+                        user,
+                        exercise,
+                        'zip',
+                        pass
+                    );
                 } else {
                     break;
                 }
-                archive.append(pass, { name: `${archive_base_path}exercises/${exercise}.zip` });
+                archive.append(pass, {
+                    name: `${archive_base_path}exercises/${exercise}.zip`
+                });
                 pass.end();
             }
         }
     }
 
-    public async getAccessLevel(gl_id: string, user_id: string): Promise<AccessLevel> {
+    public async getAccessLevel(
+        gl_id: string,
+        user_id: string
+    ): Promise<AccessLevel> {
         return await getAccessLevel(
             [
-                { src_table: 'project', dst_table: 'gl', prop: 'gamification_layers' }
+                {
+                    src_table: 'project',
+                    dst_table: 'gl',
+                    prop: 'gamification_layers'
+                }
             ],
             `gl.id = '${gl_id}'`,
             `permission.user_id = '${user_id}'`
@@ -321,20 +422,24 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
     /* Private Methods */
 
     private async addFileFromGithubToArchive(
-        user: UserEntity, gamification_layer: GamificationLayerEntity, archive: Archiver, path: string, archive_path: string
+        user: UserEntity,
+        gamification_layer: GamificationLayerEntity,
+        archive: Archiver,
+        path: string,
+        archive_path: string
     ): Promise<void> {
-
         try {
-            const contents = await this.githubApiService.getFileContents(
-                user, gamification_layer.project_id, path
+            const contents = await this.gitService.getFileContents(
+                user,
+                gamification_layer.project_id,
+                path
             );
             if (!contents || !contents.content) {
                 return;
             }
-            archive.append(
-                Buffer.from(contents.content, 'base64'),
-                { name: archive_path }
-            );
+            archive.append(Buffer.from(contents.content, 'base64'), {
+                name: archive_path
+            });
         } catch (error) {
             // just log error
             this.logger.log(error);

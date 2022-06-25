@@ -4,7 +4,7 @@ import { BullModule } from '@nestjs/bull';
 
 import { config } from '../../config';
 import { UserModule } from '../user/user.module';
-import { GithubApiModule } from '../github-api/github-api.module';
+import { GitModule } from '../git/git.module';
 import { ExerciseModule } from '../exercises/exercise.module';
 import { TestSetModule } from '../testsets/testset.module';
 
@@ -20,14 +20,12 @@ const PROVIDERS = [
 ];
 
 const MODULES = [
-    TypeOrmModule.forFeature([
-        TestEntity
-    ]),
+    TypeOrmModule.forFeature([TestEntity]),
     BullModule.registerQueue({
         name: TEST_SYNC_QUEUE,
         redis: {
-          host: config.queueing.host,
-          port: config.queueing.port
+            host: config.queueing.host,
+            port: config.queueing.port
         },
         defaultJobOptions: {
             attempts: 20,
@@ -40,7 +38,7 @@ const MODULES = [
     }),
     HttpModule,
     forwardRef(() => UserModule),
-    GithubApiModule,
+    GitModule,
     forwardRef(() => ExerciseModule),
     forwardRef(() => TestSetModule)
 ];

@@ -5,7 +5,7 @@ import { BullModule } from '@nestjs/bull';
 import { config } from '../../config';
 import { UserModule } from '../user/user.module';
 import { ProjectModule } from '../project/project.module';
-import { GithubApiModule } from '../github-api/github-api.module';
+import { GitModule } from '../git/git.module';
 import { DynamicCorrectorModule } from '../dynamic-correctors/dynamic-corrector.module';
 import { EmbeddableModule } from '../embeddables/embeddable.module';
 import { FeedbackGeneratorModule } from '../feedback-generators/feedback-generator.module';
@@ -35,14 +35,12 @@ const PROVIDERS = [
 ];
 
 const MODULES = [
-    TypeOrmModule.forFeature([
-        ExerciseEntity
-    ]),
+    TypeOrmModule.forFeature([ExerciseEntity]),
     BullModule.registerQueue({
         name: EXERCISE_SYNC_QUEUE,
         redis: {
-          host: config.queueing.host,
-          port: config.queueing.port
+            host: config.queueing.host,
+            port: config.queueing.port
         },
         defaultJobOptions: {
             attempts: 20,
@@ -56,7 +54,7 @@ const MODULES = [
     HttpModule,
     forwardRef(() => UserModule),
     forwardRef(() => ProjectModule),
-    GithubApiModule,
+    GitModule,
 
     DynamicCorrectorModule,
     EmbeddableModule,

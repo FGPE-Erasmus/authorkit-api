@@ -8,6 +8,9 @@ const appPackage = readFileSync(`${__dirname}/../../package.json`, {
 const appData = JSON.parse(appPackage);
 
 interface Config {
+    gitBaseDir: string;
+    gitUserName: string;
+    gitUserEmail: string;
     appRootPath: string;
     version: string;
     name: string;
@@ -103,12 +106,17 @@ interface Config {
 }
 
 export const config: Config = {
+    gitBaseDir: process.env.GIT_BASE_DIR,
+    gitUserName: process.env.GIT_USER_NAME,
+    gitUserEmail: process.env.GIT_USER_EMAIL,
     appRootPath: `${__dirname}/../app`,
     version: appData.version,
     name: appData.name,
     description: appData.description,
     uuid: process.env.APP_UUID,
-    isProduction: process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'prod',
+    isProduction:
+        process.env.NODE_ENV === 'production' ||
+        process.env.NODE_ENV === 'prod',
     salt: process.env.APP_SALT,
     assetsPath: `${__dirname}/../assets`,
     database: {
@@ -122,12 +130,8 @@ export const config: Config = {
         synchronize: true,
         logging: ['error'],
         migrationsRun: true,
-        migrations: [
-            __dirname + '/../migrations/*{.ts,.js}'
-        ],
-        entities: [
-            __dirname + '/../**/entity/*.entity{.ts,.js}'
-        ]
+        migrations: [__dirname + '/../migrations/*{.ts,.js}'],
+        entities: [__dirname + '/../**/entity/*.entity{.ts,.js}']
     },
     queueing: {
         host: process.env.QUEUEING_HOST,
@@ -206,8 +210,13 @@ export const config: Config = {
             forbidNonWhitelisted: false
         },
         password: {
-            min_length: parseInt(process.env.VALIDATOR_PASSWORD_MIN_LENGTH || '6', 10),
-            enforce_strong: /true/i.test(process.env.VALIDATOR_PASSWORD_ENFORCE_STRONG)
+            min_length: parseInt(
+                process.env.VALIDATOR_PASSWORD_MIN_LENGTH || '6',
+                10
+            ),
+            enforce_strong: /true/i.test(
+                process.env.VALIDATOR_PASSWORD_ENFORCE_STRONG
+            )
         }
     },
     ui_base_url: process.env.UI_BASE_URL

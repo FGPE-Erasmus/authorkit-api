@@ -21,7 +21,7 @@ ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /usr/src/app
 
-RUN apk add --no-cache bash coreutils
+RUN apk add --no-cache bash coreutils git
 
 COPY --from=builder /usr/src/app/node_modules node_modules
 

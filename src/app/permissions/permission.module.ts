@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { UserModule } from '../user/user.module';
 import { ProjectModule } from '../project/project.module';
-import { GithubApiModule } from '../github-api/github-api.module';
+import { GitModule } from '../git/git.module';
 
 import { PermissionService } from './permission.service';
 import { PermissionController } from './permission.controller';
@@ -18,7 +18,7 @@ const MODULES = [
     HttpModule,
     forwardRef(() => UserModule),
     forwardRef(() => ProjectModule),
-    GithubApiModule
+    GitModule
 ];
 
 @Module({
