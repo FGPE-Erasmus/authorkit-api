@@ -65,7 +65,7 @@
     "helmet": "^4.0.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.19",
-    "luxon": "^1.24.1",
+    "luxon": "^1.28.1",
     "nestjs-command": "^1.5.0",
     "node-cache": "^5.1.2",
     "nodemailer": "^6.4.11",
