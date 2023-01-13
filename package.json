@@ -30,12 +30,12 @@
   "precommit": [
     "lint:check"
   ],
-    "resolutions": {
-        "crc32-stream": "^4.0.2"
-    },
-    "overrides": {
-        "crc32-stream": "^4.0.2"
-    },
+  "resolutions": {
+    "crc32-stream": "^4.0.2"
+  },
+  "overrides": {
+    "crc32-stream": "^4.0.2"
+  },
   "dependencies": {
     "@nestjs/bull": "0.1.2",
     "@nestjs/common": "^7.0.0",
@@ -46,11 +46,11 @@
     "@nestjs/swagger": "^4.5.12",
     "@nestjs/typeorm": "^7.0.0",
     "@nestjs/websockets": "^7.0.0",
-    "@nestjsx/crud": "^4.6.2",
-    "@nestjsx/crud-typeorm": "^4.6.2",
+    "@nestjsx/crud": "4.6.2",
+    "@nestjsx/crud-typeorm": "4.6.2",
     "@octokit/rest": "^18.0.0",
     "apollo-server-express": "^2.16.1",
-    "archiver": "^3.1.1",
+    "archiver": "^5.3.0",
     "async": "^3.2.0",
     "async-exit-hook": "^2.0.1",
     "bull": "^3.16.0",
@@ -87,7 +87,7 @@
     "uuid": "^8.3.0",
     "winston": "^3.3.3",
     "xml2js": "^0.4.23",
-    "yapexil-mef-converter": "1.2.7"
+    "yapexil-mef-converter": "1.2.15"
   },
   "devDependencies": {
     "@nestjs/testing": "^7.4.2",
