@@ -31,8 +31,9 @@ export class GamificationTemplateService {
             let count_ch = 0;
 
             // Open zip file
-            const obj = await (await fetch(response[idx].download_url)).buffer();
-            const directory = await Open.buffer(obj);
+            const obj = await this.githubService.getFileContents(user, config.githubApi.template_repo, response[idx].path);
+            const content = Buffer.from(obj.content, 'base64');
+            const directory = await Open.buffer(content);
 
             const files = directory.files;
             for (const fdx in files) {
