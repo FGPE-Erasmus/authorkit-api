@@ -64,15 +64,21 @@ export class GamificationTemplateService {
         if (exercises_template[dto.template_id].tot_exercises !== exercises.length) {
             throw new InternalServerErrorException('Wrong exercises number!');
         } else {
-            const url = 'https://raw.githubusercontent.com/uniparthenope-fgpe/gamification-template/main/zip/' + dto.template_id + '.zip';
-            const obj = await (await fetch(url)).buffer();
-            const data = {'buffer': obj};
+            const response = await this.githubService.getFileContents(user, config.githubApi.template_repo, config.githubApi.template_path);
+            for (const idx in response) {
+                if (response[idx].name === dto.template_id + '.zip') {
+                    const url = response[idx].download_url;
+                    const obj = await (await fetch(url)).buffer();
+                    const data = {'buffer': obj};
 
-            exercises.forEach((exercise, i) => {
-                exercises_map['EX_' + ++i] = exercise['id'];
-            });
+                    exercises.forEach((exercise, i) => {
+                        exercises_map['EX_' + ++i] = exercise['id'];
+                    });
 
-            return await this.gamificationService.import(user, dto.project_id, data, exercises_map);
+                    return await this.gamificationService.import(user, dto.project_id, data, exercises_map);
+                }
+            }
         }
     }
 }
+
