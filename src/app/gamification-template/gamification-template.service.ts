@@ -7,9 +7,12 @@ import { UserEntity } from '../user/entity';
 import { GithubApiService } from '../github-api/github-api.service';
 import { Open } from 'unzipper';
 import { config } from '../../config';
+import { AppLogger } from '../app.logger';
 
 @Injectable()
 export class GamificationTemplateService {
+
+    private logger = new AppLogger(GamificationTemplateService.name);
 
     constructor(
         readonly githubService: GithubApiService,
@@ -64,21 +67,18 @@ export class GamificationTemplateService {
         if (exercises_template[dto.template_id].tot_exercises !== exercises.length) {
             throw new InternalServerErrorException('Wrong exercises number!');
         } else {
-            const response = await this.githubService.getFileContents(user, config.githubApi.template_repo, config.githubApi.template_path);
-            for (const idx in response) {
-                if (response[idx].name === dto.template_id + '.zip') {
-                    const url = response[idx].download_url;
-                    const obj = await (await fetch(url)).buffer();
-                    const data = {'buffer': obj};
+            const path = `${config.githubApi.template_path}/${dto.template_id}.zip`;
+            const response = await this.githubService.getFileContents(user, config.githubApi.template_repo, path);
+            const content = Buffer.from(response.content, 'base64');
+            const data = {'buffer': content};
 
-                    exercises.forEach((exercise, i) => {
-                        exercises_map['EX_' + ++i] = exercise['id'];
-                    });
+            exercises.forEach((exercise, i) => {
+                exercises_map['EX_' + ++i] = exercise['id'];
+            });
 
-                    return await this.gamificationService.import(user, dto.project_id, data, exercises_map);
-                }
-            }
+            return await this.gamificationService.import(user, dto.project_id, data, exercises_map);
         }
     }
 }
+
 
