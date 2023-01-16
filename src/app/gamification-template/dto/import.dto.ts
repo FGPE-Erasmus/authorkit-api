@@ -7,5 +7,6 @@ export class TemplateDto {
 export class UploadDto {
     project_id: string;
     gl_id: string;
+    gl_name: string;
 }
 

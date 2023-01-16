@@ -81,8 +81,8 @@ export class GamificationTemplateService {
 
     public async uploadGamificationLayerTemplate(user: UserEntity, dto: UploadDto): Promise<any> {
         try {
-            const repoPath = `${config.githubApi.template_path}/${dto.gl_id}.zip`;
-            const path = `${__dirname}/${dto.gl_id}.zip`;
+            const repoPath = `${config.githubApi.template_path}/${dto.gl_name}.zip`;
+            const path = `${__dirname}/${dto.gl_name}.zip`;
             const output = fs.createWriteStream(path);
 
             await this.gamificationService.export(user, dto.gl_id, 'template', 'zip', output);
