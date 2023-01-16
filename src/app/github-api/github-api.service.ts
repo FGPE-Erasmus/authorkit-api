@@ -22,6 +22,41 @@ export class GithubApiService {
     ) {
     }
 
+    public async getTemplateRepository(name: string): Promise<boolean> {
+        try {
+            this.logger.debug(`[getTemplateRepository] Get Github repository ${name}`);
+            const client = await this.getClientForToken(config.githubApi.secret);
+            const repo = await client.getRepository(name);
+            if (!repo) {
+                return false;
+            }
+            return true;
+        } catch (err) {
+            return false;
+        }
+    }
+
+    public async createTemplateRepository(name: string): Promise<RepositoryDto> {
+        try {
+            this.logger.debug(`[createTemplateRepository] Create Github repository ${name}`);
+            const client = await this.getClientForToken(config.githubApi.secret);
+            const repo = await client.createRepository({
+                name: name
+            });
+            if (!repo) {
+                throw new Error('Failed to create Github repository.');
+            }
+            this.logger.debug(`[createProjectRepository] Github repository ${name} created`);
+            return repo;
+        } catch (err) {
+            this.logger.error(
+                `[createProjectRepository] Github repository ${name} not created, because ${JSON.stringify(err.message)}`,
+                err.stack
+            );
+            throw err;
+        }
+    }
+
     public async createProjectRepository(project: ProjectEntity): Promise<RepositoryDto> {
         try {
             this.logger.debug(`[createProjectRepository] Create Github repository ${project.id}`);
