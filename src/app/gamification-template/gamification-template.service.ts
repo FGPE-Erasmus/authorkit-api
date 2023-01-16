@@ -1,18 +1,16 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { GamificationLayerService } from '../gamification-layers/gamification-layer.service';
-import { TemplateDto } from './dto/import.dto';
+import { TemplateDto, UploadDto } from './dto/import.dto';
 
-import fetch from 'node-fetch';
 import { UserEntity } from '../user/entity';
 import { GithubApiService } from '../github-api/github-api.service';
 import { Open } from 'unzipper';
 import { config } from '../../config';
-import { AppLogger } from '../app.logger';
+import { Buffer } from 'buffer';
+import * as fs from 'fs';
 
 @Injectable()
 export class GamificationTemplateService {
-
-    private logger = new AppLogger(GamificationTemplateService.name);
 
     constructor(
         readonly githubService: GithubApiService,
@@ -30,7 +28,7 @@ export class GamificationTemplateService {
             let count_ex = 0;
             let count_ch = 0;
 
-            // Open zip file
+            // Get files list
             const obj = await this.githubService.getFileContents(user, config.githubApi.template_repo, response[idx].path);
             const content = Buffer.from(obj.content, 'base64');
             const directory = await Open.buffer(content);
@@ -80,6 +78,25 @@ export class GamificationTemplateService {
             return await this.gamificationService.import(user, dto.project_id, data, exercises_map);
         }
     }
+
+    public async uploadGamificationLayerTemplate(user: UserEntity, dto: UploadDto): Promise<any> {
+        try {
+            const path = `${__dirname}/${dto.gl_id}.zip`;
+            const output = fs.createWriteStream(path);
+
+            await this.gamificationService.export(user, dto.gl_id, 'template', 'zip', output);
+
+            const content = fs.readFileSync(path);
+            const contentEncoded = new Buffer(content).toString('base64');
+
+            const repoPath = `${config.githubApi.template_path}/${dto.gl_id}.zip`;
+            return await this.githubService.createFile(user, config.githubApi.template_repo, repoPath, contentEncoded);
+        } catch (err) {
+            console.log(err);
+            throw new InternalServerErrorException('Upload template failed');
+        }
+    }
 }
+
 
 

@@ -17,3 +17,4 @@ const PROVIDERS = [
 
 export class GamificationTemplateModule {
 }
+
