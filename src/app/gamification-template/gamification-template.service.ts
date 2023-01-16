@@ -81,15 +81,24 @@ export class GamificationTemplateService {
 
     public async uploadGamificationLayerTemplate(user: UserEntity, dto: UploadDto): Promise<any> {
         try {
+            const repoPath = `${config.githubApi.template_path}/${dto.gl_id}.zip`;
             const path = `${__dirname}/${dto.gl_id}.zip`;
             const output = fs.createWriteStream(path);
 
             await this.gamificationService.export(user, dto.gl_id, 'template', 'zip', output);
+            output.end();
+            output.close();
+
+            const finishWriting = new Promise<void>(resolve => {
+                output.on('finish', function() {
+                    resolve();
+                });
+            });
+            await Promise.all([finishWriting]);
 
             const content = fs.readFileSync(path);
-            const contentEncoded = new Buffer(content).toString('base64');
+            const contentEncoded = Buffer.from(content).toString('base64');
 
-            const repoPath = `${config.githubApi.template_path}/${dto.gl_id}.zip`;
             return await this.githubService.createFile(user, config.githubApi.template_repo, repoPath, contentEncoded);
         } catch (err) {
             console.log(err);
