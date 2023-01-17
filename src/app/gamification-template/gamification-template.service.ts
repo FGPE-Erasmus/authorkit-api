@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { GamificationLayerService } from '../gamification-layers/gamification-layer.service';
-import { TemplateDto, UploadDto } from './dto/import.dto';
+import { ImportDto, TemplateDto, UploadDto } from './dto/import.dto';
 
 import { UserEntity } from '../user/entity';
 import { GithubApiService } from '../github-api/github-api.service';
@@ -17,7 +17,7 @@ export class GamificationTemplateService {
         readonly gamificationService: GamificationLayerService
     ) {}
 
-    public async getExercisesFromTemplateGithub(user: UserEntity): Promise<any> {
+    public async getExercises(user: UserEntity): Promise<any> {
         try {
             const exists = await this.githubService.getTemplateRepository(config.githubApi.template_repo);
             if (exists) {
@@ -68,11 +68,11 @@ export class GamificationTemplateService {
         }
     }
 
-    public async createGamificationLayerFromTemplate(user: UserEntity, dto: TemplateDto): Promise<any> {
+    public async create(user: UserEntity, dto: TemplateDto): Promise<any> {
         try {
             const exercises_map = {};
             const exercises = dto.exercise_ids;
-            const exercises_template = await this.getExercisesFromTemplateGithub(user);
+            const exercises_template = await this.getExercises(user);
             if (exercises_template[dto.template_id].tot_exercises !== exercises.length) {
                 throw new InternalServerErrorException('Wrong exercises number!');
             } else {
@@ -92,7 +92,7 @@ export class GamificationTemplateService {
         }
     }
 
-    public async uploadGamificationLayerTemplate(user: UserEntity, dto: UploadDto): Promise<any> {
+    public async upload(user: UserEntity, dto: UploadDto): Promise<any> {
         try {
             const repoPath = `${dto.gl_name}.zip`;
             const path = `${__dirname}/${dto.gl_name}.zip`;
@@ -110,20 +110,32 @@ export class GamificationTemplateService {
             await Promise.all([finishWriting]);
 
             const content = fs.readFileSync(path);
-            const contentEncoded = Buffer.from(content).toString('base64');
 
-            const exists = await this.githubService.getTemplateRepository(config.githubApi.template_repo);
-            if (!exists) {
-                await this.githubService.createTemplateRepository(config.githubApi.template_repo);
-            }
-
-            return await this.githubService.createFile(user, config.githubApi.template_repo, repoPath, contentEncoded);
+            return this.uploadTemplate(user, repoPath, content);
         } catch (err) {
             console.log(err);
             throw new InternalServerErrorException('Upload template failed');
         }
     }
+
+    public async uploadTemplate(user: UserEntity, repoPath: string, content: any): Promise<any> {
+        const contentEncoded = Buffer.from(content).toString('base64');
+
+        const exists = await this.githubService.getTemplateRepository(config.githubApi.template_repo);
+        if (!exists) {
+            await this.githubService.createTemplateRepository(config.githubApi.template_repo);
+        }
+
+        return await this.githubService.createFile(user, config.githubApi.template_repo, repoPath, contentEncoded);
+    }
+
+    public async import(user: UserEntity, dto: ImportDto, input: any): Promise<any> {
+        const repoPath = `${dto.gl_name}.zip`;
+        const content = input.buffer;
+        return this.uploadTemplate(user, repoPath, content);
+    }
 }
+
 
 
 

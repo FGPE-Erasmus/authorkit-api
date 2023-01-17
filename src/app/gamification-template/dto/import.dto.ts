@@ -10,3 +10,6 @@ export class UploadDto {
     gl_name: string;
 }
 
+export class ImportDto {
+    gl_name: string;
+}
