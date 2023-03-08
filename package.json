@@ -39,7 +39,7 @@
   "dependencies": {
     "@nestjs/bull": "0.1.2",
     "@nestjs/common": "^7.0.0",
-    "@nestjs/core": "^7.0.0",
+    "@nestjs/core": "^9.0.5",
     "@nestjs/microservices": "^7.0.0",
     "@nestjs/passport": "^7.0.0",
     "@nestjs/platform-express": "^7.0.0",
