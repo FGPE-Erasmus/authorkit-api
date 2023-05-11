@@ -269,11 +269,11 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             module: metadata.module,
             owner_id: user.id,
             keywords: metadata.keywords,
-            type: metadata.type,
-            difficulty: metadata.difficulty,
+            type: metadata.type?.toLowerCase(),
+            difficulty: metadata.difficulty?.toLowerCase(),
             event: metadata.event,
             platform: metadata.platform,
-            status: metadata.status,
+            status: metadata.status?.toLowerCase(),
             programmingLanguages: metadata.programmingLanguages,
             timeout: metadata.timeout,
             project_id
@@ -692,13 +692,12 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
     public async export(
         user: UserEntity, exercise_id: string, format: string = 'zip', res: any
     ): Promise<void> {
-
         const archive: Archiver = create(format);
 
         archive.pipe(res);
 
         archive.on('error', function(err) {
-            throw err;
+            console.log(err);
         });
 
         const asyncArchiveWriters = [];
@@ -707,7 +706,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
         await Promise.all(asyncArchiveWriters);
 
-        return await archive.finalize();
+        await archive.finalize();
     }
 
     public async exportMef(
@@ -882,7 +881,12 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             test_path += `tests/${test.id}/`;
             asyncArchiveWriters.push(
                 this.addFileFromGithubToArchive(
-                    user, exercise, archive, `${base_path}${test_path}metadata.json`, `${archive_base_path}${test_path}metadata.json`
+                    user, exercise, archive, `${base_path}${test_path}metadata.json`, `${archive_base_path}${test_path}metadata.json`,
+                    str => {
+                        const obj = JSON.parse(Buffer.from(str, 'base64').toString('utf8'));
+                        obj.feedback = Array.isArray(obj.feedback) ? obj.feedback : [];
+                        return Buffer.from(JSON.stringify(obj)).toString('base64');
+                    }
                 ),
                 this.addFileFromGithubToArchive(
                     user, exercise, archive, `${base_path}${test_path}${test.input.pathname}`, `${archive_base_path}${test_path}${test.input.pathname}`
@@ -911,7 +915,8 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         exercise: ExerciseEntity,
         archive: Archiver,
         path: string,
-        archive_path: string
+        archive_path: string,
+        sanitize: (str: string) => string = (str) => str
     ): Promise<void> {
 
         try {
@@ -922,7 +927,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                 return;
             }
             archive.append(
-                Buffer.from(contents.content, 'base64'),
+                Buffer.from(sanitize(contents.content), 'base64'),
                 { name: archive_path }
             );
         } catch (error) {

@@ -148,7 +148,7 @@ export class StatementService {
         const metadata = JSON.parse((await metadataFile.buffer()).toString());
 
         const entity: StatementEntity = await this.repository.save({
-            format: metadata.format,
+            format: metadata.format?.toLowerCase(),
             nat_lang: metadata.nat_lang,
             pathname: metadata.pathname,
             exercise_id: exercise.id

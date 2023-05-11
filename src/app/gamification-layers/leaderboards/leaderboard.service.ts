@@ -40,15 +40,15 @@ export class LeaderboardService extends TypeOrmCrudService<LeaderboardEntity> {
         return super.getMany(req);
     }
 
-    public async createOne(req: CrudRequest, dto: DeepPartial<LeaderboardEntity>): Promise<LeaderboardEntity> {
+    public async createOne(req: CrudRequest, dto: LeaderboardEntity): Promise<LeaderboardEntity> {
         return super.createOne(req, dto);
     }
 
-    public async updateOne(req: CrudRequest, dto: DeepPartial<LeaderboardEntity>): Promise<LeaderboardEntity> {
+    public async updateOne(req: CrudRequest, dto: LeaderboardEntity): Promise<LeaderboardEntity> {
         return super.updateOne(req, dto);
     }
 
-    public async replaceOne(req: CrudRequest, dto: DeepPartial<LeaderboardEntity>): Promise<LeaderboardEntity> {
+    public async replaceOne(req: CrudRequest, dto: LeaderboardEntity): Promise<LeaderboardEntity> {
         return super.replaceOne(req, dto);
     }
 

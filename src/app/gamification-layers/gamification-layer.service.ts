@@ -182,7 +182,7 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             description: metadata.description,
             owner_id: user.id,
             keywords: metadata.keywords,
-            status: metadata.status,
+            status: metadata.status?.toLowerCase(),
             project_id
         };
 

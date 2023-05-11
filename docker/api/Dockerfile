@@ -1,5 +1,5 @@
 # the builder
-FROM node:16-alpine AS builder
+FROM node:14-alpine AS builder
 
 ARG NODE_ENV=development
 ENV NODE_ENV=${NODE_ENV}
@@ -10,11 +10,11 @@ RUN apk add --no-cache py-pip make g++
 
 COPY package*.json nodemon*.json ./
 
-RUN yarn install
+RUN npm install
 
 
 # the server
-FROM node:16-alpine
+FROM node:14-alpine
 
 ARG NODE_ENV=development
 ENV NODE_ENV=${NODE_ENV}
@@ -27,4 +27,4 @@ COPY --from=builder /usr/src/app/node_modules node_modules
 
 COPY . .
 
-CMD [ "yarn", "watch:dev" ]
+CMD [ "npm", "run", "watch:dev" ]

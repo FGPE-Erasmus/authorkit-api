@@ -75,6 +75,6 @@ export class TestEntity extends TrackedFileEntity {
 
     @ApiProperty()
     @IsOptional({ always: true })
-    @Column('simple-json', { default: () => '(\'{}\')' })
+    @Column('simple-json', { default: () => '(\'[]\')' })
     public feedback: { message: string, weight: number }[];
 }

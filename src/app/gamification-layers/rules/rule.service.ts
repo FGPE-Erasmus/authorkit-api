@@ -40,15 +40,15 @@ export class RuleService extends TypeOrmCrudService<RuleEntity> {
         return super.getMany(req);
     }
 
-    public async createOne(req: CrudRequest, dto: DeepPartial<RuleEntity>): Promise<RuleEntity> {
+    public async createOne(req: CrudRequest, dto: RuleEntity): Promise<RuleEntity> {
         return super.createOne(req, dto);
     }
 
-    public async updateOne(req: CrudRequest, dto: DeepPartial<RuleEntity>): Promise<RuleEntity> {
+    public async updateOne(req: CrudRequest, dto: RuleEntity): Promise<RuleEntity> {
         return super.updateOne(req, dto);
     }
 
-    public async replaceOne(req: CrudRequest, dto: DeepPartial<RuleEntity>): Promise<RuleEntity> {
+    public async replaceOne(req: CrudRequest, dto: RuleEntity): Promise<RuleEntity> {
         return super.replaceOne(req, dto);
     }
 

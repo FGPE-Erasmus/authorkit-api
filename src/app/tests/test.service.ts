@@ -88,6 +88,7 @@ export class TestService {
 
         const test = await this.repository.save(plainToClass(TestEntity, {
             ...dto,
+            feedback: Array.isArray(dto.feedback) ? dto.feedback : [],
             input: {
                 pathname: input.originalname
             },
@@ -120,6 +121,7 @@ export class TestService {
         const test = await this.repository.save(plainToClass(TestEntity, {
             ...oldTest,
             ...dto,
+            feedback: Array.isArray(dto.feedback) ? dto.feedback : [],
             input: { sha: oldTest.input.sha, pathname: input.originalname },
             output: { sha: oldTest.output.sha, pathname: output.originalname }
         }));

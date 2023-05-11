@@ -40,15 +40,15 @@ export class RewardService extends TypeOrmCrudService<RewardEntity> {
         return super.getMany(req);
     }
 
-    public async createOne(req: CrudRequest, dto: DeepPartial<RewardEntity>): Promise<RewardEntity> {
+    public async createOne(req: CrudRequest, dto: RewardEntity): Promise<RewardEntity> {
         return super.createOne(req, dto);
     }
 
-    public async updateOne(req: CrudRequest, dto: DeepPartial<RewardEntity>): Promise<RewardEntity> {
+    public async updateOne(req: CrudRequest, dto: RewardEntity): Promise<RewardEntity> {
         return super.updateOne(req, dto);
     }
 
-    public async replaceOne(req: CrudRequest, dto: DeepPartial<RewardEntity>): Promise<RewardEntity> {
+    public async replaceOne(req: CrudRequest, dto: RewardEntity): Promise<RewardEntity> {
         return super.replaceOne(req, dto);
     }
 
@@ -88,7 +88,7 @@ export class RewardService extends TypeOrmCrudService<RewardEntity> {
         const entity: RewardEntity = await this.repository.save({
             name: metadata.name,
             description: metadata.description,
-            kind: metadata.kind,
+            kind: metadata.kind?.toUpperCase(),
             image: metadata.image,
             cost: metadata.cost,
             recurrent: metadata.recurrent,

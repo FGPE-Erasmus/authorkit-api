@@ -47,15 +47,15 @@ export class ChallengeService extends TypeOrmCrudService<ChallengeEntity> {
         return super.getMany(req);
     }
 
-    public async createOne(req: CrudRequest, dto: DeepPartial<ChallengeEntity>): Promise<ChallengeEntity> {
+    public async createOne(req: CrudRequest, dto: ChallengeEntity): Promise<ChallengeEntity> {
         return super.createOne(req, dto);
     }
 
-    public async updateOne(req: CrudRequest, dto: DeepPartial<ChallengeEntity>): Promise<ChallengeEntity> {
+    public async updateOne(req: CrudRequest, dto: ChallengeEntity): Promise<ChallengeEntity> {
         return super.updateOne(req, dto);
     }
 
-    public async replaceOne(req: CrudRequest, dto: DeepPartial<ChallengeEntity>): Promise<ChallengeEntity> {
+    public async replaceOne(req: CrudRequest, dto: ChallengeEntity): Promise<ChallengeEntity> {
         return super.replaceOne(req, dto);
     }
 
@@ -156,11 +156,11 @@ export class ChallengeService extends TypeOrmCrudService<ChallengeEntity> {
             name: metadata.name,
             description: metadata.description,
             exercises: metadata.refs.map(e => exercises_map[e]).filter(r => !!r).map(e => ({ id: e })),
-            mode: metadata.mode,
+            mode: metadata.mode?.toUpperCase(),
             mode_parameters: metadata.mode_parameters,
             locked: metadata.locked,
             hidden: metadata.hidden,
-            difficulty: metadata.difficulty,
+            difficulty: metadata.difficulty?.toUpperCase(),
             gl_id: gamification_layer.id
         });
 

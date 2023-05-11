@@ -43,7 +43,10 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
         super(repository);
     }
 
-    public async createOne(req: CrudRequest, dto: DeepPartial<ProjectEntity>): Promise<ProjectEntity> {
+    public async createOne(
+        req: CrudRequest,
+        dto: DeepPartial<ProjectEntity>
+    ): Promise<ProjectEntity> {
         const project = await super.createOne(req, dto);
         try {
             await this.permissionService.addOwnerPermission(project.id, project.owner_id);
@@ -53,8 +56,12 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
         return project;
     }
 
-    public async updateOne(req: CrudRequest, dto: DeepPartial<ProjectEntity>): Promise<ProjectEntity> {
-        const { allowParamsOverride, returnShallow } = req.options.routes.updateOneBase;
+    public async updateOne(
+        req: CrudRequest,
+        dto: DeepPartial<ProjectEntity>
+    ): Promise<ProjectEntity> {
+        const { allowParamsOverride, returnShallow } =
+            req.options.routes.updateOneBase;
         const paramsFilters = this.getParamFilters(req.parsed);
         const found = await this.getOneOrFail(req, returnShallow);
         const toSave = !allowParamsOverride
@@ -190,7 +197,7 @@ export class ProjectService extends TypeOrmCrudService<ProjectEntity> {
         const project = await this.repository.save({
             name: metadata.name,
             description: metadata.description,
-            status: metadata.status,
+            status: metadata.status?.toLowerCase(),
             is_public: metadata.is_public,
             owner_id: user.id
         });
