@@ -10,6 +10,7 @@ import { Archiver, create } from 'archiver';
 import { Open } from 'unzipper';
 import { Parser } from 'xml2js';
 import * as stream from 'stream';
+import axios, { AxiosResponse } from 'axios';
 import { yapexil2mefStream } from 'yapexil-mef-converter';
 
 import { AppLogger } from '../app.logger';
@@ -902,6 +903,128 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             `exercise.id = '${exercise_id}'`,
             `permission.user_id = '${user_id}'`
         );
+    }
+
+    public async generateExercise(prompt: string, user: UserEntity, project_id: string): Promise<any> {
+        try {
+            const apiKey: string = process.env.OPENAI_API_KEY
+            const apiUrl: string = process.env.OPENAI_API_URL
+
+            let content = prompt + ' .Act like a teacher. \
+            For each exercise, provide the following structure in JSON format always as an array: \
+            { \
+                "title": "A short and creative title for the exercise", \
+                "module": "Programming topic", \
+                "type": "Exercise type (use only these values: blank_sheet, extension, improvement, bug_fix, fill_in_gaps, sort_blocks, spot_bug)", \
+                "difficulty": "Difficulty level (use only these values: beginner, easy, average, hard, master)", \
+                "status": "Exercise status (use only these values: draft, unpublished, published, trash)", \
+                "keywords": ["keyword1", "keyword2"], \
+                "programmingLanguages": ["language1", "language2"], \
+                "statement": "A detailed description of the problem to be solved", \
+                "skeleton": "Python code containing a partial implementation if relevant for the exercise type (required for types like \'fill_in_gaps\' or \'code_completion\')", \
+                "solution": "Complete Python code solution", \
+            }. \
+            Provide solutions for the exercises. Return ONLY the response in JSON format. Dont add ```json string.';
+
+            const messages = [
+                {
+                    role: 'user',
+                    content: content
+                }
+            ];
+
+            const response = await axios.post(
+                apiUrl,
+                {
+                    model: 'gpt-4o-mini',
+                    temperature: 0.4,
+                    messages: messages,
+                    max_tokens: 2048,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${apiKey}`,
+                    },
+                    responseType: 'json',
+                }
+            );
+
+            const responseData = response.data.choices[0].message.content.trim();
+
+            const exercises = JSON.parse(responseData);
+            for (const exerciseData of exercises) {
+                const newExercise = new ExerciseEntity();
+
+                newExercise.title = exerciseData.title;
+                newExercise.module = exerciseData.module;
+                newExercise.type = exerciseData.type;
+                newExercise.difficulty = exerciseData.difficulty;
+                newExercise.keywords = exerciseData.keywords || [];
+                newExercise.programmingLanguages = exerciseData.programmingLanguages || [];
+                newExercise.owner_id = user.id;
+                newExercise.project_id = project_id;
+
+                const exercise = await this.repository.save(newExercise);
+
+                await this.exerciseSyncQueue.add(EXERCISE_SYNC_CREATE, { user, exercise });
+
+                const asyncImporters = [];
+
+                asyncImporters.push(
+                    this.statementService.importProcessEntries(
+                        user, exercise, {
+                            'metadata.json': {
+                                buffer: () => Buffer.from(JSON.stringify({
+                                    pathname: 'ex.txt',
+                                    format: TextFormat.TXT,
+                                    nat_lang: 'en'
+                                }), 'utf8')
+                            },
+                            'ex.txt': {
+                                buffer: () => Buffer.from(exerciseData.statement, 'utf8')
+                            }
+                        }
+                    )
+                );
+                asyncImporters.push(
+                    this.skeletonService.importProcessEntries(
+                        user, exercise, {
+                            'metadata.json': {
+                                buffer: () => Buffer.from(JSON.stringify({
+                                    pathname: 'in.py',
+                                    lang: 'python'
+                                }), 'utf8')
+                            },
+                            'in.py': {
+                                buffer: () => Buffer.from(exerciseData.skeleton, 'utf8')
+                            }
+                        }
+                    )
+                );
+                asyncImporters.push(
+                    this.solutionService.importProcessEntries(
+                        user, exercise, {
+                            'metadata.json': {
+                                buffer: () => Buffer.from(JSON.stringify({
+                                    pathname: 'sol.py',
+                                    lang: 'python'
+                                }), 'utf8')
+                            },
+                            'sol.py': {
+                                buffer: () => Buffer.from(exerciseData.solution, 'utf8')
+                            }
+                        }
+                    )
+                );
+
+                await Promise.all(asyncImporters);
+            }
+
+            return responseData;
+        } catch (error) {
+            console.error('Error:', error.response ? error.response.data : error.message);
+            throw error;
+        }
     }
 
     /* Private Methods */

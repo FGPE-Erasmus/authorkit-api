@@ -324,4 +324,15 @@ export class ExerciseController implements CrudController<ExerciseEntity> {
         }
         return exercise;
     }
+
+    @Post('openAI/generate-exercises')
+    async generateExercise(
+        @User() user: any,
+        @Body('text') prompt: string,
+        @Body('project_id') projectId: string
+    ) {
+        console.log("projectId", projectId);
+        console.log("prompt", prompt);
+        return await this.service.generateExercise(prompt, user, projectId);
+    }
 }
