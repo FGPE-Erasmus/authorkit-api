@@ -24,6 +24,7 @@ import { LeaderboardService } from './leaderboards/leaderboard.service';
 import { RewardService } from './rewards/reward.service';
 import { RuleService } from './rules/rule.service';
 import { ExerciseService } from '../exercises/exercise.service';
+import { ChallengeEntity } from './challenges/entity/challenge.entity';
 
 @Injectable()
 export class GamificationLayerService extends TypeOrmCrudService<GamificationLayerEntity> {
@@ -101,6 +102,7 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
         }
 
         const gamification_layer = await this.importMetadataFile(user, project_id, root_metadata);
+        console.log("gamification_layer: ", gamification_layer);
 
         await this.gamificationLayerSyncQueue.add(GAMIFICATION_LAYER_SYNC_CREATE, { user, gamification_layer });
 
@@ -125,9 +127,12 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
         const challenge_map = {};
         for (const key in result['challenges']) {
             if (result['challenges'].hasOwnProperty(key)) {
+                console.log("challenges: ", result['challenges'][key]);
+                console.log("exercises_map: ", exercises_map);
                 const challenge_result = await this.challengeService.importProcessEntries(
                     user, gamification_layer, result['challenges'][key], exercises_map
                 );
+                console.log("challenge_result: ", challenge_result);
                 challenge_results.push(challenge_result);
                 challenge_map[key] = challenge_result.challenge.id;
             }
@@ -326,6 +331,72 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
             `permission.user_id = '${user_id}'`
         );
     }
+
+    public async createGamificationLayer(
+        user: UserEntity, 
+        project_id: string, 
+        gamificationLayerInfo: any, 
+        challengesInfo: any, 
+        exercisesByLevel: any
+    ): Promise<string> {
+        const gamificationLayer: DeepPartial<GamificationLayerEntity> = {
+            name: gamificationLayerInfo.name,
+            description: gamificationLayerInfo.description,
+            owner_id: user.id,
+            project_id: project_id,
+            status: 'published'
+        };
+    
+        const savedGamificationLayer = await this.repository.save(gamificationLayer);
+        //console.log("savedGamificationLayer: ", savedGamificationLayer);
+
+        console.log(challengesInfo);
+
+        const challenge_results = [];
+
+        for (const challengeInfo of challengesInfo) {
+            const level = challengeInfo.level;
+
+            console.log("level: ", level);
+            // console.log("exercisesByLevel: ", exercisesByLevel);
+            let exercises = exercisesByLevel["beginner"].map(exercise => ({ id: exercise.id }));
+            console.log("exercises: ", exercises);
+
+            const challenge_result = await this.challengeService.importProcessEntries(
+                user, savedGamificationLayer, {
+                    'metadata.json': {
+                        buffer: () => Buffer.from(JSON.stringify({
+                            name: challengeInfo.name,
+                            description: challengeInfo.description,
+                            gl_id: savedGamificationLayer.id,
+                            refs: exercises
+                        }), 'utf8')
+                    },
+                }
+            );
+            console.log("challenge_result: ", challenge_result);
+
+            challenge_results.push(challenge_result);
+        }
+
+        const asyncImporters = [];
+
+        challenge_results.forEach(challenge_result => {
+            asyncImporters.push(
+                this.challengeService.importProcessEntriesAfterAllChallengesImported(
+                    user, 
+                    savedGamificationLayer, 
+                    challenge_result.challenge, 
+                    [],
+                    challenge_result.related_entities
+                )
+            );
+        });
+    
+        await Promise.all(asyncImporters);
+
+        return savedGamificationLayer.id;
+    }     
 
     /* Private Methods */
 

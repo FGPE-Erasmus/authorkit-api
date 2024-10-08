@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CrudRequest, GetManyDefaultResponse } from '@nestjsx/crud';
@@ -33,6 +33,7 @@ import { TemplateService } from '../templates/template.service';
 import { TestGeneratorService } from '../test-generators/test-generator.service';
 import { TestService } from '../tests/test.service';
 import { TestSetService } from '../testsets/testset.service';
+import { GamificationLayerService } from '../gamification-layers/gamification-layer.service';
 import { fileExtension, languageName } from '../_helpers/utils';
 
 import { ExerciseEntity } from './entity/exercise.entity';
@@ -52,6 +53,8 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
         @InjectQueue(EXERCISE_SYNC_QUEUE) private readonly exerciseSyncQueue: Queue,
 
+        @Inject(forwardRef(() => GamificationLayerService)) private readonly gamificationLayerService: GamificationLayerService,
+
         protected readonly githubApiService: GithubApiService,
 
         protected readonly dynamicCorrectorService: DynamicCorrectorService,
@@ -66,7 +69,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
         protected readonly templateService: TemplateService,
         protected readonly testGeneratorService: TestGeneratorService,
         protected readonly testService: TestService,
-        protected readonly testsetsService: TestSetService
+        protected readonly testsetsService: TestSetService,
     ) {
         super(repository);
     }
@@ -911,6 +914,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
             const apiUrl: string = process.env.OPENAI_API_URL
 
             let content = prompt + ' .Act like a teacher. \
+            Divide the exercises into levels. Each level should have different exercises based on difficulty. \
             For each exercise, provide the following structure in JSON format always as an array: \
             { \
                 "title": "A short and creative title for the exercise", \
@@ -923,6 +927,22 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                 "statement": "A detailed description of the problem to be solved", \
                 "skeleton": "Python code containing a partial implementation if relevant for the exercise type (required for types like \'fill_in_gaps\' or \'code_completion\')", \
                 "solution": "Complete Python code solution", \
+            }. \
+            Also, provide the gamification layer name and description, as well as challenge names and descriptions for each level. \
+            Return the following structure: \
+            { \
+                "gamificationLayer": { \
+                    "name": "A creative name for the gamification layer", \
+                    "description": "A detailed description of the gamification layer" \
+                }, \
+                "challenges": [ \
+                    { \
+                        "level": "The level of the challenge", \
+                        "name": "A creative name for the challenge", \
+                        "description": "A description of the challenge" \
+                    } \
+                ], \
+                "exercises": [...] \
             }. \
             Provide solutions for the exercises. Return ONLY the response in JSON format. Dont add ```json string.';
 
@@ -951,7 +971,16 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
             const responseData = response.data.choices[0].message.content.trim();
 
-            const exercises = JSON.parse(responseData);
+            const parsedResponse = JSON.parse(responseData);
+
+            //console.log(parsedResponse);
+
+            const exercises = parsedResponse.exercises;
+            const gamificationLayerInfo = parsedResponse.gamificationLayer;
+            const challengesInfo = parsedResponse.challenges;
+
+            const exercisesByLevel = {};
+
             for (const exerciseData of exercises) {
                 const newExercise = new ExerciseEntity();
 
@@ -965,6 +994,12 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                 newExercise.project_id = project_id;
 
                 const exercise = await this.repository.save(newExercise);
+
+                const level = exerciseData.difficulty || 'beginner';
+                if (!exercisesByLevel[level]) {
+                    exercisesByLevel[level] = [];
+                }
+                exercisesByLevel[level].push(exercise);
 
                 await this.exerciseSyncQueue.add(EXERCISE_SYNC_CREATE, { user, exercise });
 
@@ -1020,7 +1055,10 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                 await Promise.all(asyncImporters);
             }
 
-            return responseData;
+            let gl_id = await this.gamificationLayerService.createGamificationLayer(user, project_id, gamificationLayerInfo, challengesInfo, exercisesByLevel);
+            console.log("gl_id: ", gl_id);
+
+            return gl_id;
         } catch (error) {
             console.error('Error:', error.response ? error.response.data : error.message);
             throw error;

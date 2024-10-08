@@ -68,6 +68,8 @@ export class ChallengeService extends TypeOrmCrudService<ChallengeEntity> {
         exercises_map: any = {}
     ): Promise<{ challenge: ChallengeEntity, children: string[], related_entities: any }> {
 
+        //console.log("[importProcessEntries] exercises_map: ", exercises_map);
+        
         const root_metadata = entries['metadata.json'];
         if (!root_metadata) {
             throw new BadRequestException('Archive misses required metadata');
@@ -102,6 +104,8 @@ export class ChallengeService extends TypeOrmCrudService<ChallengeEntity> {
         challenge: ChallengeEntity, children: string[], related_entities: any,
         exercises_map: any = {}, challenges_map: any = {}
     ) {
+        //console.log("[importProcessEntriesAfterAllChallengesImported] challenges_map: ", challenges_map);
+        //console.log("children: ", children);
 
         children.forEach(old_child_id => {
             const child_id = challenges_map[old_child_id];
@@ -151,6 +155,10 @@ export class ChallengeService extends TypeOrmCrudService<ChallengeEntity> {
     ): Promise<{ entity: ChallengeEntity, children: string[] }> {
 
         const metadata = JSON.parse((await metadataFile.buffer()).toString());
+
+        //console.log("[importMetadataFile] exercises_map: ", exercises_map);
+        //console.log(metadata.refs.map(e => exercises_map[e]).filter(r => !!r).map(e => ({ id: e })));
+        //console.log(metadata.refs);
 
         const entity: ChallengeEntity = await this.repository.save({
             name: metadata.name,

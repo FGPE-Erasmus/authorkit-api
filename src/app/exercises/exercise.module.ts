@@ -19,6 +19,7 @@ import { TemplateModule } from '../templates/template.module';
 import { TestGeneratorModule } from '../test-generators/test-generator.module';
 import { TestSetModule } from '../testsets/testset.module';
 import { TestModule } from '../tests/test.module';
+import { GamificationLayerModule } from '../gamification-layers/gamification-layer.module';
 
 import { ExercisePipe } from './pipe/exercise.pipe';
 import { ExerciseService } from './exercise.service';
@@ -56,6 +57,7 @@ const MODULES = [
     HttpModule,
     forwardRef(() => UserModule),
     forwardRef(() => ProjectModule),
+    forwardRef(() => GamificationLayerModule),
     GithubApiModule,
 
     DynamicCorrectorModule,
