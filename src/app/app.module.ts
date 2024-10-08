@@ -31,6 +31,7 @@ import { TemplateModule } from './templates/template.module';
 import { TestGeneratorModule } from './test-generators/test-generator.module';
 import { SkeletonModule } from './skeletons/skeleton.module';
 import { ContactModule } from './contact/contact.module';
+import { OpenAIModule } from './openAI/openAI.module';
 
 @Module({
     imports: [
@@ -71,7 +72,8 @@ import { ContactModule } from './contact/contact.module';
         LeaderboardModule,
         RewardModule,
         RuleModule,
-        GamificationTemplateModule
+        GamificationTemplateModule,
+        OpenAIModule
     ]
 })
 export class AppModule {
