@@ -348,19 +348,46 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
         };
     
         const savedGamificationLayer = await this.repository.save(gamificationLayer);
-        //console.log("savedGamificationLayer: ", savedGamificationLayer);
-
-        console.log(challengesInfo);
 
         const challenge_results = [];
+        const allExercises = [];
+        for (const level in exercisesByLevel) {
+            if (exercisesByLevel.hasOwnProperty(level)) {
+                allExercises.push(...exercisesByLevel[level]);
+            }
+        }
+        //console.log("allExercises: ", allExercises);
+
+        const totalChallenges = challengesInfo.length;
+        const totalExercises = allExercises.length;
+        //console.log("totalChallenges: ", totalChallenges);
+        //console.log("totalExercises: ", totalExercises);
+
+        const exercisesPerChallenge = Math.floor(totalExercises / totalChallenges);
+        let remainingExercises = totalExercises % totalChallenges;
+
+        let exerciseIndex = 0;
 
         for (const challengeInfo of challengesInfo) {
-            const level = challengeInfo.level;
+            const challengeExercises = [];
 
-            console.log("level: ", level);
-            // console.log("exercisesByLevel: ", exercisesByLevel);
-            let exercises = exercisesByLevel["beginner"].map(exercise => ({ id: exercise.id }));
-            console.log("exercises: ", exercises);
+            let count = exercisesPerChallenge;
+            if (remainingExercises > 0) {
+                count += 1;
+                remainingExercises -= 1;
+            }
+
+            for (let i = 0; i < count; i++) {
+                if (exerciseIndex < totalExercises) {
+                    const exercise = allExercises[exerciseIndex++];
+                    challengeExercises.push({ id: exercise });
+                }
+            }
+
+            const exercises_map = challengeExercises.reduce((acc, exercise, index) => {
+                acc[`EX_${index + 1}`] = exercise.id;
+                return acc;
+            }, {});
 
             const challenge_result = await this.challengeService.importProcessEntries(
                 user, savedGamificationLayer, {
@@ -369,10 +396,11 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
                             name: challengeInfo.name,
                             description: challengeInfo.description,
                             gl_id: savedGamificationLayer.id,
-                            refs: exercises
+                            refs: challengeExercises.map((_, index) => `EX_${index + 1}`),
                         }), 'utf8')
                     },
-                }
+                },
+                exercises_map
             );
             console.log("challenge_result: ", challenge_result);
 
@@ -396,7 +424,7 @@ export class GamificationLayerService extends TypeOrmCrudService<GamificationLay
         await Promise.all(asyncImporters);
 
         return savedGamificationLayer.id;
-    }     
+    }
 
     /* Private Methods */
 

@@ -925,8 +925,9 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                 "keywords": ["keyword1", "keyword2"], \
                 "programmingLanguages": ["language1", "language2"], \
                 "statement": "A detailed description of the problem to be solved", \
-                "skeleton": "Python code containing a partial implementation if relevant for the exercise type (required for types like \'fill_in_gaps\' or \'code_completion\')", \
-                "solution": "Complete Python code solution", \
+                "skeleton": "Code containing a partial implementation if relevant for the exercise type (required for types like \'fill_in_gaps\' or \'code_completion\')", \
+                "solution": "Complete code solution", \
+                "fileExtension": "Suggested file extension based on the programming language, e.g. .py, .js" \
             }. \
             Also, provide the gamification layer name and description, as well as challenge names and descriptions for each level. \
             Return the following structure: \
@@ -937,7 +938,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                 }, \
                 "challenges": [ \
                     { \
-                        "level": "The level of the challenge", \
+                        "level": "The level of the challenge (use only these values: beginner, easy, average, hard, master)", \
                         "name": "A creative name for the challenge", \
                         "description": "A description of the challenge" \
                     } \
@@ -973,8 +974,6 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
 
             const parsedResponse = JSON.parse(responseData);
 
-            //console.log(parsedResponse);
-
             const exercises = parsedResponse.exercises;
             const gamificationLayerInfo = parsedResponse.gamificationLayer;
             const challengesInfo = parsedResponse.challenges;
@@ -987,11 +986,12 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                 newExercise.title = exerciseData.title;
                 newExercise.module = exerciseData.module;
                 newExercise.type = exerciseData.type;
-                newExercise.difficulty = exerciseData.difficulty;
+                newExercise.difficulty = exerciseData.difficulty.toLowerCase();
                 newExercise.keywords = exerciseData.keywords || [];
                 newExercise.programmingLanguages = exerciseData.programmingLanguages || [];
                 newExercise.owner_id = user.id;
                 newExercise.project_id = project_id;
+                const ext = exerciseData.fileExtension || '.py';
 
                 const exercise = await this.repository.save(newExercise);
 
@@ -1010,12 +1010,12 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                         user, exercise, {
                             'metadata.json': {
                                 buffer: () => Buffer.from(JSON.stringify({
-                                    pathname: 'ex.txt',
+                                    pathname: `ex.${ext}`,
                                     format: TextFormat.TXT,
                                     nat_lang: 'en'
                                 }), 'utf8')
                             },
-                            'ex.txt': {
+                            [`ex.${ext}`]: {
                                 buffer: () => Buffer.from(exerciseData.statement, 'utf8')
                             }
                         }
@@ -1026,11 +1026,11 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                         user, exercise, {
                             'metadata.json': {
                                 buffer: () => Buffer.from(JSON.stringify({
-                                    pathname: 'in.py',
+                                    pathname: `in.${ext}`,
                                     lang: 'python'
                                 }), 'utf8')
                             },
-                            'in.py': {
+                            [`in.${ext}`]: {
                                 buffer: () => Buffer.from(exerciseData.skeleton, 'utf8')
                             }
                         }
@@ -1041,11 +1041,11 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                         user, exercise, {
                             'metadata.json': {
                                 buffer: () => Buffer.from(JSON.stringify({
-                                    pathname: 'sol.py',
+                                    pathname: `sol.${ext}`,
                                     lang: 'python'
                                 }), 'utf8')
                             },
-                            'sol.py': {
+                            [`sol.${ext}`]: {
                                 buffer: () => Buffer.from(exerciseData.solution, 'utf8')
                             }
                         }
@@ -1055,10 +1055,7 @@ export class ExerciseService extends TypeOrmCrudService<ExerciseEntity> {
                 await Promise.all(asyncImporters);
             }
 
-            let gl_id = await this.gamificationLayerService.createGamificationLayer(user, project_id, gamificationLayerInfo, challengesInfo, exercisesByLevel);
-            console.log("gl_id: ", gl_id);
-
-            return gl_id;
+            return await this.gamificationLayerService.createGamificationLayer(user, project_id, gamificationLayerInfo, challengesInfo, exercisesByLevel);
         } catch (error) {
             console.error('Error:', error.response ? error.response.data : error.message);
             throw error;

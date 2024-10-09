@@ -156,9 +156,9 @@ export class ChallengeService extends TypeOrmCrudService<ChallengeEntity> {
 
         const metadata = JSON.parse((await metadataFile.buffer()).toString());
 
-        //console.log("[importMetadataFile] exercises_map: ", exercises_map);
-        //console.log(metadata.refs.map(e => exercises_map[e]).filter(r => !!r).map(e => ({ id: e })));
-        //console.log(metadata.refs);
+        //console.log("metadata.refs: ", metadata.refs);
+        //console.log("exercises_map: ", exercises_map);
+        //console.log("final: ", metadata.refs.map(e => exercises_map[e]).filter(r => !!r).map(e => ({ id: e })));
 
         const entity: ChallengeEntity = await this.repository.save({
             name: metadata.name,
