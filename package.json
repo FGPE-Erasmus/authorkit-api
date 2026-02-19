@@ -86,7 +86,7 @@
     "unzipper": "^0.10.11",
     "uuid": "^8.3.0",
     "winston": "^3.3.3",
-    "xml2js": "^0.4.23",
+    "xml2js": "^0.5.0",
     "yapexil-mef-converter": "1.2.15"
   },
   "devDependencies": {
